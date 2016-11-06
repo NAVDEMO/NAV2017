@@ -3,7 +3,8 @@
 param
 (
        [string]$VMAdminUsername = $null
-      ,[string]$VMAdminPassword  = $null
+      ,[string]$NAVAdminUsername = $null
+      ,[string]$AdminPassword  = $null
       ,[string]$Country = $null
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$PublicMachineName = $null
@@ -23,8 +24,6 @@ Start-Transcript -Path "C:\DEMO\initialize.txt"
 while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }
 
 # Other variables
-$NavAdminUser = "admin"
-$NavAdminPassword = $VMAdminPassword
 $CloudServiceName = $PublicMachineName
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
 
@@ -33,8 +32,8 @@ $failure = $false
 try {
     # Initialize Virtual Machine
     ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')           | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeNavAdminUser = "'+$NAVAdminUser+'"')                 | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeNavAdminPassword = "'+$NAVAdminPassword+'"')         | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')             | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')            | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
     ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"') | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
     ('$HardcodeCloudServiceName = "'+$CloudServiceName+'"')         | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
     ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')       | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
@@ -51,7 +50,7 @@ prompt for credentials:i:1')
 
 if ($Office365UserName -ne "No") {
     try {
-        ('$HardcodeNavAdminUser = "default"')                                    | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
+        ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                      | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')         | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         ('$HardcodeSharePointAdminPassword = "'+$Office365Password+'"')          | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         ('$HardcodeCreateSharePointPortal = "'+$Office365CreatePortal+'"')       | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
