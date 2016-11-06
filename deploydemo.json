@@ -20,13 +20,20 @@
             "type": "string",
             "defaultValue": "vmadmin",
             "metadata": {
-                "Description": "Specify VM Admin user name"
+                "Description": "Specify VM Administrator user name"
             }
         },
-        "vmAdminPassword": {
+        "navAdminUsername": {
+            "type": "string",
+            "defaultValue": "admin",
+            "metadata": {
+                "Description": "Specify NAV Administrator user name"
+            }
+        },
+        "adminPassword": {
             "type": "securestring",
             "metadata": {
-                "Description": "Specify VM Admin Password"
+                "Description": "Specify Administrator Password (for VM and NAV)"
             }
         },
         "country": {
@@ -274,7 +281,7 @@
                 "osProfile": {
                     "computername": "[variables('server1Name')]",
                     "adminUsername": "[parameters('vmAdminUsername')]",
-                    "adminPassword": "[parameters('vmAdminPassword')]",
+                    "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
                       "provisionVmAgent": "true"
                     }
@@ -320,7 +327,7 @@
                     "fileUris": [
                         "[concat(variables('ScriptFilePath'), 'initialize.ps1')]"
                     ],
-                    "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -VMAdminUsername ',parameters('vmAdminUsername'),' -VMAdminPassword ',parameters('vmAdminPassword'),' -Country \"',parameters('country'),'\" -PublicMachineName ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' -bingMapsKey ',parameters('bingMapsKey'),' -ClickOnce ',parameters('clickonce'),' -PowerBI ',parameters('powerBI'),' -Office365UserName ',parameters('Office365UserName'),' -Office365Password ',parameters('Office365Password'))]"
+                    "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -VMAdminUsername ',parameters('vmAdminUsername'),' -NAVAdminUsername ',parameters('navAdminUsername'),' -AdminPassword ',parameters('adminPassword'),' -Country \"',parameters('country'),'\" -PublicMachineName ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' -bingMapsKey ',parameters('bingMapsKey'),' -ClickOnce ',parameters('clickonce'),' -PowerBI ',parameters('powerBI'),' -Office365UserName ',parameters('Office365UserName'),' -Office365Password ',parameters('Office365Password'))]"
                 },
                 "protectedSettings": {
                     "storageAccountName": "[variables('newStorageAccountName')]",
