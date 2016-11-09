@@ -61,7 +61,10 @@ if ($Office365UserName -ne "No") {
         ('$HardcodeSharePointAppCatalogUrl = "default"')                         | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         ('$HardcodeSharePointMultitenant = "No"')                                | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         . 'c:\DEMO\O365 Integration\install.ps1' 4> 'C:\DEMO\O365 Integration\install.log'
+
         Sync-NavTenant -ServerInstance NAV -Tenant default -Force
+        Set-NAVServerConfiguration $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
+
     } catch {
         Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message
         Write-Verbose $_.Exception.Message
