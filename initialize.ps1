@@ -7,13 +7,16 @@ param
       ,[string]$AdminPassword  = $null
       ,[string]$Country = $null
       ,[string]$RestoreAndUseBakFile = "Default"
+      ,[string]$CloudServiceName = $null
+      ,[string]$CertificatePfxUrl = $null
+      ,[string]$CertificatePfxPassword = $null
       ,[string]$PublicMachineName = $null
       ,[string]$bingMapsKey = $null
       ,[string]$clickonce = $null
       ,[string]$powerBI = $null
       ,[string]$Office365UserName = $null
       ,[string]$Office365Password = $null
-      ,[string]$Office365CreatePortal = "Yes"
+      ,[string]$Office365CreatePortal = $null
 )
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
@@ -24,20 +27,35 @@ Start-Transcript -Path "C:\DEMO\initialize.txt"
 while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }
 
 # Other variables
-$CloudServiceName = $PublicMachineName
+If ($CertificatePfxUrl -eq "No")
+{
+    $PublicMachineName = $CloudServiceName
+    $CertificatePfxFile = "default"
+} else {
+    if ($certificatePfxUrl.StartsWith("http://") -or $certificatePfxUrl.StartsWith("https://")) {
+        $CertificatePfxFile = "C:\DEMO\certificate.pfx"
+        Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
+        Invoke-WebRequest $certificatePfxUrl -OutFile $CertificatePfxFile
+    } else {
+        Write-Verbose "Error downloading $certificatePfxUrl to $CertificatePfxFile"
+        throw "Error downloading $certificatePfxUrl to $CertificatePfxFile"
+    }
+}
+
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
 
 $failure = $false
 
 try {
     # Initialize Virtual Machine
-    ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')           | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')             | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')            | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"') | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeCloudServiceName = "'+$CloudServiceName+'"')         | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')       | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodecertificatePfxFile = "default"')                     | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')               | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                 | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')     | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodeCloudServiceName = "'+$CloudServiceName+'"')             | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')           | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodecertificatePfxFile = "'+$CertificatePfxFile+'"')         | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+    ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"') | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
     . 'c:\DEMO\Initialize\install.ps1' 4> 'C:\DEMO\Initialize\install.log'
 } catch {
     Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message
@@ -63,7 +81,8 @@ if ($Office365UserName -ne "No") {
         . 'c:\DEMO\O365 Integration\install.ps1' 4> 'C:\DEMO\O365 Integration\install.log'
 
         Sync-NavTenant -ServerInstance NAV -Tenant default -Force
-        Set-NAVServerConfiguration $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
+        Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
+        Set-NAVServerInstance -ServerInstance $serverInstance -Restart
 
     } catch {
         Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message
