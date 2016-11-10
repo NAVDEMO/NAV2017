@@ -397,7 +397,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "CPU utilization",
+                            "displayName": "CPU % Processor Time",
                             "locale": "en-us"
                           }
                         ]
@@ -408,7 +408,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "CPU privileged time",
+                            "displayName": "CPU % Privileged Time",
                             "locale": "en-us"
                           }
                         ]
@@ -419,7 +419,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "CPU user time",
+                            "displayName": "CPU % User Time",
                             "locale": "en-us"
                           }
                         ]
@@ -430,7 +430,7 @@
                         "unit": "Count",
                         "annotation": [
                           {
-                            "displayName": "CPU frequency",
+                            "displayName": "CPU Processor Frequency",
                             "locale": "en-us"
                           }
                         ]
@@ -441,7 +441,7 @@
                         "unit": "Count",
                         "annotation": [
                           {
-                            "displayName": "Processes",
+                            "displayName": "Process Processes",
                             "locale": "en-us"
                           }
                         ]
@@ -452,7 +452,7 @@
                         "unit": "Count",
                         "annotation": [
                           {
-                            "displayName": "Threads",
+                            "displayName": "Process Thread Count",
                             "locale": "en-us"
                           }
                         ]
@@ -463,7 +463,7 @@
                         "unit": "Count",
                         "annotation": [
                           {
-                            "displayName": "Handles",
+                            "displayName": "Process Handle Count",
                             "locale": "en-us"
                           }
                         ]
@@ -474,7 +474,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "Memory usage",
+                            "displayName": "Memory % Committed Bytes In Use",
                             "locale": "en-us"
                           }
                         ]
@@ -485,7 +485,7 @@
                         "unit": "Bytes",
                         "annotation": [
                           {
-                            "displayName": "Memory available",
+                            "displayName": "Memory Available Bytes",
                             "locale": "en-us"
                           }
                         ]
@@ -496,7 +496,7 @@
                         "unit": "Bytes",
                         "annotation": [
                           {
-                            "displayName": "Memory committed",
+                            "displayName": "Memory Committed Bytes",
                             "locale": "en-us"
                           }
                         ]
@@ -507,7 +507,7 @@
                         "unit": "Bytes",
                         "annotation": [
                           {
-                            "displayName": "Memory commit limit",
+                            "displayName": "Memory Commit Limit",
                             "locale": "en-us"
                           }
                         ]
@@ -518,7 +518,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "Disk active time",
+                            "displayName": "Disk % Disk Time",
                             "locale": "en-us"
                           }
                         ]
@@ -529,7 +529,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "Disk active read time",
+                            "displayName": "Disk % Disk Read Time",
                             "locale": "en-us"
                           }
                         ]
@@ -540,7 +540,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "Disk active write time",
+                            "displayName": "Disk % Disk Write Time",
                             "locale": "en-us"
                           }
                         ]
@@ -551,7 +551,7 @@
                         "unit": "CountPerSecond",
                         "annotation": [
                           {
-                            "displayName": "Disk operations",
+                            "displayName": "Disk Transfers/sec",
                             "locale": "en-us"
                           }
                         ]
@@ -562,7 +562,7 @@
                         "unit": "CountPerSecond",
                         "annotation": [
                           {
-                            "displayName": "Disk read operations",
+                            "displayName": "Disk Reads/sec",
                             "locale": "en-us"
                           }
                         ]
@@ -573,7 +573,7 @@
                         "unit": "CountPerSecond",
                         "annotation": [
                           {
-                            "displayName": "Disk write operations",
+                            "displayName": "Disk Writes/sec",
                             "locale": "en-us"
                           }
                         ]
@@ -584,7 +584,7 @@
                         "unit": "BytesPerSecond",
                         "annotation": [
                           {
-                            "displayName": "Disk speed",
+                            "displayName": "Disk Bytes/sec",
                             "locale": "en-us"
                           }
                         ]
@@ -595,7 +595,7 @@
                         "unit": "BytesPerSecond",
                         "annotation": [
                           {
-                            "displayName": "Disk read speed",
+                            "displayName": "Disk Read Bytes/sec",
                             "locale": "en-us"
                           }
                         ]
@@ -606,7 +606,7 @@
                         "unit": "BytesPerSecond",
                         "annotation": [
                           {
-                            "displayName": "Disk write speed",
+                            "displayName": "Disk Write Bytes/sec",
                             "locale": "en-us"
                           }
                         ]
@@ -617,7 +617,7 @@
                         "unit": "Percent",
                         "annotation": [
                           {
-                            "displayName": "Disk free space (percentage)",
+                            "displayName": "Disk % Free Space",
                             "locale": "en-us"
                           }
                         ]
@@ -628,7 +628,337 @@
                         "unit": "Count",
                         "annotation": [
                           {
-                            "displayName": "# Active Sessions",
+                            "displayName": "NAV # Active Sessions",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Available tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Available tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Calculated fields cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Calculated fields cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Command cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Command cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Mounted tenants",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Mounted tenants",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# of task errors/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # of task errors/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Open application connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Open application connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Open connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Open connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Open tenant connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Open tenant connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Preferred connection total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Preferred connection total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Primary key cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Primary key cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Result set cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Result set cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Rows in all temporary tables",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Rows in all temporary tables",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Running tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Running tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Calculated fields cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Calculated fields cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Command cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Command cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Preferred connection cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Preferred connection cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Primary key cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Primary key cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Query repositioning rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Query repositioning rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Result set cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Result set cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Average server operation time (ms)",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Average server operation time (ms)",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Average task execution time",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Average task execution time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Hard throttled connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Hard throttled connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Heartbeat time (ms)",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Heartbeat time (ms)",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Maximum # of tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Maximum # of tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Server operations/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Server operations/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Soft throttled connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Soft throttled connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Time (ms) since the list of running tasks last had capacity for new tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Time (ms) since the list of running tasks last had capacity for new tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Total # Pending tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Total # Pending tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Total # Running tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Total # Running tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Transient errors",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Transient errors",
                             "locale": "en-us"
                           }
                         ]
@@ -682,8 +1012,6 @@
           "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -VMAdminUsername ',parameters('vmAdminUsername'),' -NAVAdminUsername ',parameters('navAdminUsername'),' -AdminPassword ',parameters('adminPassword'),' -Country \"',parameters('country'),'\" -CloudServiceName ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' -CertificatePfxUrl ',parameters('CertificatePfxUrl'),' -CertificatePfxPassword ',parameters('CertificatePfxPassword'),' -PublicMachineName ',parameters('PublicMachineName'),' -bingMapsKey ',parameters('bingMapsKey'),' -ClickOnce ',parameters('clickonce'),' -PowerBI ',parameters('powerBI'),' -Office365UserName ',parameters('Office365UserName'),' -Office365Password ',parameters('Office365Password'),' -Office365CreatePortal ',parameters('Office365CreatePortal'))]"
         },
         "protectedSettings": {
-          "storageAccountName": "[variables('storageAccountName')]",
-          "storageAccountKey": "[listKeys(variables('accountid'),'2015-06-15').key1]"
         }
       }
     }
