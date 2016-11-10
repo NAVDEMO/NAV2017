@@ -2,21 +2,21 @@
 
 param
 (
-       [string]$VMAdminUsername = $null
-      ,[string]$NAVAdminUsername = $null
-      ,[string]$AdminPassword  = $null
-      ,[string]$Country = $null
+       [string]$VMAdminUsername = ""
+      ,[string]$NAVAdminUsername = ""
+      ,[string]$AdminPassword  = ""
+      ,[string]$Country = ""
       ,[string]$RestoreAndUseBakFile = "Default"
-      ,[string]$CloudServiceName = $null
-      ,[string]$CertificatePfxUrl = $null
-      ,[string]$CertificatePfxPassword = $null
-      ,[string]$PublicMachineName = $null
-      ,[string]$bingMapsKey = $null
-      ,[string]$clickonce = $null
-      ,[string]$powerBI = $null
-      ,[string]$Office365UserName = $null
-      ,[string]$Office365Password = $null
-      ,[string]$Office365CreatePortal = $null
+      ,[string]$CloudServiceName = ""
+      ,[string]$CertificatePfxUrl = ""
+      ,[string]$CertificatePfxPassword = 
+      ,[string]$PublicMachineName = ""
+      ,[string]$bingMapsKey = ""
+      ,[string]$clickonce = ""
+      ,[string]$powerBI = ""
+      ,[string]$Office365UserName = ""
+      ,[string]$Office365Password = ""
+      ,[string]$Office365CreatePortal = ""
 )
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force

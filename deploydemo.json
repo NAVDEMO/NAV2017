@@ -38,30 +38,30 @@
     },
     "CertificatePfxUrl": {
       "type": "string",
-      "defaultValue": "No",
+      "defaultValue": "",
       "metadata": {
-        "Description": "URL for Certificate Pfx File"
+        "Description": "URL for Certificate Pfx File (leave empty to use Self Signed Certificate)"
       }
     },
     "CertificatePfxPassword": {
       "type": "securestring",
-      "defaultValue": "No",
+      "defaultValue": "",
       "metadata": {
-        "Description": "Password for Certificate Pfx File"
+        "Description": "Password for Certificate Pfx File (leave empty when Self Signed Cerificate)"
       }
     },
     "PublicMachineName": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "Description": "Public Dns Name (CNAME record pointing to your cloud service)"
+        "Description": "Public Dns Name (CNAME record pointing to your cloud service, leave empty when using Self Signed Certificate)"
       }
     },
     "bingMapsKey": {
       "type": "string",
-      "defaultValue": "No",
+      "defaultValue": "",
       "metadata": {
-        "Description": "Bing Maps Key (enter No to skip Bing Maps Integration)"
+        "Description": "Bing Maps Key (leave empty to skip Bing Maps Integration)"
       }
     },
     "clickonce": {
@@ -82,16 +82,16 @@
     },
     "Office365UserName": {
       "type": "string",
-      "defaultValue": "No",
+      "defaultValue": "",
       "metadata": {
-        "Description": "Enter Office 365 Administrator Email (enter No to skip Office 365 integration)"
+        "Description": "Enter Office 365 Administrator Email (leave empty to skip Office 365 integration)"
       }
     },
     "Office365Password": {
       "type": "securestring",
-      "defaultValue": "No",
+      "defaultValue": "",
       "metadata": {
-        "Description": "Enter Office 365 Administrator Password"
+        "Description": "Enter Office 365 Administrator Password (leave empty if no Office 365 integration)"
       }
     },
     "Office365CreatePortal": {
@@ -99,7 +99,7 @@
       "defaultValue": "Yes",
       "allowedValues": [ "Yes", "No" ],
       "metadata": {
-        "Description": "Create SharePoint Portal with NAV content (for Office 365 Integration)"
+        "Description": "Create SharePoint Portal with NAV content (only if Office 365 Integration is installed)"
       }
     }
   },
@@ -1009,7 +1009,7 @@
           "fileUris": [
             "[concat(variables('ScriptFilePath'), 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -VMAdminUsername ',parameters('vmAdminUsername'),' -NAVAdminUsername ',parameters('navAdminUsername'),' -AdminPassword ',parameters('adminPassword'),' -Country \"',parameters('country'),'\" -CloudServiceName ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' -CertificatePfxUrl ',parameters('CertificatePfxUrl'),' -CertificatePfxPassword ',parameters('CertificatePfxPassword'),' -PublicMachineName ',parameters('PublicMachineName'),' -bingMapsKey ',parameters('bingMapsKey'),' -ClickOnce ',parameters('clickonce'),' -PowerBI ',parameters('powerBI'),' -Office365UserName ',parameters('Office365UserName'),' -Office365Password ',parameters('Office365Password'),' -Office365CreatePortal ',parameters('Office365CreatePortal'))]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -VMAdminUsername ',parameters('vmAdminUsername'),' -NAVAdminUsername ',parameters('navAdminUsername'),' -AdminPassword ',parameters('adminPassword'),' -Country \"',parameters('country'),'\" -CloudServiceName ',reference(variables('publicIPAddressName')).dnsSettings.fqdn,' -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\"')]"
         },
         "protectedSettings": {
         }
