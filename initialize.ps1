@@ -27,7 +27,7 @@ Start-Transcript -Path "C:\DEMO\initialize.txt"
 while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }
 
 # Other variables
-If ($CertificatePfxUrl -eq "No")
+If ($CertificatePfxUrl -eq "")
 {
     $PublicMachineName = $CloudServiceName
     $CertificatePfxFile = "default"
@@ -37,13 +37,12 @@ If ($CertificatePfxUrl -eq "No")
         Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
         Invoke-WebRequest $certificatePfxUrl -OutFile $CertificatePfxFile
     } else {
-        Write-Verbose "Error downloading $certificatePfxUrl to $CertificatePfxFile"
-        throw "Error downloading $certificatePfxUrl to $CertificatePfxFile"
+        Write-Verbose "Error downloading '$certificatePfxUrl'"
+        throw "Error downloading '$certificatePfxUrl'"
     }
 }
 
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
-
 $failure = $false
 
 try {
@@ -66,7 +65,7 @@ try {
 Set-Content -Path "c:\inetpub\wwwroot\http\$MachineName.rdp" -Value ('full address:s:' + $PublicMachineName + ':3389
 prompt for credentials:i:1')
 
-if ($Office365UserName -ne "No") {
+if ($Office365UserName -ne "") {
     try {
         ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                      | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')         | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
@@ -91,7 +90,7 @@ if ($Office365UserName -ne "No") {
     }
 }
 
-if ($bingMapsKey -ne "No") {
+if ($bingMapsKey -ne "") {
     try {
         ('$HardcodeBingMapsKey = "'+$bingMapsKey+'"') | Add-Content "c:\DEMO\BingMaps\HardcodeInput.ps1"
         ('$HardcodeRegionFormat = "default"')         | Add-Content "c:\DEMO\BingMaps\HardcodeInput.ps1"
