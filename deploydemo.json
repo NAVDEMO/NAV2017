@@ -779,7 +779,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Calculated fields cache hit rate",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Percent",
                         "annotation": [
                           {
                             "displayName": "NAV % Calculated fields cache hit rate",
@@ -790,7 +790,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Command cache hit rate",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Percent",
                         "annotation": [
                           {
                             "displayName": "NAV % Command cache hit rate",
@@ -801,7 +801,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Preferred connection cache hit rate",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Percent",
                         "annotation": [
                           {
                             "displayName": "NAV % Preferred connection cache hit rate",
@@ -812,7 +812,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Primary key cache hit rate",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Percent",
                         "annotation": [
                           {
                             "displayName": "NAV % Primary key cache hit rate",
@@ -823,7 +823,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Query repositioning rate",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Percent",
                         "annotation": [
                           {
                             "displayName": "NAV % Query repositioning rate",
@@ -834,7 +834,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Result set cache hit rate",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Percent",
                         "annotation": [
                           {
                             "displayName": "NAV % Result set cache hit rate",
@@ -845,7 +845,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Average server operation time (ms)",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Milliseconds",
                         "annotation": [
                           {
                             "displayName": "NAV Average server operation time (ms)",
@@ -856,7 +856,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Average task execution time",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Milliseconds",
                         "annotation": [
                           {
                             "displayName": "NAV Average task execution time",
@@ -878,7 +878,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Heartbeat time (ms)",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Milliseconds",
                         "annotation": [
                           {
                             "displayName": "NAV Heartbeat time (ms)",
@@ -900,7 +900,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Server operations/sec",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Operations/second",
                         "annotation": [
                           {
                             "displayName": "NAV Server operations/sec",
@@ -922,7 +922,7 @@
                       {
                         "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Time (ms) since the list of running tasks last had capacity for new tasks",
                         "sampleRate": "PT15S",
-                        "unit": "Count",
+                        "unit": "Milliseconds",
                         "annotation": [
                           {
                             "displayName": "NAV Time (ms) since the list of running tasks last had capacity for new tasks",
