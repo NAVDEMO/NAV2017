@@ -621,6 +621,17 @@
                             "locale": "en-us"
                           }
                         ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Active sessions",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "# Active Sessions",
+                            "locale": "en-us"
+                          }
+                        ]
                       }
                     ]
                   },
@@ -672,10 +683,15 @@
         },
         "protectedSettings": {
           "storageAccountName": "[variables('storageAccountName')]",
-          "storageAccountKey": "[listKeys(variables('accountid'),'2015-06-15').key1]",
-          "storageAccountEndPoint": "https://core.windows.net"
+          "storageAccountKey": "[listKeys(variables('accountid'),'2015-06-15').key1]"
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "Landing page URL": {
+      "type": "string",
+      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+    }
+  }
 }
