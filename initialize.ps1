@@ -9,7 +9,7 @@ param
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
       ,[string]$CertificatePfxUrl = ""
-      ,[string]$CertificatePfxPassword = 
+      ,[string]$CertificatePfxPassword = "" 
       ,[string]$PublicMachineName = ""
       ,[string]$bingMapsKey = ""
       ,[string]$clickonce = ""
