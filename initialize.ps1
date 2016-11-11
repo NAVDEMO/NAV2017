@@ -17,6 +17,7 @@ param
       ,[string]$Office365UserName = ""
       ,[string]$Office365Password = ""
       ,[string]$Office365CreatePortal = ""
+      ,[string]$PatchPath = ""
 )
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
@@ -25,6 +26,12 @@ Start-Transcript -Path "C:\DEMO\initialize.txt"
 # Wait until NAV Service Tier is Running
 . ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")
 while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }
+
+function DownlooadFile($sourceUrl, $destinationFile)
+{
+    Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
+    Invoke-WebRequest $sourceUrl -OutFile $destinationFile
+}
 
 # Other variables
 If ($CertificatePfxUrl -eq "")
@@ -35,12 +42,15 @@ If ($CertificatePfxUrl -eq "")
     if ($certificatePfxUrl.StartsWith("http://") -or $certificatePfxUrl.StartsWith("https://")) {
         $CertificatePfxFile = "C:\DEMO\certificate.pfx"
         Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
-        Invoke-WebRequest $certificatePfxUrl -OutFile $CertificatePfxFile
+        DownloadFile($certificatePfxUrl, $CertificatePfxFile)
     } else {
         Write-Verbose "Error downloading '$certificatePfxUrl'"
         throw "Error downloading '$certificatePfxUrl'"
     }
 }
+
+DownloadFile("$PatchPath/Initialize/Install.ps1", "c:\demo\Initialize\install.ps1");
+DownloadFile("$PatchPath/O365 Integration/instal.ps1", "c:\demo\O365 Integration\install.ps1");
 
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
 $failure = $false
@@ -78,10 +88,6 @@ if ($Office365UserName -ne "") {
         ('$HardcodeSharePointAppCatalogUrl = "default"')                         | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         ('$HardcodeSharePointMultitenant = "No"')                                | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
         . 'c:\DEMO\O365 Integration\install.ps1' 4> 'C:\DEMO\O365 Integration\install.log'
-
-        Sync-NavTenant -ServerInstance NAV -Tenant default -Force
-        Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
-        Set-NAVServerInstance -ServerInstance $serverInstance -Restart
 
     } catch {
         Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message
