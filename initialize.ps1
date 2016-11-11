@@ -36,7 +36,7 @@ function DownlooadFile([string]$sourceUri, [string]$destinationFile)
 function PatchFileIfOldNecessary([string]$sourceUri, [string]$destinationFile, $date)
 {
     if (Test-Path -path $destinationFile) {
-        if (get-item C:\temp\Create2016VM.ps1).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
+        if ((get-item C:\temp\Create2016VM.ps1).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
             # File is newer - don't patch
             return
         } 
