@@ -48,7 +48,7 @@ function PatchFileIfNecessary([string]$sourceUrl, [string]$destinationFile, $dat
 # Update RTM files
 $date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
 PatchFileIfNecessary -SourceUrl "$PatchPath/Initialize/install.ps1" -destinationFile "c:\demo\Initialize\install.ps1" -date $date
-PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/instal.ps1" -destinationFile "c:\demo\O365 Integration\install.ps1" -date $date
+PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/install.ps1" -destinationFile "c:\demo\O365 Integration\install.ps1" -date $date
 PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/HelperFunctions.ps1" -destinationFile "c:\demo\O365 Integration\HelperFunctions.ps1" -date $date
 PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/O365 Integration.navx" -destinationFile "c:\demo\O365 Integration\O365 Integration.navx" -date $date
 PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/Deltas/COD51401.DELTA" -destinationFile "c:\demo\O365 Integration\Deltas\COD51401.DELTA" -date $date
