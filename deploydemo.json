@@ -101,26 +101,7 @@
       "metadata": {
         "Description": "Create SharePoint Portal with NAV content (only if Office 365 Integration is installed)"
       }
-    },
-      "_artifactsLocation": {
-          "type": "string",
-          "metadata": {
-              "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
-          }
-      },
-      "_artifactsLocationSasToken": {
-          "type": "securestring",
-          "metadata": {
-              "description": "Auto-generated token to access _artifactsLocation"
-          }
-      },
-      "DSCUpdateTagVersion": {
-          "type": "string",
-          "defaultValue": "1.0",
-          "metadata": {
-              "description": "This value must be changed from a previous deployment to ensure the extension will run"
-          }
-      }
+    }
   },
   "variables": {
     "storageAccountType": "Standard_LRS",
@@ -394,7 +375,6 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "modulesUrl": "[concat(variables('ScriptFilePath'), 'DSC.ps1')]",
-              "sasToken": "",
               "configurationFunction": "DSC.ps1\\NAVDSC",
               "properties": {}
             },
