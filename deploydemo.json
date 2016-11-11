@@ -1024,7 +1024,7 @@
         "displayName": "PowerShellScript2"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/extensions/', variables('server1Name'), '/vmextension1')]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
