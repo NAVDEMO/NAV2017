@@ -374,7 +374,7 @@
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "modulesUrl": "[concat(variables('ScriptFilePath'), 'DSC.ps1')]",
+              "modulesUrl": "[concat(variables('ScriptFilePath'), 'DSC.zip')]",
               "configurationFunction": "DSC.ps1\\NAVDSC",
               "properties": {}
             },
