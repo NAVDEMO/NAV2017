@@ -2,7 +2,8 @@
 
 param
 (
-       [string]$VMAdminUsername = ""
+       [string]$PatchPath = ""
+      ,[string]$VMAdminUsername = ""
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
       ,[string]$Country = ""
@@ -17,7 +18,6 @@ param
       ,[string]$Office365UserName = ""
       ,[string]$Office365Password = ""
       ,[string]$Office365CreatePortal = ""
-      ,[string]$PatchPath = ""
 )
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
@@ -27,53 +27,70 @@ Start-Transcript -Path "C:\DEMO\initialize.txt"
 . ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")
 while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }
 
-function DownlooadFile($sourceUrl, $destinationFile)
+function DownlooadFile([string]$sourceUri, [string]$destinationFile)
 {
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-# Other variables
-If ($CertificatePfxUrl -eq "")
+function PatchFileIfOldNecessary([string]$sourceUri, [string]$destinationFile, $date)
 {
-    $PublicMachineName = $CloudServiceName
-    $CertificatePfxFile = "default"
-} else {
-    if ($certificatePfxUrl.StartsWith("http://") -or $certificatePfxUrl.StartsWith("https://")) {
-        $CertificatePfxFile = "C:\DEMO\certificate.pfx"
-        Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
-        DownloadFile($certificatePfxUrl, $CertificatePfxFile)
-    } else {
-        Write-Verbose "Error downloading '$certificatePfxUrl'"
-        throw "Error downloading '$certificatePfxUrl'"
+    if (Test-Path -path $destinationFile) {
+        if (get-item C:\temp\Create2016VM.ps1).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
+            # File is newer - don't patch
+            return
+        } 
+        Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     }
+    Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-DownloadFile("$PatchPath/Initialize/Install.ps1", "c:\demo\Initialize\install.ps1");
-DownloadFile("$PatchPath/O365 Integration/instal.ps1", "c:\demo\O365 Integration\install.ps1");
+$date = (Get-Date -Date "2016-11-11 00:00:00Z").ToUniversalTime()
+PatchFileIfNecessary -SourceUri "$PatchPath/Initialize/Install.ps1" -destinationFile "c:\demo\Initialize\install.ps1" -date $date
+$date = (Get-Date -Date "2015-11-11 00:00:00Z").ToUniversalTime()
+PatchFileIfNecessary -SourceUri "$PatchPath/O365 Integration/instal.ps1" -destinationFile "c:\demo\O365 Integration\install.ps1" -date $date
 
+# Other variables
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
 $failure = $false
 
-try {
-    # Initialize Virtual Machine
-    ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')               | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                 | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')     | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodeCloudServiceName = "'+$CloudServiceName+'"')             | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')           | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodecertificatePfxFile = "'+$CertificatePfxFile+'"')         | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"') | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-    . 'c:\DEMO\Initialize\install.ps1' 4> 'C:\DEMO\Initialize\install.log'
-} catch {
-    Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message
-    Write-Verbose $_.Exception.Message
-    throw
-}
+if ($NAVAdminUsername -ne "") {
 
-Set-Content -Path "c:\inetpub\wwwroot\http\$MachineName.rdp" -Value ('full address:s:' + $PublicMachineName + ':3389
+    If ($CertificatePfxUrl -eq "")
+    {
+        $PublicMachineName = $CloudServiceName
+        $CertificatePfxFile = "default"
+    } else {
+        if ($certificatePfxUrl.StartsWith("http://") -or $certificatePfxUrl.StartsWith("https://")) {
+            $CertificatePfxFile = "C:\DEMO\certificate.pfx"
+            Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
+            DownloadFile -SourceUri $certificatePfxUrl -destinationFile $CertificatePfxFile
+        } else {
+            Write-Verbose "Error downloading '$certificatePfxUrl'"
+            throw "Error downloading '$certificatePfxUrl'"
+        }
+    }
+
+    try {
+        # Initialize Virtual Machine
+        ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')               | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                 | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')     | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        ('$HardcodeCloudServiceName = "'+$CloudServiceName+'"')             | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')           | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        ('$HardcodecertificatePfxFile = "'+$CertificatePfxFile+'"')         | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"') | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
+        . 'c:\DEMO\Initialize\install.ps1' 4> 'C:\DEMO\Initialize\install.log'
+    } catch {
+        Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message
+        Write-Verbose $_.Exception.Message
+        throw
+    }
+
+    Set-Content -Path "c:\inetpub\wwwroot\http\$MachineName.rdp" -Value ('full address:s:' + $PublicMachineName + ':3389
 prompt for credentials:i:1')
+}
 
 if ($Office365UserName -ne "") {
     try {
