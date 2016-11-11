@@ -101,7 +101,26 @@
       "metadata": {
         "Description": "Create SharePoint Portal with NAV content (only if Office 365 Integration is installed)"
       }
-    }
+    },
+      "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+          }
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "Auto-generated token to access _artifactsLocation"
+          }
+      },
+      "DSCUpdateTagVersion": {
+          "type": "string",
+          "defaultValue": "1.0",
+          "metadata": {
+              "description": "This value must be changed from a previous deployment to ensure the extension will run"
+          }
+      }
   },
   "variables": {
     "storageAccountType": "Standard_LRS",
@@ -122,7 +141,7 @@
     "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
     "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
     "ScriptCommandToExecute": "powershell.exe -File  ",
-    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/dev/"
+    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/dev/",
   },
   "resources": [
     {
@@ -357,6 +376,32 @@
         }
       },
       "resources": [
+        {
+          "name": "Microsoft.Powershell.DSC",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('server1Name'))]"
+          ],
+          "tags": {
+            "displayName": "DSC"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "forceUpdateTag": "[parameters('DSCUpdateTagVersion')]",
+            "settings": {
+              "modulesUrl": "[concat(variables('ScriptFilePath'), 'DSC.ps1')]",
+              "sasToken": "",
+              "configurationFunction": "DSC.ps1\\NAVDSC",
+              "properties": {}
+            },
+            "protectedSettings": {}
+          }
+        },
         {
           "type": "extensions",
           "name": "Microsoft.Insights.VMDiagnosticsSettings",
@@ -993,32 +1038,6 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('server1Name'),'/vmextension1')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "PowerShellScript1"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.4",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[concat(variables('ScriptFilePath'), 'installAzurePowerShell.ps1')]"
-          ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'installAzurePowershell.ps1')]"
-        },
-        "protectedSettings": {
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('server1Name'),'/vmextension2')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "PowerShellScript2"
