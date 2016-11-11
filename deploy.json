@@ -8,14 +8,6 @@
                 "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
             }
         },
-        "location": {
-            "type": "string",
-            "defaultValue": "West Europe",
-            "allowedValues": ["West US", "East US", "North Central US", "North Europe", "West Europe", "East Asia", "Southeast Asia"],
-            "metadata": {
-                "Description": "Select Location in which to deploy Microsoft Dynamics NAV 2017"
-            }
-        },
         "vmAdminUsername": {
             "type": "string",
             "defaultValue": "vmadmin",
