@@ -392,7 +392,6 @@
             "type": "DSC",
             "typeHandlerVersion": "2.9",
             "autoUpgradeMinorVersion": true,
-            "forceUpdateTag": "[parameters('DSCUpdateTagVersion')]",
             "settings": {
               "modulesUrl": "[concat(variables('ScriptFilePath'), 'DSC.ps1')]",
               "sasToken": "",
