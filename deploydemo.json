@@ -995,10 +995,36 @@
       "name": "[concat(variables('server1Name'),'/vmextension1')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "PowerShellScript"
+        "displayName": "PowerShellScript1"
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(variables('ScriptFilePath'), 'installAzurePowerShell.ps1')]"
+          ],
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'installAzurePowershell.ps1')]"
+        },
+        "protectedSettings": {
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('server1Name'),'/vmextension2')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PowerShellScript2"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/extensions/', variables('server1Name'), '/vmextension1')]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",

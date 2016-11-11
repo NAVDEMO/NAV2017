@@ -30,7 +30,7 @@ $publicWebBaseUrl = $config.SelectSingleNode("//appSettings/add[@key='PublicWebB
 $serverInstance = $config.SelectSingleNode("//appSettings/add[@key='ServerInstance']").value
 $multitenant = ($config.SelectSingleNode("//appSettings/add[@key='Multitenant']").value -ne "false")
 $DatabaseServer = $config.SelectSingleNode("//appSettings/add[@key='DatabaseServer']").value
-$ARRisConfigured = (Get-WebBinding -Name "Microsoft Dynamics NAV 2017 Web Client" | Where-Object { $_.bindingInformation -eq "*:8443:" })
+$ARRisConfigured = (Get-WebBinding -Name "Microsoft Dynamics NAV 2017 Weblogin  Client" | Where-Object { $_.bindingInformation -eq "*:8443:" })
 
 $WebConfigFile = "C:\inetpub\wwwroot\$ServerInstance\Web.config"
 $WebConfig = [xml](Get-Content $WebConfigFile)
