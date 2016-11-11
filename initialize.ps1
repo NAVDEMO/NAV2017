@@ -27,16 +27,16 @@ Start-Transcript -Path "C:\DEMO\initialize.txt"
 . ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")
 while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }
 
-function DownlooadFile([string]$sourceUri, [string]$destinationFile)
+function DownlooadFile([string]$sourceUrl, [string]$destinationFile)
 {
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-function PatchFileIfOldNecessary([string]$sourceUri, [string]$destinationFile, $date)
+function PatchFileIfNecessary([string]$sourceUrl, [string]$destinationFile, $date)
 {
     if (Test-Path -path $destinationFile) {
-        if ((get-item C:\temp\Create2016VM.ps1).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
+        if ((get-item $destinationFile).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
             # File is newer - don't patch
             return
         } 
@@ -46,9 +46,9 @@ function PatchFileIfOldNecessary([string]$sourceUri, [string]$destinationFile, $
 }
 
 $date = (Get-Date -Date "2016-11-11 00:00:00Z").ToUniversalTime()
-PatchFileIfNecessary -SourceUri "$PatchPath/Initialize/Install.ps1" -destinationFile "c:\demo\Initialize\install.ps1" -date $date
+PatchFileIfNecessary -SourceUrl "$PatchPath/Initialize/install.ps1" -destinationFile "c:\demo\Initialize\install.ps1" -date $date
 $date = (Get-Date -Date "2015-11-11 00:00:00Z").ToUniversalTime()
-PatchFileIfNecessary -SourceUri "$PatchPath/O365 Integration/instal.ps1" -destinationFile "c:\demo\O365 Integration\install.ps1" -date $date
+PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/instal.ps1" -destinationFile "c:\demo\O365 Integration\install.ps1" -date $date
 
 # Other variables
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
@@ -64,7 +64,7 @@ if ($NAVAdminUsername -ne "") {
         if ($certificatePfxUrl.StartsWith("http://") -or $certificatePfxUrl.StartsWith("https://")) {
             $CertificatePfxFile = "C:\DEMO\certificate.pfx"
             Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
-            DownloadFile -SourceUri $certificatePfxUrl -destinationFile $CertificatePfxFile
+            DownloadFile -SourceUrl $certificatePfxUrl -destinationFile $CertificatePfxFile
         } else {
             Write-Verbose "Error downloading '$certificatePfxUrl'"
             throw "Error downloading '$certificatePfxUrl'"
