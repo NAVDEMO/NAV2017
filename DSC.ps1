@@ -12,7 +12,7 @@ Configuration NAVDSC
             Name = "Microsoft Azure PowerShell"
             Path = "$env:ProgramFiles\Microsoft\Web Platform Installer\WebPiCmd-x64.exe"
             ProductId = ''
-            Arguments = "/install /products:WindowsAzurePowershellGet /AcceptEula"
+            Arguments = "/install /products:WindowsAzurePowershellGet /AcceptEula /ForceReboot"
         }
     }
 }
