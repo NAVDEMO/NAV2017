@@ -33,8 +33,10 @@ function DownlooadFile([string]$sourceUrl, [string]$destinationFile)
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-function PatchFileIfNecessary([string]$sourceUrl, [string]$destinationFile, $date)
+function PatchFileIfNecessary([string]$sourceUrl, [string]$path, $date)
 {
+    $destinationFile = "C:\DEMO\$path"
+    $sourceUrl = "$sourceUrl/$path"
     if (Test-Path -path $destinationFile) {
         if ((get-item $destinationFile).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
             # File is newer - don't patch
@@ -47,15 +49,23 @@ function PatchFileIfNecessary([string]$sourceUrl, [string]$destinationFile, $dat
 
 # Update RTM files
 $date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
-PatchFileIfNecessary -SourceUrl "$PatchPath/Initialize/install.ps1" -destinationFile "c:\demo\Initialize\install.ps1" -date $date
-PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/install.ps1" -destinationFile "c:\demo\O365 Integration\install.ps1" -date $date
-PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/HelperFunctions.ps1" -destinationFile "c:\demo\O365 Integration\HelperFunctions.ps1" -date $date
-PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/O365 Integration.navx" -destinationFile "c:\demo\O365 Integration\O365 Integration.navx" -date $date
-PatchFileIfNecessary -SourceUrl "$PatchPath/O365 Integration/Deltas/COD51401.DELTA" -destinationFile "c:\demo\O365 Integration\Deltas\COD51401.DELTA" -date $date
+PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "Initialize/install.ps1"        
+PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/install.ps1"
+PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/HelperFunctions.ps1"
+PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/O365 Integration.navx"
+PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/Deltas/COD51401.DELTA"
 
 # Other variables
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
-$failure = $false
+
+new-item -Path "c:\DEMO\Install" -Force -ErrorAction Ignore
+
+$step = 1
+$next = $step+1
+('Write-Verbose “Using WebPI to install Microsoft Azure PowerShell"')                    | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$tempPICmd = $env:programfiles + “\microsoft\web platform installer\webpicmd.exe”')    | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$tempPIParameters = “/install /accepteula /Products:WindowsAzurePowerShellGet"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Start-Process -FilePath $tempPICmd -ArgumentList $tempPIParameters -Wait -Passthru')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
 
@@ -74,80 +84,80 @@ if ($NAVAdminUsername -ne "") {
         }
     }
 
-    try {
-        # Initialize Virtual Machine
-        ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')               | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                 | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')     | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        ('$HardcodeCloudServiceName = "'+$CloudServiceName+'"')             | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')           | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        ('$HardcodecertificatePfxFile = "'+$CertificatePfxFile+'"')         | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"') | Add-Content "c:\DEMO\Initialize\HardcodeInput.ps1"
-        . 'c:\DEMO\Initialize\install.ps1' 4> 'C:\DEMO\Initialize\install.log'
-    } catch {
-        Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message
-        Write-Verbose $_.Exception.Message
-        throw
-    }
-
-    Set-Content -Path "c:\inetpub\wwwroot\http\$MachineName.rdp" -Value ('full address:s:' + $PublicMachineName + ':3389
-prompt for credentials:i:1')
+    # Initialize Virtual Machine
+    $step = $next
+    $next++
+    ('try')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeCloudServiceName = "'+$CloudServiceName+'"')                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodecertificatePfxFile = "'+$CertificatePfxFile+'"')                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"')                    | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Initialize\install.ps1" 4> "C:\DEMO\Initialize\install.log"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ("Set-Content -Path ""c:\inetpub\wwwroot\http\$MachineName.rdp"" -Value ('full address:s:' + $PublicMachineName + ':3389
+prompt for credentials:i:1')")                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')       | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($Office365UserName -ne "") {
-    try {
-        ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                      | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')         | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointAdminPassword = "'+$Office365Password+'"')          | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeCreateSharePointPortal = "'+$Office365CreatePortal+'"')       | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointUrl = "default"')                                   | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointSite = "' + ($PublicMachineName.Split('.')[0])+'"') | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointLanguage = "default"')                              | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointTimezoneId = "default"')                            | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointAppCatalogUrl = "default"')                         | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        ('$HardcodeSharePointMultitenant = "No"')                                | Add-Content "c:\DEMO\O365 Integration\HardcodeInput.ps1"
-        . 'c:\DEMO\O365 Integration\install.ps1' 4> 'C:\DEMO\O365 Integration\install.log'
-
-    } catch {
-        Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message
-        Write-Verbose $_.Exception.Message
-        $failure = $true
-    }
+    $step = $next
+    $next++
+    ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointAdminPassword = "'+$Office365Password+'"')                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeCreateSharePointPortal = "'+$Office365CreatePortal+'"')                     | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointUrl = "default"')                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeAadTenant = "default"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointSite = "' + ($PublicMachineName.Split('.')[0])+'"')               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointLanguage = "default"')                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointTimezoneId = "default"')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointAppCatalogUrl = "default"')                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointMultitenant = "No"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\O365 Integration\install.ps1" 4> "C:\DEMO\O365 Integration\install.log"') | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message') | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($bingMapsKey -ne "") {
-    try {
-        ('$HardcodeBingMapsKey = "'+$bingMapsKey+'"') | Add-Content "c:\DEMO\BingMaps\HardcodeInput.ps1"
-        ('$HardcodeRegionFormat = "default"')         | Add-Content "c:\DEMO\BingMaps\HardcodeInput.ps1"
-        . 'c:\DEMO\BingMaps\install.ps1' 4> 'C:\DEMO\BingMaps\install.log'
-    } catch {
-        Set-Content -Path "c:\DEMO\BingMaps\error.txt" -Value $_.Exception.Message
-        Write-Verbose $_.Exception.Message
-        $failure = $true
-    }
+    $step = $next
+    $next++
+    ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeBingMapsKey = "'+$bingMapsKey+'"')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeRegionFormat = "default"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\BingMaps\install.ps1" 4> "C:\DEMO\BingMaps\install.log"')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\BingMaps\error.txt" -Value $_.Exception.Message')         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($powerBI -eq "Yes") {
-    try {
-        . 'c:\DEMO\PowerBI\install.ps1' 4> 'C:\DEMO\PowerBI\install.log'
-    } catch {
-        Set-Content -Path "c:\DEMO\PowerBI\error.txt" -Value $_.Exception.Message
-        Write-Verbose $_.Exception.Message
-        $failure = $true
-    }
+    $step = $next
+    $next++
+    ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\PowerBI\install.ps1" 4> "C:\DEMO\PowerBI\install.log"')                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\PowerBI\error.txt" -Value $_.Exception.Message')          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($clickonce -eq "Yes") {
-    try {
-        . 'c:\DEMO\Clickonce\install.ps1' 4> 'C:\DEMO\Clickonce\install.log'
-    } catch {
-        Set-Content -Path "c:\DEMO\Clickonce\error.txt" -Value $_.Exception.Message
-        Write-Verbose $_.Exception.Message
-        $failure = $true
-    }
+    $step = $next
+    $next++
+    ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Clickonce\install.ps1" 4> "C:\DEMO\Clickonce\install.log"')               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Clickonce\error.txt" -Value $_.Exception.Message')        | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
-if ($failure) {
-    throw "Error installing demo packages"
-}

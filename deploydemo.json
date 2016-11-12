@@ -358,30 +358,6 @@
       },
       "resources": [
         {
-          "name": "Microsoft.Powershell.DSC",
-          "type": "extensions",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-06-15",
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('server1Name'))]"
-          ],
-          "tags": {
-            "displayName": "DSC"
-          },
-          "properties": {
-            "publisher": "Microsoft.Powershell",
-            "type": "DSC",
-            "typeHandlerVersion": "2.9",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "modulesUrl": "[concat(variables('ScriptFilePath'), 'DSC.zip')]",
-              "configurationFunction": "DSC.ps1\\NAVDSC",
-              "properties": {}
-            },
-            "protectedSettings": {}
-          }
-        },
-        {
           "type": "extensions",
           "name": "Microsoft.Insights.VMDiagnosticsSettings",
           "apiVersion": "2015-06-15",
