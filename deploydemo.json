@@ -1,10 +1,10 @@
-{
+er{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "name": {
       "type": "string",
-      "metadata": {
+t      "metadata": {
         "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
       }
     },
@@ -14,7 +14,7 @@
       "metadata": {
         "Description": "Specify VM Administrator user name"
       }
-    },
+s    },
     "navAdminUsername": {
       "type": "string",
       "defaultValue": "admin",
@@ -24,7 +24,7 @@
     },
     "adminPassword": {
       "type": "securestring",
-      "metadata": {
+a      "metadata": {
         "Description": "Specify Administrator Password (for VM and NAV)"
       }
     },
@@ -34,7 +34,7 @@
       "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "GB - Great Britain", "IS - Iceland", "IT - Italy", "NA - North America", "NL - Netherlands", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden" ],
       "metadata": {
         "Description": "Select Microsoft Dynamics NAV 2016 Country version to deploy"
-      }
+m      }
     },
     "CertificatePfxUrl": {
       "type": "string",
@@ -44,8 +44,7 @@
       }
     },
     "CertificatePfxPassword": {
-      "type": "securestring",
-      "defaultValue": "",
+      "type": "securestring",      "defaultValue": "",
       "metadata": {
         "Description": "Password for Certificate Pfx File (leave empty when using Self Signed Cerificate)"
       }
@@ -55,8 +54,7 @@
       "defaultValue": "",
       "metadata": {
         "Description": "Public Dns Name (CNAME record pointing to your cloud service, leave empty when using Self Signed Certificate)"
-      }
-    },
+      }    },
     "bingMapsKey": {
       "type": "string",
       "defaultValue": "",
@@ -66,8 +64,7 @@
     },
     "clickonce": {
       "type": "string",
-      "defaultValue": "No",
-      "allowedValues": [ "Yes", "No" ],
+      "defaultValue": "No",      "allowedValues": [ "Yes", "No" ],
       "metadata": {
         "Description": "Install Clickonce Support?"
       }
@@ -122,7 +119,7 @@
     "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
     "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
     "ScriptCommandToExecute": "powershell.exe -File  ",
-    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/dev/",
+    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/master/",
   },
   "resources": [
     {
