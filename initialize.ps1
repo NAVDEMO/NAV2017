@@ -27,7 +27,7 @@ Start-Transcript -Path "C:\DEMO\initialize.txt"
 . ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")
 while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }
 
-function DownlooadFile([string]$sourceUrl, [string]$destinationFile)
+function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
@@ -49,7 +49,7 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
 
 # Other variables
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
-new-item -Path "c:\DEMO\Install" -Force -ErrorAction Ignore
+new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 
 # Update RTM files
 $date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
@@ -62,13 +62,13 @@ DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\
 
 $step = 1
 $next = $step+1
-('Write-Verbose “Using WebPI to install Microsoft Azure PowerShell"')                    | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$tempPICmd = $env:programfiles + “\microsoft\web platform installer\webpicmd.exe”')    | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$tempPIParameters = “/install /accepteula /Products:WindowsAzurePowerShellGet"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Start-Process -FilePath $tempPICmd -ArgumentList $tempPIParameters -Wait -Passthru')   | Add-Content "c:\DEMO\Install\step$step.ps1"
-('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')     | Add-Content "c:\DEMO\Install\step$step.ps1"
+('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User '+$VMAdminUserName+' -Password '+$VMAdminPassword+' –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('Restart-Computer -Force')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Write-Verbose “Using WebPI to install Microsoft Azure PowerShell"')                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$tempPICmd = $env:programfiles + “\microsoft\web platform installer\webpicmd.exe”')            | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$tempPIParameters = “/install /accepteula /Products:WindowsAzurePowerShellGet /ForceReboot"')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Start-Process -FilePath $tempPICmd -ArgumentList $tempPIParameters -Wait -Passthru')           | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Restart-Computer -Force')                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
 
@@ -90,7 +90,7 @@ if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     $step = $next
     $next++
-    ('try')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -100,8 +100,8 @@ if ($NAVAdminUsername -ne "") {
     ('$HardcodecertificatePfxFile = "'+$CertificatePfxFile+'"')                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"')                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. "c:\DEMO\Initialize\install.ps1" 4> "C:\DEMO\Initialize\install.log"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ("Set-Content -Path ""c:\inetpub\wwwroot\http\$MachineName.rdp"" -Value ('full address:s:' + $PublicMachineName + ':3389
-prompt for credentials:i:1')")                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ("Set-Content -Path ""c:\inetpub\wwwroot\http\$MachineName.rdp"" -Value 'full address:s:$PublicMachineName:3389
+prompt for credentials:i:1'")                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -163,5 +163,6 @@ if ($clickonce -eq "Yes") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\Clickonce\error.txt" -Value $_.Exception.Message')        | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
+
+('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false') | Add-Content "c:\DEMO\Install\step$step.ps1"
