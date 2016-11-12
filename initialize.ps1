@@ -68,7 +68,7 @@ $next = $step+1
 ('Start-Process -FilePath $tempPICmd -ArgumentList $tempPIParameters -Wait -Passthru')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')     | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User '+$VMAdminUserName+' -Password '+$VMAdminPassword+' –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Restart-Computer -Force')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('Restart-Computer -Force')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
 
