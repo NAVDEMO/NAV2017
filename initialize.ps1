@@ -58,14 +58,16 @@ PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integratio
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/O365 Integration.navx"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/Deltas/COD51401.DELTA"
+
+# Download files for Task Registration
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFile "c:\DEMO\Install\InstallAzurePowerShell.cmd"
 
 $step = 1
 $next = $step+1
-('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('while ((Get-Service -Name ''MicrosoftDynamicsNavServer$NAV'').Status -ne ''Running'') { start-sleep -Seconds 10 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')         | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -90,6 +92,7 @@ if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     $step = $next
     $next++
+    ('while ((Get-Service -Name ''MicrosoftDynamicsNavServer$NAV'').Status -ne ''Running'') { start-sleep -Seconds 10 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -112,6 +115,7 @@ prompt for credentials:i:1'")                                                   
 if ($Office365UserName -ne "") {
     $step = $next
     $next++
+    ('while ((Get-Service -Name ''MicrosoftDynamicsNavServer$NAV'').Status -ne ''Running'') { start-sleep -Seconds 10 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
