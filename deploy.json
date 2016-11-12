@@ -905,7 +905,7 @@
           "fileUris": [
             "[concat(variables('ScriptFilePath'), 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -PatchPath \"',variables('ScriptFilePath'), 'Fixes\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -PatchPath \"',variables('ScriptFilePath'))]"
         },
         "protectedSettings": {
         }

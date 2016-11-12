@@ -160,6 +160,7 @@ if ($clickonce -eq "Yes") {
 }
 
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
-
+Restart-Computer -Force
