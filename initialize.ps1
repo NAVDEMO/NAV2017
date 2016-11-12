@@ -65,6 +65,7 @@ DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFil
 $step = 1
 $next = $step+1
 ('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+('while ((Get-Service -Name ''MicrosoftDynamicsNavServer$NAV'').Status -ne ''Running'') { start-sleep -Seconds 10 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')         | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -157,8 +158,5 @@ if ($clickonce -eq "Yes") {
 
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 
-Write-Verbose $env:UserName
-Write-Verbose $env:MachineName
+Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
 
-Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "nt authority\localservice" –Force
-Restart-Computer -Force
