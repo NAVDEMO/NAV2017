@@ -62,8 +62,8 @@ DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\
 
 $step = 1
 $next = $step+1
-('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User '+$VMAdminUserName+' -Password '+$VMAdminPassword+' –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User '+$VMAdminUserName+' -Password '+$AdminPassword+' –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Write-Verbose “Using WebPI to install Microsoft Azure PowerShell"')                            | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('$tempPICmd = $env:programfiles + “\microsoft\web platform installer\webpicmd.exe”')            | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('$tempPIParameters = “/install /accepteula /Products:WindowsAzurePowerShellGet /ForceReboot"')  | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -105,7 +105,7 @@ prompt for credentials:i:1'")                                                   
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Restart-Computer -Force')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
@@ -128,7 +128,7 @@ if ($Office365UserName -ne "") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($bingMapsKey -ne "") {
@@ -141,7 +141,7 @@ if ($bingMapsKey -ne "") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\BingMaps\error.txt" -Value $_.Exception.Message')         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($powerBI -eq "Yes") {
@@ -152,7 +152,7 @@ if ($powerBI -eq "Yes") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\PowerBI\error.txt" -Value $_.Exception.Message')          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($clickonce -eq "Yes") {
