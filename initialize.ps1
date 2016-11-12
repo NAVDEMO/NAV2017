@@ -33,10 +33,10 @@ function DownlooadFile([string]$sourceUrl, [string]$destinationFile)
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-function PatchFileIfNecessary([string]$sourceUrl, [string]$path, $date)
+function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
 {
-    $destinationFile = "C:\DEMO\$path"
-    $sourceUrl = "$sourceUrl/$path"
+    $destinationFile = ("C:\"+$path.Replace("/","\"))
+    $sourceUrl = "${baseUrl}$path"
     if (Test-Path -path $destinationFile) {
         if ((get-item $destinationFile).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
             # File is newer - don't patch
@@ -47,18 +47,18 @@ function PatchFileIfNecessary([string]$sourceUrl, [string]$path, $date)
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-# Update RTM files
-$date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
-PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "Initialize/install.ps1"        
-PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/install.ps1"
-PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/O365 Integration.navx"
-PatchFileIfNecessary -date $date -SourceUrl $PatchPath -path "O365 Integration/Deltas/COD51401.DELTA"
-
 # Other variables
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
-
 new-item -Path "c:\DEMO\Install" -Force -ErrorAction Ignore
+
+# Update RTM files
+$date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"        
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/O365 Integration.navx"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/Deltas/COD51401.DELTA"
+DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 
 $step = 1
 $next = $step+1
@@ -66,6 +66,9 @@ $next = $step+1
 ('$tempPICmd = $env:programfiles + “\microsoft\web platform installer\webpicmd.exe”')    | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('$tempPIParameters = “/install /accepteula /Products:WindowsAzurePowerShellGet"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Start-Process -FilePath $tempPICmd -ArgumentList $tempPIParameters -Wait -Passthru')   | Add-Content "c:\DEMO\Install\step$step.ps1"
+('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')     | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User '+$VMAdminUserName+' -Password '+$VMAdminPassword+' –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Restart-Computer -Force')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
 
@@ -102,6 +105,8 @@ prompt for credentials:i:1')")                                                  
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Restart-Computer -Force')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($Office365UserName -ne "") {
@@ -123,7 +128,7 @@ if ($Office365UserName -ne "") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($bingMapsKey -ne "") {
@@ -136,7 +141,7 @@ if ($bingMapsKey -ne "") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\BingMaps\error.txt" -Value $_.Exception.Message')         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($powerBI -eq "Yes") {
@@ -147,7 +152,7 @@ if ($powerBI -eq "Yes") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\PowerBI\error.txt" -Value $_.Exception.Message')          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($clickonce -eq "Yes") {
@@ -158,6 +163,5 @@ if ($clickonce -eq "Yes") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\Clickonce\error.txt" -Value $_.Exception.Message')        | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Install\step'+$next+'.ps1"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Install\Step'+$next+'.ps1" | Out-File "C:\DEMO\Install\Next-Step.ps1"')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
-
