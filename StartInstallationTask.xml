@@ -7,7 +7,7 @@
   <Triggers>
     <BootTrigger>
       <Enabled>true</Enabled>
-      <Delay>PT2M</Delay>
+      <Delay>PT1M</Delay>
     </BootTrigger>
   </Triggers>
   <Principals>

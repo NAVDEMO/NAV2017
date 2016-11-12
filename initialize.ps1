@@ -69,7 +69,7 @@ $next = $step+1
 ('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')         | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Restart-Computer -Force')                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
 
@@ -103,12 +103,12 @@ if ($NAVAdminUsername -ne "") {
     ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"')                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. "c:\DEMO\Initialize\install.ps1" 4> "C:\DEMO\Initialize\install.log"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
     ("Set-Content -Path ""c:\inetpub\wwwroot\http\$MachineName.rdp"" -Value 'full address:s:${PublicMachineName}:3389
-prompt for credentials:i:1'")                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
+prompt for credentials:i:1'")                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Restart-Computer -Force')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')   | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($Office365UserName -ne "") {
@@ -161,6 +161,7 @@ if ($clickonce -eq "Yes") {
 
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
 Restart-Computer -Force
