@@ -44,7 +44,8 @@
       }
     },
     "CertificatePfxPassword": {
-      "type": "securestring",      "defaultValue": "",
+      "type": "securestring",
+      "defaultValue": "",
       "metadata": {
         "Description": "Password for Certificate Pfx File (leave empty when using Self Signed Cerificate)"
       }
@@ -64,7 +65,8 @@
     },
     "clickonce": {
       "type": "string",
-      "defaultValue": "No",      "allowedValues": [ "Yes", "No" ],
+      "defaultValue": "No",
+      "allowedValues": [ "Yes", "No" ],
       "metadata": {
         "Description": "Install Clickonce Support?"
       }
