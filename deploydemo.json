@@ -1,10 +1,10 @@
-er{
+{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "name": {
       "type": "string",
-t      "metadata": {
+      "metadata": {
         "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
       }
     },
@@ -14,7 +14,7 @@ t      "metadata": {
       "metadata": {
         "Description": "Specify VM Administrator user name"
       }
-s    },
+    },
     "navAdminUsername": {
       "type": "string",
       "defaultValue": "admin",
@@ -24,7 +24,7 @@ s    },
     },
     "adminPassword": {
       "type": "securestring",
-a      "metadata": {
+      "metadata": {
         "Description": "Specify Administrator Password (for VM and NAV)"
       }
     },
@@ -34,7 +34,7 @@ a      "metadata": {
       "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "GB - Great Britain", "IS - Iceland", "IT - Italy", "NA - North America", "NL - Netherlands", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden" ],
       "metadata": {
         "Description": "Select Microsoft Dynamics NAV 2016 Country version to deploy"
-m      }
+      }
     },
     "CertificatePfxUrl": {
       "type": "string",
