@@ -125,12 +125,9 @@ if ($Office365UserName -ne "") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($bingMapsKey -ne "") {
-    $step = $next
-    $next++
     ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeBingMapsKey = "'+$bingMapsKey+'"')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeRegionFormat = "default"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -138,23 +135,17 @@ if ($bingMapsKey -ne "") {
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\BingMaps\error.txt" -Value $_.Exception.Message')         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($powerBI -eq "Yes") {
-    $step = $next
-    $next++
     ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. "c:\DEMO\PowerBI\install.ps1" 4> "C:\DEMO\PowerBI\install.log"')                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\PowerBI\error.txt" -Value $_.Exception.Message')          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"') | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($clickonce -eq "Yes") {
-    $step = $next
-    $next++
     ('try {')                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. "c:\DEMO\Clickonce\install.ps1" 4> "C:\DEMO\Clickonce\install.log"')               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -162,6 +153,6 @@ if ($clickonce -eq "Yes") {
     ('}')                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
-('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 
-. "c:\DEMO\Install\step1.ps1'"
+. "c:\DEMO\Install\step1.ps1"
