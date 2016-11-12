@@ -59,16 +59,13 @@ PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integratio
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/O365 Integration.navx"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/Deltas/COD51401.DELTA"
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\DEMO\Install\InstallationTask.xml"
+DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFile "c:\DEMO\Install\InstallAzurePowerShell.cmd"
 
 $step = 1
 $next = $step+1
 ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User '+$VMAdminUserName+' -Password '+$AdminPassword+' –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Write-Verbose “Using WebPI to install Microsoft Azure PowerShell"')                            | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$tempPICmd = $env:programfiles + “\microsoft\web platform installer\webpicmd.exe”')            | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$tempPIParameters = “/install /accepteula /Products:WindowsAzurePowerShellGet /ForceReboot"')  | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Start-Process -FilePath $tempPICmd -ArgumentList $tempPIParameters -Wait -Passthru')           | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Restart-Computer -Force')                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')         | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
 
@@ -166,3 +163,5 @@ if ($clickonce -eq "Yes") {
 }
 
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false') | Add-Content "c:\DEMO\Install\step$step.ps1"
+
+. "c:\DEMO\Install\step1.ps1'"
