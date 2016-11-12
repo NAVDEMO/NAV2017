@@ -114,8 +114,6 @@
     "publicIPAddressName": "PublicIP",
     "storageAccountName": "[concat('storage', replace(tolower(parameters('name')),'-',''))]",
     "sqlServerName" : "[concat('sql', replace(tolower(parameters('name')),'-',''))]",
-    "sqlDatabaseName" : "[replace(tolower(parameters('name')),'-','')]",
-    "sqlCollation" : "SQL_Latin1_General_CP1_CI_AS",
     "dnsName": "[tolower(parameters('name'))]",
     "vmSize": "Standard_D2",
     "addressPrefix": "10.0.0.0/16",
@@ -147,24 +145,6 @@
         "version": "12.0"
       },
       "resources": [
-        {
-          "name": "[variables('sqlDatabaseName')]",
-          "type": "databases",
-          "location": "[resourceGroup().location]",
-          "tags": {
-            "displayName": "Database"
-          },
-          "apiVersion": "2014-04-01-preview",
-          "dependsOn": [
-            "[variables('sqlserverName')]"
-          ],
-          "properties": {
-            "edition": "Standard",
-            "collation": "[variables('sqlCollation')]",
-            "maxSizeBytes": "1073741824",
-            "requestedServiceObjectiveName": "S0"
-          }
-        },
         {
           "type": "firewallrules",
           "apiVersion": "2014-04-01-preview",
