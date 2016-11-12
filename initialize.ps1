@@ -66,7 +66,6 @@ DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFil
 
 $step = 1
 $next = $step+1
-('while ((Get-Service -Name ''MicrosoftDynamicsNavServer$NAV'').Status -ne ''Running'') { start-sleep -Seconds 10 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
