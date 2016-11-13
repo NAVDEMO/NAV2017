@@ -40,7 +40,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "Description": "URL for Certificate Pfx File (leave empty to use Self Signed Certificate)"
+        "Description": "URL for/Base64 of Certificate Pfx File (leave empty to use Self Signed Certificate)"
       }
     },
     "CertificatePfxPassword": {
