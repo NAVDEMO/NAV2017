@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "name": {
+    "vmName": {
       "type": "string",
       "metadata": {
         "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
@@ -31,7 +31,7 @@
     "country": {
       "type": "string",
       "defaultValue": "W1 - International",
-      "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "GB - Great Britain", "IS - Iceland", "IT - Italy", "NA - North America", "NL - Netherlands", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden" ],
+      "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "GB - Great Britain", "IS - Iceland", "IT - Italy", "NA - North America", "NL - Netherlands", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden", "W1", "AT", "AU", "BE", "CH", "CZ", "DE", "DK", "ES", "FI", "FR", "GB", "IS", "IT", "NA", "NL", "NO", "NZ", "RU", "SE" ],
       "metadata": {
         "Description": "Select Microsoft Dynamics NAV 2016 Country version to deploy"
       }
@@ -44,7 +44,8 @@
       }
     },
     "CertificatePfxPassword": {
-      "type": "securestring",      "defaultValue": "",
+      "type": "securestring",
+      "defaultValue": "",
       "metadata": {
         "Description": "Password for Certificate Pfx File (leave empty when using Self Signed Cerificate)"
       }
@@ -64,7 +65,8 @@
     },
     "clickonce": {
       "type": "string",
-      "defaultValue": "No",      "allowedValues": [ "Yes", "No" ],
+      "defaultValue": "No",
+      "allowedValues": [ "Yes", "No" ],
       "metadata": {
         "Description": "Install Clickonce Support?"
       }
@@ -104,8 +106,8 @@
     "storageAccountType": "Standard_LRS",
     "vmStorageAccountContainerName": "vhds",
     "publicIPAddressName": "PublicIP",
-    "storageAccountName": "[replace(tolower(parameters('name')),'-','')]",
-    "dnsName": "[tolower(parameters('name'))]",
+    "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
+    "dnsName": "[tolower(parameters('vmName'))]",
     "vmSize": "Standard_D2",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
