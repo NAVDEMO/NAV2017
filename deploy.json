@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
+        "vmName": {
             "type": "string",
             "metadata": {
                 "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
@@ -26,8 +26,8 @@
         "storageAccountType" : "Standard_LRS",
         "vmStorageAccountContainerName" : "vhds",
         "publicIPAddressName" : "PublicIP",
-        "storageAccountName" : "[replace(tolower(parameters('name')),'-','')]",
-        "dnsName" : "[tolower(parameters('name'))]",
+        "storageAccountName" : "[replace(tolower(parameters('vmName')),'-','')]",
+        "dnsName" : "[tolower(parameters('vmName'))]",
         "vmSize" : "Standard_D2",
         "addressPrefix":"10.0.0.0/16",
         "subnetName" : "Subnet",
