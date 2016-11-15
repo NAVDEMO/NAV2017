@@ -55,7 +55,8 @@
       "defaultValue": "",
       "metadata": {
         "Description": "Public Dns Name (CNAME record pointing to your cloud service, leave empty when using Self Signed Certificate)"
-      }    },
+      }
+    },
     "bingMapsKey": {
       "type": "string",
       "defaultValue": "",
@@ -114,7 +115,7 @@
     "subnetPrefix": "10.0.0.0/24",
     "networkSecurityGroupName": "NetSecurity",
     "virtualNetworkName": "VNet",
-    "server1Name": "Server1",
+    "server1Name": "[concat(parameters('vmName'),'-1')]",
     "nic1Name": "Nic1",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",

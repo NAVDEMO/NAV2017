@@ -217,10 +217,19 @@ Connect-MsolService -Credential $SharePointAdminCredential -ErrorAction Stop
 
 $publicWebBaseUrl = $publicWebBaseUrl.Replace("/$ServerInstance/", "/AAD/")
 
+#$headers = Get-AuthenticationHeaders -aadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
+
 # Create new Web Server Instance
 if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
-    Write-Verbose "Create NAV WebServerInstance"
-    New-NAVWebServerInstance -ClientServicesCredentialType AccessControlService -ClientServicesPort 7046 -DnsIdentity $dnsidentity -Server localhost -ServerInstance $serverInstance -WebServerInstance AAD -AcsUri "https://www.bing.com" -Company $Company
+
+    $AcsUri = "https://login.windows.net/$AadTenant/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
+    $federationMetadata = "https://login.windows.net/$AadTenant/federationmetadata/2007-06/federationmetadata.xml"
+
+    Write-Verbose "Set FederationMetada $federationMetadata"
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ClientServicesFederationMetadataLocation" -KeyValue $federationMetadata
+    
+    Write-Verbose "Create NAV WebServerInstance with ACSUri $ACSUri"
+    New-NAVWebServerInstance -ClientServicesCredentialType "AccessControlService" -ClientServicesPort 7046 -DnsIdentity $dnsidentity -Server "localhost" -ServerInstance $serverInstance -WebServerInstance "AAD" -AcsUri $AcsUri -Company $Company
 
     # Change AAD Web.config
     $NAVWebConfigFile = "C:\inetpub\wwwroot\$ServerInstance\Web.config"
@@ -230,12 +239,15 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     $AADWebConfig = [xml](Get-Content $AADWebConfigFile)
     $AADWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value
     $AADWebConfig.Save($AADWebConfigFile)
-}
 
-# Enable single sign on
-Write-Verbose "Enable Single Sign-On"
-cd $PSScriptRootV2
-Set-NavSingleSignOnWithOffice365 -NavServerInstance $serverInstance -NavWebServerInstanceName AAD -NavUser $NavAdminUser -AuthenticationEmail $SharePointAdminLoginname -AuthenticationEmailPassword $SharePointAdminSecurePassword -NavServerCertificateThumbprint $thumbprint -NavWebAddress $publicWebBaseURL -Verbose
+    Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -aadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
+
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AppIdUri" -KeyValue $publicWebBaseUrl
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AzureActiveDirectoryClientId" -KeyValue $GLOBAL:ssoAdAppId
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "WSFederationLoginEndpoint" -KeyValue $ACSUri
+    Set-NAVServerUser -ServerInstance $serverInstance -UserName $NAVAdminUser -AuthenticationEmail $SharePointAdminLoginname
+}
 
 # Copy Client Add-ins
 Write-Verbose "Copy Client Add-ins"
@@ -267,16 +279,9 @@ Copy-Item (Join-Path $PSScriptRootV2 "Translations") "C:\Program Files\Microsoft
 Copy-Item (Join-Path $PSScriptRootV2 "Office.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\Office.png" -Force
 Copy-Item (Join-Path $PSScriptRootV2 "myapps.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\myapps.png" -Force
 
-# Set new publicWebBaseUrl
-Set-NAVServerConfiguration $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
-
 # Restart NAV Service Tier
 Write-Verbose "Restart Service Tier"
 Set-NAVServerInstance -ServerInstance $serverInstance -Restart
-
-#Create the 44-character key value
-$keyValue = Create-AesKey
-$applicationid = Setup-AadApp -PublicWebBaseUrl $publicWebBaseUrl -AadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword -KeyValue $keyValue
 
 Push-Location
 #Install local DB
@@ -289,6 +294,8 @@ INSERT INTO [dbo].[Web Service] ([Object Type],[Service Name],[Object ID],[Publi
 GO"
 Pop-Location
 
+Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ExcelAddInAzureActiveDirectoryClientId" -KeyValue $GLOBAL:ExcelAdAppId
+
 # Restart Service Tier
 Write-Verbose "Restart Service Tier"
 Set-NAVServerInstance $ServerInstance -Restart
@@ -300,7 +307,7 @@ if (!(Get-NAVServerUser $serverInstance | Where-Object { $_.UserName -eq $O365Us
     New-NAVServerUser -ServerInstance $serverInstance -UserName $O365Username -Password (ConvertTo-SecureString -String $O365Password -AsPlainText -Force) 
     New-NAVServerUserPermissionSet -ServerInstance $serverInstance -UserName $O365Username -PermissionSetId SUPER
 } else {
-    Write-Verbose "Enable Geocode user"
+    Write-Verbose "Enable O365 user"
     Set-NAVServerUser $serverInstance -UserName $O365Username -State Enabled
 }
 
@@ -313,9 +320,9 @@ $proxy = New-WebServiceProxy -Uri $Uri -Credential $credential
 # Timout 1 hour
 $proxy.timeout = 60*60*1000
 Write-Verbose "Setup Azure Ad App"
-$proxy.SetAzureAdAppSetup($applicationid, $keyValue)
+$proxy.SetAzureAdAppSetup($GLOBAL:PowerBiAdAppId, $GLOBAL:PowerBiAdAppKeyValue)
 
-Write-Verbose "Disable Geocode user"
+Write-Verbose "Disable O365 user"
 Set-NAVServerUser $Serverinstance -UserName $O365Username -State Disabled
 Get-NAVServerSession -ServerInstance $serverInstance | % { Remove-NAVServerSession -ServerInstance $serverInstance -SessionId $_.SessionID -Force }
 
