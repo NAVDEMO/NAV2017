@@ -200,7 +200,7 @@ function Setup-AadApps
 
     # Invoke-RestMethod will not close the connection properly and as such will only allow 2 subsequent calls to Invoke-RestMethod
     # This is why we use Invoke-WebRequest and getting the response content
-    (Invoke-WebRequest -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $ssoUrl -Body $ssoPostData).Content 
+    (Invoke-WebRequest -UseBasicParsing -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $ssoUrl -Body $ssoPostData).Content 
 
 
 
@@ -240,7 +240,7 @@ function Setup-AadApps
          }
       )} | ConvertTo-Json -Depth 99
 
-    (Invoke-WebRequest -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $excelUrl   -Body $excelPostData).Content
+    (Invoke-WebRequest -UseBasicParsing -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $excelUrl   -Body $excelPostData).Content
 
 
 
@@ -293,6 +293,6 @@ function Setup-AadApps
          }
       )} | ConvertTo-Json -Depth 99
     
-    (Invoke-WebRequest -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $powerBiUrl -Body $powerBiPostData).Content
+    (Invoke-WebRequest -UseBasicParsing -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $powerBiUrl -Body $powerBiPostData).Content
 }
 
