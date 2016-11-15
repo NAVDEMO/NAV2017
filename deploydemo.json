@@ -359,7 +359,7 @@
       "resources": [
         {
           "type": "extensions",
-          "name": "Microsoft.Insights.VMDiagnosticsSettings",
+          "name": "diagnostics",
           "apiVersion": "2015-06-15",
           "location": "[resourceGroup().location]",
           "tags": {
