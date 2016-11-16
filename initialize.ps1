@@ -23,9 +23,9 @@ param
       ,[string]$AzureSQL = ""
 )
 
-"Starting VM Initialization" | Set-Content -Path "c:\demo\status.txt"
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Start-Transcript -Path "C:\DEMO\initialize.txt"
+"Starting VM Initialization" | Set-Content -Path "c:\demo\status.txt"
 
 function Log([string]$line) { ([DateTime]::Now.ToString("hh:mm:ss") + " $line") | Add-Content -Path "c:\demo\status.txt" }
 
@@ -233,7 +233,7 @@ if ($AzureSQL -eq "Yes") {
 ('Log("Installation completening")')                                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 
-Log("Register installation task" 
+Log("Register installation task")
 Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
 Log("Restart computer and start Installation tasks")
 Restart-Computer -Force
