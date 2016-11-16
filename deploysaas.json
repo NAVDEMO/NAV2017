@@ -130,7 +130,7 @@
     "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
     "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
     "ScriptCommandToExecute": "powershell.exe -File  ",
-    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/master/",
+    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/dev/",
   },
   "resources": [
     {
@@ -396,7 +396,7 @@
       "resources": [
         {
           "type": "extensions",
-          "name": "Microsoft.Insights.VMDiagnosticsSettings",
+          "name": "diagnostics",
           "apiVersion": "2015-06-15",
           "location": "[resourceGroup().location]",
           "tags": {
