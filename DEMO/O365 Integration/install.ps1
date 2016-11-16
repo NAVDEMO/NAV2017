@@ -128,12 +128,6 @@ $SharePointAdminCredential = New-Object System.Management.Automation.PSCredentia
 
 $CreateSharePointPortal = ((Get-UserInput -Id CreateSharePointPortal -Text "Do you want to create a demo SharePoint Portal with App Parts from NAV? (Yes/No)" -Default "Yes") -eq "Yes")
 
-$aadTenant = ""
-if ($SharePointAdminLoginname.EndsWith('.onmicrosoft.com')) {
-    $aadTenant = $SharePointAdminLoginname.Split('@')[1]
-}
-$aadTenant = Get-UserInput -Id AadTenant -Text "Azure Active Directory Tenant (example: cronus.onmicrosoft.com)" -Default $aadTenant
-
 if ($CreateSharePointPortal) {
 
     $SharePointMultitenant = ((Get-UserInput -Id SharePointMultitenant -Text "Is the SharePoint portal going to be integrated to a multitenant NAV? (Yes/No)" -Default "No") -eq "Yes")
@@ -218,13 +212,13 @@ Connect-MsolService -Credential $SharePointAdminCredential -ErrorAction Stop
 
 $publicWebBaseUrl = $publicWebBaseUrl.Replace("/$ServerInstance/", "/AAD/")
 
-#$headers = Get-AuthenticationHeaders -aadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
-
 # Create new Web Server Instance
 if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
 
-    $AcsUri = "https://login.windows.net/$AadTenant/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
-    $federationMetadata = "https://login.windows.net/$AadTenant/federationmetadata/2007-06/federationmetadata.xml"
+    Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
+
+    $AcsUri = "https://login.windows.net/$GLOBAL:AadTenant/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
+    $federationMetadata = "https://login.windows.net/$GLOBAL:AadTenant/federationmetadata/2007-06/federationmetadata.xml"
 
     Write-Verbose "Set FederationMetada $federationMetadata"
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ClientServicesFederationMetadataLocation" -KeyValue $federationMetadata
@@ -240,8 +234,6 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     $AADWebConfig = [xml](Get-Content $AADWebConfigFile)
     $AADWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value
     $AADWebConfig.Save($AADWebConfigFile)
-
-    Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -aadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
 
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AppIdUri" -KeyValue $publicWebBaseUrl
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl

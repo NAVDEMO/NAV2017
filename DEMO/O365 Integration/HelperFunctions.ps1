@@ -136,7 +136,6 @@ function Setup-AadApps
     Param
     (
         [string]$publicWebBaseUrl,
-        [string]$aadTenant,
         [string]$SharePointAdminLoginname,
         [string]$SharePointAdminPassword
     )
@@ -145,13 +144,15 @@ function Setup-AadApps
     $SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
     $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
     $account = Login-AzureRmAccount -Credential $SharePointAdminCredential
+    
+    $GLOBAL:AadTenant = $account.Context.Tenant.TenantId;
     $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
     $adUserObjectId = $adUser.Id
 
     $graphUrl = "https://graph.windows.net"
     $apiversion = "1.6"
 
-    $authority = "https://login.microsoftonline.com/$aadTenant"
+    $authority = "https://login.microsoftonline.com/$GLOBAL:aadTenant"
     $clientId = "1950a258-227b-4e31-a9cf-717495945fc2"  # Set well-known client ID for AzurePowerShell
     $resourceAppIdURI = "$graphUrl/" # resource we want to use
     
@@ -178,12 +179,12 @@ function Setup-AadApps
     $GLOBAL:SsoAdAppId = $ssoAdApp.ApplicationId
 
     # Get oauth2 permission id for sso app
-    $url = ("$graphUrl/$aadTenant/applications/$($ssoAdApp.ObjectID)?api-version=$apiversion")
+    $url = ("$graphUrl/$GLOBAL:aadTenant/applications/$($ssoAdApp.ObjectID)?api-version=$apiversion")
     $result = Invoke-RestMethod -Uri $url -Method "GET" -Headers $headers
     $oauth2permissionid = $result.oauth2Permissions.id
     
     # Add Required Resource Access
-    $ssoUrl = "$graphUrl/$aadTenant/applications/$($ssoAdApp.ObjectID)?api-version=$apiversion"
+    $ssoUrl = "$graphUrl/$GLOBAL:aadTenant/applications/$($ssoAdApp.ObjectID)?api-version=$apiversion"
 
     $ssoPostData = @{"requiredResourceAccess" = @(
          @{ 
@@ -221,7 +222,7 @@ function Setup-AadApps
     $GLOBAL:ExcelAdAppId = $excelAdApp.ApplicationId
 
     # Add Required Resource Access
-    $excelUrl = "$graphUrl/$aadTenant/applications/$($excelAdApp.ObjectID)?api-version=$apiversion"
+    $excelUrl = "$graphUrl/$GLOBAL:aadTenant/applications/$($excelAdApp.ObjectID)?api-version=$apiversion"
 
     $excelPostData = @{
       "oauth2AllowImplicitFlow" = $true;
@@ -245,9 +246,9 @@ function Setup-AadApps
     (Invoke-WebRequest -UseBasicParsing -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $excelUrl   -Body $excelPostData).Content
 
     # Add owner to Azure Ad Application
-    $excelOwnerUrl = "$graphUrl/$aadTenant/applications/$($excelAdApp.ObjectID)/`$links/owners?api-version=$apiversion"
+    $excelOwnerUrl = "$graphUrl/$GLOBAL:aadTenant/applications/$($excelAdApp.ObjectID)/`$links/owners?api-version=$apiversion"
     $excelOwnerPostData  = @{
-      "url" = "$graphUrl/$aadTenant/directoryObjects/$adUserObjectId/Microsoft.DirectoryServices.User?api-version=$apiversion"
+      "url" = "$graphUrl/$GLOBAL:aadTenant/directoryObjects/$adUserObjectId/Microsoft.DirectoryServices.User?api-version=$apiversion"
     } | ConvertTo-Json -Depth 99
 
     (Invoke-WebRequest -UseBasicParsing -Method POST -ContentType 'application/json' -Headers $headers -Uri $excelOwnerUrl   -Body $excelOwnerPostData).Content
@@ -284,7 +285,7 @@ function Setup-AadApps
     $GLOBAL:PowerBiAdAppId = $powerBiAdApp.ApplicationId
     
     # Add Required Resource Access
-    $powerBiUrl = "$graphUrl/$aadTenant/applications/$($powerBiAdApp.ObjectID)?api-version=$apiversion"
+    $powerBiUrl = "$graphUrl/$GLOBAL:aadTenant/applications/$($powerBiAdApp.ObjectID)?api-version=$apiversion"
     $powerBiPostData = @{"requiredResourceAccess" = @(
          @{ 
             "resourceAppId" = "00000009-0000-0000-c000-000000000000"; 
