@@ -3,6 +3,9 @@
 param
 (
        [string]$PatchPath = ""
+      ,[string]$StorageAccountName = ""
+      ,[string]$StorageAccountKey = ""
+      ,[string]$UseSubscriptionId = ""
       ,[string]$VMAdminUsername = ""
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
@@ -19,8 +22,11 @@ param
       ,[string]$Office365UserName = ""
       ,[string]$Office365Password = ""
       ,[string]$Office365CreatePortal = ""
+      ,[string]$SharePointBaseUrl = ""
       ,[string]$Multitenancy = ""
-      ,[string]$AzureSQL = ""
+      ,[string]$sqlAdminUsername = ""
+      ,[string]$sqlServerName = ""
+      ,[string]$PublishSettings = ""
 )
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
@@ -69,6 +75,9 @@ PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integratio
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFile "c:\DEMO\Install\InstallAzurePowerShell.cmd"
+
+# Remove DynamicsNAV.Key
+Remove-Item -Path "C:\DEMO\AzureSQL\DynamicsNAV.key" -Force -ErrorAction Ignore
 
 $licenseFile = ""
 if ($licenseFileUrl -ne "")
@@ -154,7 +163,7 @@ if ($Office365UserName -ne "") {
     ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointAdminPassword = "'+$Office365Password+'"')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeCreateSharePointPortal = "'+$Office365CreatePortal+'"')                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeSharePointUrl = "default"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointUrl = "'+$SharePointBaseUrl+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointSite = "' + ($PublicMachineName.Split('.')[0])+'"')                               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointLanguage = "default"')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointTimezoneId = "default"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -221,16 +230,40 @@ if ($Multitenancy -eq "Yes") {
 
 }
 
-if ($AzureSQL -eq "Yes") {
-    # Setup Azure SQL
+if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "") -and ($PublishSettings -ne "") -and ($UseSubscriptionId -ne "")) {
 
+    $PublishSettingsFile = "C:\DEMO\my.publishsettings"
+    Log("Unpack base64 encoded License File to $licenseFile")
+    [System.IO.File]::WriteAllBytes($publishSettingsFile, [System.Convert]::FromBase64String($PublishSettings))
+
+    # Setup Azure SQL
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Moving database to Azure SQL")')                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeExistingAzureSqlDatabase = "No"')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeGetPublishSettingsFile = "No"')                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodePublishSettingsFile = "'+$PublishSettingsFile+'"')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeUseSubscription = "'+$UseSubscriptionID+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeStorageAccountName = "'+$StorageAccountName+'"')                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeStorageAccountKey = "'+$StorageAccountKey+'"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeContainerName = "default"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('#. "c:\DEMO\AzureSQL\install.ps1" 4> "C:\DEMO\AzureSQL\install.log"')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Remove-Item -Path "'+$PublishSettingsFile+'" -force -ErrorAction Ignore')                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Done moving database to Azure SQL")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("ERROR (AzureSQL): "+$_.Exception.Message)')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 ('Log("Cleaning up")')                                                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log("Installation completening")')                                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
+('#Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+('#Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 
 Log("Register installation task")
