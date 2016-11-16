@@ -217,10 +217,19 @@ Connect-MsolService -Credential $SharePointAdminCredential -ErrorAction Stop
 
 $publicWebBaseUrl = $publicWebBaseUrl.Replace("/$ServerInstance/", "/AAD/")
 
+#$headers = Get-AuthenticationHeaders -aadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
+
 # Create new Web Server Instance
 if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
-    Write-Verbose "Create NAV WebServerInstance"
-    New-NAVWebServerInstance -ClientServicesCredentialType AccessControlService -ClientServicesPort 7046 -DnsIdentity $dnsidentity -Server localhost -ServerInstance $serverInstance -WebServerInstance AAD -AcsUri "https://www.bing.com" -Company $Company
+
+    $AcsUri = "https://login.windows.net/$AadTenant/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
+    $federationMetadata = "https://login.windows.net/$AadTenant/federationmetadata/2007-06/federationmetadata.xml"
+
+    Write-Verbose "Set FederationMetada $federationMetadata"
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ClientServicesFederationMetadataLocation" -KeyValue $federationMetadata
+    
+    Write-Verbose "Create NAV WebServerInstance with ACSUri $ACSUri"
+    New-NAVWebServerInstance -ClientServicesCredentialType "AccessControlService" -ClientServicesPort 7046 -DnsIdentity $dnsidentity -Server "localhost" -ServerInstance $serverInstance -WebServerInstance "AAD" -AcsUri $AcsUri -Company $Company
 
     # Change AAD Web.config
     $NAVWebConfigFile = "C:\inetpub\wwwroot\$ServerInstance\Web.config"
@@ -230,190 +239,187 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     $AADWebConfig = [xml](Get-Content $AADWebConfigFile)
     $AADWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value
     $AADWebConfig.Save($AADWebConfigFile)
-}
 
-# Enable single sign on
-Write-Verbose "Enable Single Sign-On"
-cd $PSScriptRootV2
-Set-NavSingleSignOnWithOffice365 -NavServerInstance $serverInstance -NavWebServerInstanceName AAD -NavUser $NavAdminUser -AuthenticationEmail $SharePointAdminLoginname -AuthenticationEmailPassword $SharePointAdminSecurePassword -NavServerCertificateThumbprint $thumbprint -NavWebAddress $publicWebBaseURL -Verbose
+    Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -aadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
 
-# Copy Client Add-ins
-Write-Verbose "Copy Client Add-ins"
-XCopy (Join-Path $PSScriptRootV2 "Client Add-Ins\*.*") "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Add-ins" /Y
-XCopy (Join-Path $PSScriptRootV2 "Client Add-Ins\*.*") "C:\Program Files\Microsoft Dynamics NAV\$NavVersion\Service\Add-ins" /Y
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AppIdUri" -KeyValue $publicWebBaseUrl
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AzureActiveDirectoryClientId" -KeyValue $GLOBAL:ssoAdAppId
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ExcelAddInAzureActiveDirectoryClientId" -KeyValue $GLOBAL:ExcelAdAppId
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "WSFederationLoginEndpoint" -KeyValue $ACSUri
+    Set-NAVServerUser -ServerInstance $serverInstance -UserName $NAVAdminUser -AuthenticationEmail $SharePointAdminLoginname
 
-Write-Verbose "Register Client Add-in"
-Remove-NAVAddIn -ServerInstance $serverInstance -AddInName "HTMLViewer" -PublicKeyToken "5be233b58c6bf929" -Force -ErrorAction Ignore
-New-NAVAddIn    -ServerInstance $serverInstance -AddInName "HTMLViewer" -PublicKeyToken "5be233b58c6bf929" -Category JavaScriptControlAddIn -Description "HTML Viewer Control Add-In" -ResourceFile "C:\DEMO\O365 Integration\HtmlViewerControlAddIn\ControlAddIn\Resource\manifest.zip" 
-
-# Uninstall and unpublish NAV App if already installed
-UnInstall-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo" -ErrorAction Ignore
-UnPublish-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo" -ErrorAction Ignore
-
-# Install pre-requisites if they exist
-$NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
-$PrereqFile = Join-Path $PSScriptRootV2 "$Language Prereq.fob"
-if (Test-Path -Path $PrereqFile) {
-    Write-Host -ForegroundColor Green "Import pre-requisite .fob file"
-    Import-NAVApplicationObject -DatabaseServer 'localhost\NAVDEMO' -DatabaseName $DatabaseName -Path $PrereqFile -SynchronizeSchemaChanges Force -NavServerName localhost -NavServerInstance $ServerInstance -NavServerManagementPort 7045 -ImportAction Overwrite -Confirm:$false
-}
-
-# Publish and Install NAV App 
-Publish-NAVApp -ServerInstance $serverInstance -Path (Join-Path $PSScriptRootV2 "O365 Integration.navx") -SkipVerification
-Install-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo"
-
-# Copy misc. files
-Copy-Item (Join-Path $PSScriptRootV2 "Translations") "C:\Program Files\Microsoft Dynamics NAV\$NavVersion\Service" -Recurse -Force
-Copy-Item (Join-Path $PSScriptRootV2 "Office.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\Office.png" -Force
-Copy-Item (Join-Path $PSScriptRootV2 "myapps.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\myapps.png" -Force
-
-# Set new publicWebBaseUrl
-Set-NAVServerConfiguration $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
-
-# Restart NAV Service Tier
-Write-Verbose "Restart Service Tier"
-Set-NAVServerInstance -ServerInstance $serverInstance -Restart
-
-#Create the 44-character key value
-$keyValue = Create-AesKey
-$applicationid = Setup-AadApp -PublicWebBaseUrl $publicWebBaseUrl -AadTenant $aadTenant -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword -KeyValue $keyValue
-
-Push-Location
-#Install local DB
-Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
-"USE [$DatabaseName]
-GO
-DELETE FROM [dbo].[Web Service] WHERE [Service Name] = 'AzureAdAppSetup'
-GO
-INSERT INTO [dbo].[Web Service] ([Object Type],[Service Name],[Object ID],[Published]) VALUES (5,'AzureAdAppSetup',51401,1)
-GO"
-Pop-Location
-
-# Restart Service Tier
-Write-Verbose "Restart Service Tier"
-Set-NAVServerInstance $ServerInstance -Restart
-
-$O365Username = "o365user"
-$O365Password = "o365P@ssw0rd"
-if (!(Get-NAVServerUser $serverInstance | Where-Object { $_.UserName -eq $O365Username })) {
-    Write-Verbose "Create O365 user"
-    New-NAVServerUser -ServerInstance $serverInstance -UserName $O365Username -Password (ConvertTo-SecureString -String $O365Password -AsPlainText -Force) 
-    New-NAVServerUserPermissionSet -ServerInstance $serverInstance -UserName $O365Username -PermissionSetId SUPER
-} else {
-    Write-Verbose "Enable Geocode user"
-    Set-NAVServerUser $serverInstance -UserName $O365Username -State Enabled
-}
-
-# Invoke Web Service
-Write-Verbose "Create Web Service Proxy"
-$secureO365Password = ConvertTo-SecureString -String $O365Password -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential ($O365Username, $secureO365Password)
-$Uri = ("$publicSoapBaseUrl" + "$Company/Codeunit/AzureAdAppSetup")
-$proxy = New-WebServiceProxy -Uri $Uri -Credential $credential
-# Timout 1 hour
-$proxy.timeout = 60*60*1000
-Write-Verbose "Setup Azure Ad App"
-$proxy.SetAzureAdAppSetup($applicationid, $keyValue)
-
-Write-Verbose "Disable Geocode user"
-Set-NAVServerUser $Serverinstance -UserName $O365Username -State Disabled
-Get-NAVServerSession -ServerInstance $serverInstance | % { Remove-NAVServerSession -ServerInstance $serverInstance -SessionId $_.SessionID -Force }
-
-# Modify Default.aspx to include a link to SharePoint
-Write-Verbose "Modify default.aspx"
-
-$insertcode = ""
-if ($CreateSharePointPortal) {
-    $SharePointSiteUrl = "$SharePointUrl/sites/$SharePointSite"
-    $insertcode = "var officeDiv = InsertTopBarButton(helpDiv, ""Resources/Images/Office.png"", ""$SharePointSiteUrl"", ""_self"", ""Go to Office 365"");"
-}
-
-$codesnippet = "if (window.location.href.toLowerCase().indexOf(""/aad/"") >= 0) {
-  var intRef = setInterval(AddTopBarButtons, 1000);
-}
-
-function AddTopBarButtons() {
-  var helpDivs= document.getElementsByClassName(""system-help"");
-  if (helpDivs.length > 0) {
-    clearInterval(intRef);
-    var helpDiv = helpDivs[helpDivs.length-1];
-    $insertCode   
-    var productnameDivs = document.getElementsByClassName(""productname"");
-    productnameDiv = productnameDivs[0];
-    if (productnameDivs.length > 0) {
-      var waffleDiv = InsertTopBarButton(productnameDiv, ""Resources/Images/MyApps.png"", ""https://portal.office.com/myapps"", ""_self"", ""Go to My Apps"");   
-    }
-  }
-}
-
-function InsertTopBarButton(beforeDiv, src, link, target, title) {
-    var myDiv = CreateTopBarButton(src, link, target, title);
-    beforeDiv.parentNode.insertBefore(myDiv, beforeDiv);
-    return myDiv;
-}
-
-function CreateTopBarButton(src, link, target, title) {
-    var myDiv = document.createElement(""div"");
-    myDiv.className = ""system-help"";
-    var myLink = document.createElement(""a"");
-    myLink.href = link;
-    myLink.setAttribute('target', target);
-    var myImage = document.createElement(""img"");
-    myImage.src = src;
-    myImage.title = title;
-    myImage.setAttribute(""style"",""vertical-align: middle"");
-    myLink.appendChild(myImage);
-    myDiv.appendChild(myLink);
-    return myDiv;
-}"
-
-$defaultAspxFile = "C:\inetpub\wwwroot\NAV\WebClient\default.aspx"
-$defaultAspx = (Get-Content $defaultAspxFile)
-$idx = 0
-$end1 = 0
-$start2 = 0
-
-# Find location to insert code snippet
-while ($idx -lt ($defaultAspx.Length-2))
-{
-    if (($end1 -eq 0) -and
-        $defaultAspx[$idx].Trim().Startswith('Microsoft.Dynamics.NAV.App.initialize') -and 
-        ($defaultAspx[$idx-2].Trim().Equals('<script type="text/javascript">') -or 
-         $defaultAspx[$idx-11].Trim().Equals('<script type="text/javascript">')))
-    {
-        if ($defaultAspx[$idx+1].Trim().Equals('}') -or 
-            $defaultAspx[$idx+1].Trim().Equals('if (window.location.href.toLowerCase().indexOf("/aad/") >= 0) {'))
-        {
-            # Insert code snippet after Initialize if it wasn't modified by others
-            $end1 = $idx
-        }
-    }
-
-    if (($end1 -gt 0) -and
-        $defaultAspx[$idx].Trim().Equals('}') -and
-        $defaultAspx[$idx+1].Trim().Equals('</script>'))
-    {
-        # End of code snippet        
-        $start2 = $idx
-        break;
-    }
-
-    $idx++
-}
-
-# Write default.aspx with modified code snippet
-if ($start2 -gt 0) {
-    $stream = [System.IO.StreamWriter] $defaultAspxFile
-    0..$end1 | % {
-        $stream.WriteLine($defaultAspx[$_])
-    }
-
-    $stream.WriteLine($codesnippet)
+    # Copy Client Add-ins
+    Write-Verbose "Copy Client Add-ins"
+    XCopy (Join-Path $PSScriptRootV2 "Client Add-Ins\*.*") "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Add-ins" /Y
+    XCopy (Join-Path $PSScriptRootV2 "Client Add-Ins\*.*") "C:\Program Files\Microsoft Dynamics NAV\$NavVersion\Service\Add-ins" /Y
     
-    $start2..($defaultAspx.Length-1) | % {
-        $stream.WriteLine($defaultAspx[$_])
+    Write-Verbose "Register Client Add-in"
+    Remove-NAVAddIn -ServerInstance $serverInstance -AddInName "HTMLViewer" -PublicKeyToken "5be233b58c6bf929" -Force -ErrorAction Ignore
+    New-NAVAddIn    -ServerInstance $serverInstance -AddInName "HTMLViewer" -PublicKeyToken "5be233b58c6bf929" -Category JavaScriptControlAddIn -Description "HTML Viewer Control Add-In" -ResourceFile "C:\DEMO\O365 Integration\HtmlViewerControlAddIn\ControlAddIn\Resource\manifest.zip" 
+    
+    # Uninstall and unpublish NAV App if already installed
+    UnInstall-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo" -ErrorAction Ignore
+    UnPublish-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo" -ErrorAction Ignore
+    
+    # Install pre-requisites if they exist
+    $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
+    $PrereqFile = Join-Path $PSScriptRootV2 "$Language Prereq.fob"
+    if (Test-Path -Path $PrereqFile) {
+        Write-Host -ForegroundColor Green "Import pre-requisite .fob file"
+        Import-NAVApplicationObject -DatabaseServer 'localhost\NAVDEMO' -DatabaseName $DatabaseName -Path $PrereqFile -SynchronizeSchemaChanges Force -NavServerName localhost -NavServerInstance $ServerInstance -NavServerManagementPort 7045 -ImportAction Overwrite -Confirm:$false
     }
-    $stream.close()
+    
+    # Publish and Install NAV App 
+    Publish-NAVApp -ServerInstance $serverInstance -Path (Join-Path $PSScriptRootV2 "O365 Integration.navx") -SkipVerification
+    Install-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo"
+    
+    # Copy misc. files
+    Copy-Item (Join-Path $PSScriptRootV2 "Translations") "C:\Program Files\Microsoft Dynamics NAV\$NavVersion\Service" -Recurse -Force
+    Copy-Item (Join-Path $PSScriptRootV2 "Office.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\Office.png" -Force
+    Copy-Item (Join-Path $PSScriptRootV2 "myapps.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\myapps.png" -Force
+    
+    # Restart NAV Service Tier
+    Write-Verbose "Restart Service Tier"
+    Set-NAVServerInstance -ServerInstance $serverInstance -Restart
+    
+    Push-Location
+    #Install local DB
+    Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
+    "USE [$DatabaseName]
+    GO
+    DELETE FROM [dbo].[Web Service] WHERE [Service Name] = 'AzureAdAppSetup'
+    GO
+    INSERT INTO [dbo].[Web Service] ([Object Type],[Service Name],[Object ID],[Published]) VALUES (5,'AzureAdAppSetup',51401,1)
+    GO"
+    Pop-Location
+    
+    # Restart Service Tier
+    Write-Verbose "Restart Service Tier"
+    Set-NAVServerInstance $ServerInstance -Restart
+    
+    $O365Username = "o365user"
+    $O365Password = "o365P@ssw0rd"
+    if (!(Get-NAVServerUser $serverInstance | Where-Object { $_.UserName -eq $O365Username })) {
+        Write-Verbose "Create O365 user"
+        New-NAVServerUser -ServerInstance $serverInstance -UserName $O365Username -Password (ConvertTo-SecureString -String $O365Password -AsPlainText -Force) 
+        New-NAVServerUserPermissionSet -ServerInstance $serverInstance -UserName $O365Username -PermissionSetId SUPER
+    } else {
+        Write-Verbose "Enable O365 user"
+        Set-NAVServerUser $serverInstance -UserName $O365Username -State Enabled
+    }
+    
+    # Invoke Web Service
+    Write-Verbose "Create Web Service Proxy"
+    $secureO365Password = ConvertTo-SecureString -String $O365Password -AsPlainText -Force
+    $credential = New-Object System.Management.Automation.PSCredential ($O365Username, $secureO365Password)
+    $Uri = ("$publicSoapBaseUrl" + "$Company/Codeunit/AzureAdAppSetup")
+    $proxy = New-WebServiceProxy -Uri $Uri -Credential $credential
+    # Timout 1 hour
+    $proxy.timeout = 60*60*1000
+    Write-Verbose "Setup Azure Ad App"
+    $proxy.SetAzureAdAppSetup($GLOBAL:PowerBiAdAppId, $GLOBAL:PowerBiAdAppKeyValue)
+    
+    Write-Verbose "Disable O365 user"
+    Set-NAVServerUser $Serverinstance -UserName $O365Username -State Disabled
+    Get-NAVServerSession -ServerInstance $serverInstance | % { Remove-NAVServerSession -ServerInstance $serverInstance -SessionId $_.SessionID -Force }
+    
+    # Modify Default.aspx to include a link to SharePoint
+    Write-Verbose "Modify default.aspx"
+    
+    $insertcode = ""
+    if ($CreateSharePointPortal) {
+        $SharePointSiteUrl = "$SharePointUrl/sites/$SharePointSite"
+        $insertcode = "var officeDiv = InsertTopBarButton(helpDiv, ""Resources/Images/Office.png"", ""$SharePointSiteUrl"", ""_self"", ""Go to Office 365"");"
+    }
+    
+    $codesnippet = "if (window.location.href.toLowerCase().indexOf(""/aad/"") >= 0) {
+      var intRef = setInterval(AddTopBarButtons, 1000);
+    }
+    
+    function AddTopBarButtons() {
+      var helpDivs= document.getElementsByClassName(""system-help"");
+      if (helpDivs.length > 0) {
+        clearInterval(intRef);
+        var helpDiv = helpDivs[helpDivs.length-1];
+        $insertCode   
+        var productnameDivs = document.getElementsByClassName(""productname"");
+        productnameDiv = productnameDivs[0];
+        if (productnameDivs.length > 0) {
+          var waffleDiv = InsertTopBarButton(productnameDiv, ""Resources/Images/MyApps.png"", ""https://portal.office.com/myapps"", ""_self"", ""Go to My Apps"");   
+        }
+      }
+    }
+    
+    function InsertTopBarButton(beforeDiv, src, link, target, title) {
+        var myDiv = CreateTopBarButton(src, link, target, title);
+        beforeDiv.parentNode.insertBefore(myDiv, beforeDiv);
+        return myDiv;
+    }
+    
+    function CreateTopBarButton(src, link, target, title) {
+        var myDiv = document.createElement(""div"");
+        myDiv.className = ""system-help"";
+        var myLink = document.createElement(""a"");
+        myLink.href = link;
+        myLink.setAttribute('target', target);
+        var myImage = document.createElement(""img"");
+        myImage.src = src;
+        myImage.title = title;
+        myImage.setAttribute(""style"",""vertical-align: middle"");
+        myLink.appendChild(myImage);
+        myDiv.appendChild(myLink);
+        return myDiv;
+    }"
+    
+    $defaultAspxFile = "C:\inetpub\wwwroot\NAV\WebClient\default.aspx"
+    $defaultAspx = (Get-Content $defaultAspxFile)
+    $idx = 0
+    $end1 = 0
+    $start2 = 0
+    
+    # Find location to insert code snippet
+    while ($idx -lt ($defaultAspx.Length-2))
+    {
+        if (($end1 -eq 0) -and
+            $defaultAspx[$idx].Trim().Startswith('Microsoft.Dynamics.NAV.App.initialize') -and 
+            ($defaultAspx[$idx-2].Trim().Equals('<script type="text/javascript">') -or 
+             $defaultAspx[$idx-11].Trim().Equals('<script type="text/javascript">')))
+        {
+            if ($defaultAspx[$idx+1].Trim().Equals('}') -or 
+                $defaultAspx[$idx+1].Trim().Equals('if (window.location.href.toLowerCase().indexOf("/aad/") >= 0) {'))
+            {
+                # Insert code snippet after Initialize if it wasn't modified by others
+                $end1 = $idx
+            }
+        }
+    
+        if (($end1 -gt 0) -and
+            $defaultAspx[$idx].Trim().Equals('}') -and
+            $defaultAspx[$idx+1].Trim().Equals('</script>'))
+        {
+            # End of code snippet        
+            $start2 = $idx
+            break;
+        }
+    
+        $idx++
+    }
+    
+    # Write default.aspx with modified code snippet
+    if ($start2 -gt 0) {
+        $stream = [System.IO.StreamWriter] $defaultAspxFile
+        0..$end1 | % {
+            $stream.WriteLine($defaultAspx[$_])
+        }
+    
+        $stream.WriteLine($codesnippet)
+        
+        $start2..($defaultAspx.Length-1) | % {
+            $stream.WriteLine($defaultAspx[$_])
+        }
+        $stream.close()
+    }
 }
 
 if ($CreateSharePointPortal) {

@@ -22,10 +22,17 @@
         "Description": "Specify NAV Administrator user name"
       }
     },
+    "sqlAdminUsername": {
+      "type": "string",
+      "defaultValue": "sqladmin",
+      "metadata": {
+        "Description": "Specify SQL Administrator user name"
+      }
+    },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "Description": "Specify Administrator Password (for VM and NAV)"
+        "Description": "Specify Administrator Password (for VM, NAV and SQL)"
       }
     },
     "country": {
@@ -55,7 +62,7 @@
       "defaultValue": "",
       "metadata": {
         "Description": "Public Dns Name (CNAME record pointing to your cloud service, leave empty when using Self Signed Certificate)"
-      }
+      }    
     },
     "bingMapsKey": {
       "type": "string",
@@ -108,6 +115,7 @@
     "vmStorageAccountContainerName": "vhds",
     "publicIPAddressName": "PublicIP",
     "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
+    "sqlServerName" : "[concat('sql', replace(tolower(parameters('vmName')),'-',''))]",
     "dnsName": "[tolower(parameters('vmName'))]",
     "vmSize": "Standard_D2",
     "addressPrefix": "10.0.0.0/16",
@@ -125,6 +133,35 @@
     "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/dev/",
   },
   "resources": [
+    {
+      "name": "[variables('sqlserverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "apiVersion": "2014-04-01-preview",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdminUsername')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "firewallrules",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[variables('sqlserverName')]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "AllowAllAzureIps",
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    },
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
@@ -359,7 +396,7 @@
       "resources": [
         {
           "type": "extensions",
-          "name": "diagnostics",
+          "name": "Microsoft.Insights.VMDiagnosticsSettings",
           "apiVersion": "2015-06-15",
           "location": "[resourceGroup().location]",
           "tags": {

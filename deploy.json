@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
+        "vmName": {
             "type": "string",
             "metadata": {
                 "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
@@ -26,8 +26,8 @@
         "storageAccountType" : "Standard_LRS",
         "vmStorageAccountContainerName" : "vhds",
         "publicIPAddressName" : "PublicIP",
-        "storageAccountName" : "[replace(tolower(parameters('name')),'-','')]",
-        "dnsName" : "[tolower(parameters('name'))]",
+        "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
+        "dnsName" : "[tolower(parameters('vmName'))]",
         "vmSize" : "Standard_D2",
         "addressPrefix":"10.0.0.0/16",
         "subnetName" : "Subnet",
@@ -41,7 +41,7 @@
         "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
         "ScriptCommandToExecute": "powershell.exe -File  ",
-        "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/master/"
+        "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/dev/"
     },
     "resources": [
         {
