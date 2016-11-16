@@ -128,6 +128,7 @@ $SharePointAdminCredential = New-Object System.Management.Automation.PSCredentia
 
 $CreateSharePointPortal = ((Get-UserInput -Id CreateSharePointPortal -Text "Do you want to create a demo SharePoint Portal with App Parts from NAV? (Yes/No)" -Default "Yes") -eq "Yes")
 
+$aadTenant = ""
 if ($SharePointAdminLoginname.EndsWith('.onmicrosoft.com')) {
     $aadTenant = $SharePointAdminLoginname.Split('@')[1]
 }
