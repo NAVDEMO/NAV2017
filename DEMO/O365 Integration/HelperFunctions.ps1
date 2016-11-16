@@ -247,7 +247,7 @@ function Setup-AadApps
     # Add owner to Azure Ad Application
     $excelOwnerUrl = "$graphUrl/$aadTenant/applications/$($excelAdApp.ObjectID)/`$links/owners?api-version=$apiversion"
     $excelOwnerPostData  = @{
-      "url" = "https://graph.windows.net/navdem23.onmicrosoft.com/directoryObjects/$adUserObjectId/Microsoft.DirectoryServices.User?api-version=$apiversion"
+      "url" = "$graphUrl/$aadTenant/directoryObjects/$adUserObjectId/Microsoft.DirectoryServices.User?api-version=$apiversion"
     } | ConvertTo-Json -Depth 99
 
     (Invoke-WebRequest -UseBasicParsing -Method POST -ContentType 'application/json' -Headers $headers -Uri $excelOwnerUrl   -Body $excelOwnerPostData).Content
