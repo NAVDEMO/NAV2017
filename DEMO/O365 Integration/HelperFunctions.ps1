@@ -144,8 +144,10 @@ function Setup-AadApps
     # Login to AzureRm
     $SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
     $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
-    Login-AzureRmAccount -Credential $SharePointAdminCredential | Out-Null
-    
+    $account = Login-AzureRmAccount -Credential $SharePointAdminCredential
+    $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
+    $adUserObjectId = $adUser.Id
+
     $graphUrl = "https://graph.windows.net"
     $apiversion = "1.6"
 
@@ -242,6 +244,13 @@ function Setup-AadApps
 
     (Invoke-WebRequest -UseBasicParsing -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $excelUrl   -Body $excelPostData).Content
 
+    # Add owner to Azure Ad Application
+    $excelOwnerUrl = "$graphUrl/$aadTenant/applications/$($excelAdApp.ObjectID)/`$links/owners?api-version=$apiversion"
+    $excelOwnerPostData  = @{
+      "url" = "https://graph.windows.net/navdem23.onmicrosoft.com/directoryObjects/$adUserObjectId/Microsoft.DirectoryServices.User?api-version=$apiversion"
+    } | ConvertTo-Json -Depth 99
+
+    (Invoke-WebRequest -UseBasicParsing -Method POST -ContentType 'application/json' -Headers $headers -Uri $excelOwnerUrl   -Body $excelOwnerPostData).Content
 
 
     # PowerBI Ad App
