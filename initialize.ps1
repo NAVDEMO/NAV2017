@@ -5,7 +5,6 @@ param
        [string]$PatchPath = ""
       ,[string]$StorageAccountName = ""
       ,[string]$StorageAccountKey = ""
-      ,[string]$UseSubscriptionId = ""
       ,[string]$VMAdminUsername = ""
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
@@ -26,12 +25,11 @@ param
       ,[string]$Multitenancy = ""
       ,[string]$sqlAdminUsername = ""
       ,[string]$sqlServerName = ""
-      ,[string]$PublishSettings = ""
 )
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Start-Transcript -Path "C:\DEMO\initialize.txt"
-"Starting VM Initialization" | Set-Content -Path "c:\demo\status.txt"
+([DateTime]::Now.ToString("hh:mm:ss") + "Starting VM Initialization") | Add-Content -Path "c:\demo\status.txt"
 
 function Log([string]$line) { ([DateTime]::Now.ToString("hh:mm:ss") + " $line") | Add-Content -Path "c:\demo\status.txt" }
 
@@ -230,11 +228,7 @@ if ($Multitenancy -eq "Yes") {
 
 }
 
-if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "") -and ($PublishSettings -ne "") -and ($UseSubscriptionId -ne "")) {
-
-    $PublishSettingsFile = "C:\DEMO\my.publishsettings"
-    Log("Unpack base64 encoded License File to $licenseFile")
-    [System.IO.File]::WriteAllBytes($publishSettingsFile, [System.Convert]::FromBase64String($PublishSettings))
+if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
 
     # Setup Azure SQL
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -242,15 +236,13 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "") -and ($PublishSettin
     ('$HardcodeExistingAzureSqlDatabase = "No"')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeGetPublishSettingsFile = "No"')                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodePublishSettingsFile = "'+$PublishSettingsFile+'"')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeUseSubscription = "'+$UseSubscriptionID+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeStorageAccountName = "'+$StorageAccountName+'"')                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeStorageAccountKey = "'+$StorageAccountKey+'"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeContainerName = "default"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('#. "c:\DEMO\AzureSQL\install.ps1" 4> "C:\DEMO\AzureSQL\install.log"')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Remove-Item -Path "'+$PublishSettingsFile+'" -force -ErrorAction Ignore')                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('#. "c:\DEMO\AzureSQL\install.ps1" 4> "C:\DEMO\AzureSQL\install.log"')                                | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("Done moving database to Azure SQL")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -261,8 +253,8 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "") -and ($PublishSettin
 
 ('Log("Cleaning up")')                                                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-('#Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
-('#Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 

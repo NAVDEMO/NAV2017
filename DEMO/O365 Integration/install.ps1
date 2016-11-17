@@ -126,7 +126,13 @@ if ($SharePointAdminPassword) {
 $SharePointAdminPassword = Decrypt-SecureString $SharePointAdminSecurePassword
 $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
 
+# Connect to Microsoft Online Service
+Write-Verbose "Connect to Microsoft Online Service"
+Connect-MsolService -Credential $SharePointAdminCredential -ErrorAction Stop
+
+
 $CreateSharePointPortal = ((Get-UserInput -Id CreateSharePointPortal -Text "Do you want to create a demo SharePoint Portal with App Parts from NAV? (Yes/No)" -Default "Yes") -eq "Yes")
+$sku = Get-MsolAccountSku | Select-Object -First 1
 
 if ($CreateSharePointPortal) {
 
@@ -134,10 +140,7 @@ if ($CreateSharePointPortal) {
 
     do {
         $err = $false
-        $SharePointUrl = ""
-        if ($SharePointAdminLoginname.EndsWith('.onmicrosoft.com')) {
-            $SharePointUrl = ('https://' + $SharePointAdminLoginname.Split('@')[1].Split('.')[0] + '.sharepoint.com')
-        }
+        $SharePointUrl = ('https://' + $sku.AccountName + '.sharepoint.com')
         $SharePointUrl = Get-UserInput -Id SharePointUrl -Text "SharePoint Base URL (example: https://cronus.sharepoint.com)" -Default $SharePointUrl
         while ($SharePointUrl.EndsWith('/')) {
             $SharePointUrl = $SharePointUrl.SubString(0, $SharePointUrl.Length-1)
@@ -205,10 +208,6 @@ if ($CreateSharePointPortal) {
     
     cd $PSScriptRootV2
 }
-
-# Connect to Microsoft Online Service
-Write-Verbose "Connect to Microsoft Online Service"
-Connect-MsolService -Credential $SharePointAdminCredential -ErrorAction Stop
 
 $publicWebBaseUrl = $publicWebBaseUrl.Replace("/$ServerInstance/", "/AAD/")
 

@@ -29,13 +29,6 @@
         "Description": "Specify SQL Administrator user name"
       }
     },
-    "PublishSettings": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "Description": "Base64 of PublishSettings file (Necessary for Azure SQL)"
-      }
-    },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
@@ -114,13 +107,6 @@
       "allowedValues": [ "Yes", "No" ],
       "metadata": {
         "Description": "Create SharePoint Portal with NAV content (only if Office 365 Integration is installed)"
-      }
-    },
-    "SharePointBaseUrl": {
-      "type": "string",
-      "defaultValue": "default",
-      "metadata": {
-        "Description": "SharePoint Base Url (e.g. https://contoso.sharepoint.com/). Only necessary if you are creating a SharePoint Portal with NAV content."
       }
     }
   },
@@ -1060,7 +1046,7 @@
           "fileUris": [
             "[concat(variables('ScriptFilePath'), 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -PatchPath \"',variables('ScriptFilePath'),'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -UseSubscriptionId \"',subscription().subscriptionId,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\" -SharePointBaseUrl \"',parameters('SharePointBaseUrl'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -sqlServerName \"',variables('sqlServerName'),'\" -PublishSettings \"',parameters('PublishSettings'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -PatchPath \"',variables('ScriptFilePath'),'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -sqlServerName \"',variables('sqlServerName'),'\"')]"
         },
         "protectedSettings": {
         }
