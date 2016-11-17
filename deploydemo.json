@@ -122,7 +122,7 @@
     "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
     "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
     "ScriptCommandToExecute": "powershell.exe -File  ",
-    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/master/",
+    "ScriptFilePath": "https://raw.githubusercontent.com/NAVDEMO/NAV2017/dev/",
   },
   "resources": [
     {
@@ -1009,7 +1009,7 @@
           "fileUris": [
             "[concat(variables('ScriptFilePath'), 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -PatchPath \"',variables('ScriptFilePath'), '\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -PatchPath \"',variables('ScriptFilePath'),'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\"')]"
         },
         "protectedSettings": {
         }

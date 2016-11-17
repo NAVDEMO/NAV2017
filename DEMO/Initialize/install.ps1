@@ -171,7 +171,10 @@ if (!(Test-Path (Join-Path $PSScriptRootV2 '..\Profiles.ps1'))){
 
     $languageCode = $languageCodes[$Language]
 
-    Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `    "USE [$DatabaseName]    UPDATE [dbo].[User Personalization] SET [Language ID]='$languageCode', [Locale ID]='$languageCode', [Company]='$Company';"    
+    Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
+    "USE [$DatabaseName]
+    UPDATE [dbo].[User Personalization] SET [Language ID]='$languageCode', [Locale ID]='$languageCode', [Company]='$Company';"
+    
     C:
 
 } else {
@@ -270,6 +273,7 @@ if (!(Get-Website -Name http)) {
     New-Website -Name http -IPAddress * -Port 80 -PhysicalPath $httpWebSiteDirectory -Force
 }
 Copy-Item (Join-Path $PSScriptRootV2 'Default.aspx')     "$httpWebSiteDirectory\Default.aspx" 
+Copy-Item (Join-Path $PSScriptRootV2 'status.aspx')      "$httpWebSiteDirectory\status.aspx" 
 Copy-Item (Join-Path $PSScriptRootV2 'WindowsStore.png') "$httpWebSiteDirectory\WindowsStore.png" 
 Copy-Item (Join-Path $PSScriptRootV2 'AppStore.png')     "$httpWebSiteDirectory\AppStore.png" 
 Copy-Item (Join-Path $PSScriptRootV2 'GooglePlay.png')   "$httpWebSiteDirectory\GooglePlay.png" 
@@ -357,7 +361,9 @@ $newWebClientLink = "https://$PublicMachineName/$serverInstance/WebClient"
 $mht = $mht.Replace($orgWebClientLink, $newWebClientLink)
 [System.IO.File]::WriteAllText("C:\DEMO\Welcome to Microsoft Dynamics NAV on Microsoft Azure.mht", $mht, [System.Text.Encoding]::GetEncoding(28591))
 
-$URLsFile = "C:\Users\Public\Desktop\URLs.txt"("Demo env. Landing page        : http://$PublicMachineName")                                          | Add-Content -Path $URLsFile
+$URLsFile = "C:\Users\Public\Desktop\URLs.txt"
+
+("Demo env. Landing page        : http://$PublicMachineName")                                          | Add-Content -Path $URLsFile
 ("Web Client URL                : https://$PublicMachineName/$serverInstance/WebClient")               | Add-Content -Path $URLsFile
 ("Tablet Client URL             : https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx")   | Add-Content -Path $URLsFile
 ("Phone Client URL              : https://$PublicMachineName/$serverInstance/WebClient/phone.aspx")    | Add-Content -Path $URLsFile
