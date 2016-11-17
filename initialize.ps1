@@ -8,10 +8,9 @@ param
       ,[string]$VMAdminUsername = ""
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
-      ,[string]$Country = ""
+      ,[string]$Country = "W1"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
-      ,[string]$LicenseFileUrl = ""
       ,[string]$CertificatePfxUrl = ""
       ,[string]$CertificatePfxPassword = "" 
       ,[string]$PublicMachineName = ""
@@ -21,7 +20,6 @@ param
       ,[string]$Office365UserName = ""
       ,[string]$Office365Password = ""
       ,[string]$Office365CreatePortal = ""
-      ,[string]$SharePointBaseUrl = ""
       ,[string]$Multitenancy = ""
       ,[string]$sqlAdminUsername = ""
       ,[string]$sqlServerName = ""
@@ -29,9 +27,9 @@ param
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Start-Transcript -Path "C:\DEMO\initialize.txt"
-([DateTime]::Now.ToString("hh:mm:ss") + "Starting VM Initialization") | Add-Content -Path "c:\demo\status.txt"
+([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " Starting VM Initialization") | Add-Content -Path "c:\demo\status.txt"
 
-function Log([string]$line) { ([DateTime]::Now.ToString("hh:mm:ss") + " $line") | Add-Content -Path "c:\demo\status.txt" }
+function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
@@ -64,6 +62,8 @@ Log("Machine Name is $MachineName")
 # Update RTM files
 $date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"        
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/Default.aspx"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/status.aspx"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/O365 Integration.navx"
@@ -76,20 +76,6 @@ DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFil
 
 # Remove DynamicsNAV.Key
 Remove-Item -Path "C:\DEMO\AzureSQL\DynamicsNAV.key" -Force -ErrorAction Ignore
-
-$licenseFile = ""
-if ($licenseFileUrl -ne "")
-{
-    $licenseFile = "C:\DEMO\license.flf"
-    if ($licenseFileUrl.StartsWith("http://") -or $licenseFileUrl.StartsWith("https://")) {
-        Write-Verbose "Downloading $licenseFileUrl to $licenseFile"
-        DownloadFile -SourceUrl $LicenseFileUrl -destinationFile $licenseFile
-    } else {
-        Log("Unpack base64 encoded License File to $licenseFile")
-        # Assume Base64
-        [System.IO.File]::WriteAllBytes($licenseFile, [System.Convert]::FromBase64String($licenseFileUrl))
-    }
-}
 
 if ($CertificatePfxUrl -eq "")
 {
@@ -120,7 +106,7 @@ if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     $step = $next
     $next++
-    ('function Log([string]$line) { ([DateTime]::Now.ToString("hh:mm:ss") + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("Waiting for NAV Service Tier to start")')                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -151,7 +137,7 @@ prompt for credentials:i:1'")                                                   
 }
 
 if ($Office365UserName -ne "") {
-    ('function Log([string]$line) { ([DateTime]::Now.ToString("hh:mm:ss") + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("Waiting for NAV Service Tier to start")')                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -161,7 +147,7 @@ if ($Office365UserName -ne "") {
     ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointAdminPassword = "'+$Office365Password+'"')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeCreateSharePointPortal = "'+$Office365CreatePortal+'"')                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeSharePointUrl = "'+$SharePointBaseUrl+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeSharePointUrl = "default"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointSite = "' + ($PublicMachineName.Split('.')[0])+'"')                               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointLanguage = "default"')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointTimezoneId = "default"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -216,11 +202,6 @@ if ($clickonce -eq "Yes") {
     ('Log("ERROR (ClickOnce): "+$_.Exception.Message)')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-}
-
-if ($licenseFile -ne "") {
-    # Install Extention Development Shell
-    
 }
 
 if ($Multitenancy -eq "Yes") {
