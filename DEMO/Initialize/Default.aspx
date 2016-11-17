@@ -310,7 +310,7 @@ You can connect to the server in the demo environment by following this link.
     }
   }
   if (System.IO.File.Exists(@"c:\demo\status.txt")) {
-    var installing = System.IO.Directory.Exists(@"c:\demo\install");
+    var installing = System.IO.File.Exists(@"c:\demo\initialize.txt");
     if (installing) {
 %>
       <tr><td colspan="4"><h3>Installation still running</h3></td></tr>
