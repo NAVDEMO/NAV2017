@@ -109,7 +109,6 @@ if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     ('Log("Waiting for NAV Service Tier to start")')                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("NAV Service Tier started")')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
