@@ -324,7 +324,7 @@ UPDATE [dbo].[Profile]
 GO
 UPDATE [dbo].[Profile]
    SET [Default Role Center] = 1
- WHERE [Profile ID] = '$BusinessManager'
+ WHERE [Role Center ID] = 9022
 GO"
 
 New-DesktopShortcut -Name "NAV 2017 Windows Client"                              -TargetPath "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Microsoft.Dynamics.Nav.Client.exe" -Arguments "-Language:$languageCode"
