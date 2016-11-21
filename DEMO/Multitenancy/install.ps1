@@ -61,24 +61,26 @@ if ($ARRisConfigured) {
     Throw-UserError -Text "Server is configured for Load Balancing. You need to apply this package before setting up Load Balancing."
 }
 
-if (!$multitenant) {
+$defaultTenant = "default"
+$changesettings = $false
 
-    if ($DatabaseServer -ne "localhost") {
+if ($DatabaseServer -ne "localhost") {
     
-        # Using AzureSQL as database server
-        [array]$tenants = Get-NAVTenant -ServerInstance $ServerInstance
-        if ($tenants -ne 0) {
-            Throw-UserError -Text "Server is not using SQL Express as database server. You need to apply this package before using Azure SQL."
-        }
+    # Using AzureSQL as database server
+    [array]$tenants = Get-NAVTenant -ServerInstance $ServerInstance
+    if ($tenants) {
+        Throw-UserError -Text "Server is not using SQL Express as database server. You need to apply this package before using Azure SQL."
+    }
     
-        # AzureSQL with no tenants - create default tenant
-        $defaultTenant = "default"
-        $DatabaseCredentials = New-Object PSCredential -ArgumentList $DatabaseServerParams.UserName, (ConvertTo-SecureString -String $DatabaseServerParams.Password -AsPlainText -Force)
-        Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $defaultTenant
-        Mount-NAVTenant -ServerInstance $serverInstance -Id $defaultTenant -AllowAppDatabaseWrite -DatabaseServer $DatabaseServer -DatabaseName $defaultTenant -DatabaseCredentials $DatabaseCredentials -OverwriteTenantIdInDatabase -Force
-        New-NAVServerUser -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -Password (ConvertTo-SecureString -String "Coke4ever" -AsPlainText -Force)
-        New-NAVServerUserPermissionSet -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -PermissionSetId "SUPER"
-    } else {
+    # AzureSQL with no tenants - create default tenant
+    $DatabaseCredentials = New-Object PSCredential -ArgumentList $DatabaseServerParams.UserName, (ConvertTo-SecureString -String $DatabaseServerParams.Password -AsPlainText -Force)
+    Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $defaultTenant
+    Mount-NAVTenant -ServerInstance $serverInstance -Id $defaultTenant -AllowAppDatabaseWrite -DatabaseServer $DatabaseServer -DatabaseName $defaultTenant -DatabaseCredentials $DatabaseCredentials -OverwriteTenantIdInDatabase -Force
+    New-NAVServerUser -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -Password (ConvertTo-SecureString -String "Coke4ever" -AsPlainText -Force)
+    New-NAVServerUserPermissionSet -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -PermissionSetId "SUPER"
+    $changesettings = $true
+} else {
+    if (!$multitenant) {
         clear
 
         Set-NAVServerInstance $serverInstance -Stop
@@ -103,8 +105,11 @@ if (!$multitenant) {
         } else {
             Mount-NAVTenant $serverInstance -Id $defaultTenant -AllowAppDatabaseWrite -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $defaultTenant
         }
+        $changesettings = $true
     }
+}
 
+if ($changesettings) {
     Set-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $defaultTenant
 
     # Change global ClientUserSettings
