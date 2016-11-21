@@ -2,7 +2,7 @@
 
 param
 (
-       [string]$PatchPath = ""
+       [string]$ScriptPath = ""
       ,[string]$StorageAccountName = ""
       ,[string]$StorageAccountKey = ""
       ,[string]$VMAdminUsername = ""
@@ -61,6 +61,7 @@ Log("Machine Name is $MachineName")
 
 # Update RTM files
 $date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
+$PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"        
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/Default.aspx"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/status.aspx"
