@@ -233,7 +233,7 @@
               "type": "extensions",
               "apiVersion": "2014-04-01-preview",
               "dependsOn": [
-                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Database')]"
+                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template')]"
               ],
               "tags": {
                 "displayName": "Import"
