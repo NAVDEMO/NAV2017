@@ -208,27 +208,18 @@ if ($clickonce -eq "Yes") {
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
-if ($Multitenancy -eq "Yes") {
-    # Setup Multitenancy
-
-}
-
 if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
 
     # Setup Azure SQL
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Moving database to Azure SQL")')                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeExistingAzureSqlDatabase = "No"')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeGetPublishSettingsFile = "No"')                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodePublishSettingsFile = "'+$PublishSettingsFile+'"')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Setting up Azure SQL")')                                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeExistingAzureSqlDatabase = "Yes"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeStorageAccountName = "'+$StorageAccountName+'"')                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeStorageAccountKey = "'+$StorageAccountKey+'"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeContainerName = "default"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('#. "c:\DEMO\AzureSQL\install.ps1" 4> "C:\DEMO\AzureSQL\install.log"')                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done moving database to Azure SQL")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabaseName = "default"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\AzureSQL\install.ps1" 4> "C:\DEMO\AzureSQL\install.log"')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Done setting up Azure SQL")')                                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("ERROR (AzureSQL): "+$_.Exception.Message)')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
