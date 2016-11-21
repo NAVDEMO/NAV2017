@@ -438,7 +438,9 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]",
+        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Demo Database NAV (10-0)', 'Import')]",
+        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Tenant Template', 'Import')]"
       ],
       "properties": {
         "diagnosticsProfile": {
