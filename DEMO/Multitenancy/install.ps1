@@ -79,7 +79,9 @@ if ($DatabaseServer -ne "localhost") {
     New-NAVServerUser -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -Password (ConvertTo-SecureString -String "Coke4ever" -AsPlainText -Force)
     New-NAVServerUserPermissionSet -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -PermissionSetId "SUPER"
     $changesettings = $true
+
 } else {
+
     if (!$multitenant) {
         clear
 
@@ -98,6 +100,7 @@ if ($DatabaseServer -ne "localhost") {
         Set-NavDatabaseTenantId -DatabaseName $defaultTenant -TenantId $defaultTenant
         Remove-NAVApplication -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $defaultTenant -Force
         Start-Sleep -Seconds 30
+        Copy-NavDatabase -SourceDatabaseName $defaultTenant -DestinationDatabaseName "Tenant Template"
 
         if ($SharePointInstallFolder) {
             $SharePointSiteUrl = "$SharePointUrl/sites/$defaultTenant"
@@ -137,8 +140,6 @@ if ($changesettings) {
         }
     }
 
-    New-ClickOnceDeployment -Name $defaultTenant -PublicMachineName $PublicMachineName -TenantID $defaultTenant -clickOnceWebSiteDirectory $httpWebSiteDirectory
-
     New-DesktopShortcut -Name "Demo Environment Landing Page"     -TargetPath "http://$PublicMachineName" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     New-DesktopShortcut -Name "NAV 2017 Web Client"               -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/?tenant=$defaultTenant" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     New-DesktopShortcut -Name "NAV 2017 Tablet Client"            -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx?tenant=$defaultTenant" IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
@@ -147,9 +148,7 @@ if ($changesettings) {
 
     New-Item 'C:\MT' -ItemType Directory -Force -ErrorAction Ignore
 
-    Push-Location
-    Copy-NavDatabase -SourceDatabaseName $defaultTenant -DestinationDatabaseName "Tenant Template"
-    Pop-Location
+   # New-ClickOnceDeployment -Name $defaultTenant -PublicMachineName $PublicMachineName -TenantID $defaultTenant -clickOnceWebSiteDirectory $httpWebSiteDirectory
 }
 
 $URLsFile = "C:\Users\Public\Desktop\URLs.txt"$URLs = Get-Content $URLsFile
