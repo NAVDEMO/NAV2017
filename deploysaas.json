@@ -62,7 +62,7 @@
       "defaultValue": "",
       "metadata": {
         "Description": "Public Dns Name (CNAME record pointing to your cloud service, leave empty when using Self Signed Certificate)"
-      }    
+      }
     },
     "bingMapsKey": {
       "type": "string",
@@ -108,6 +108,17 @@
       "metadata": {
         "Description": "Create SharePoint Portal with NAV content (only if Office 365 Integration is installed)"
       }
+    },
+    "SqlStorageAppDbUri": {
+      "type": "string",
+      "minLength": 1
+    },
+    "SqlStorageTenantDbUri": {
+      "type": "string",
+      "minLength": 1
+    },
+    "SqlStorageKey": {
+      "type": "securestring"
     }
   },
   "variables": {
@@ -176,7 +187,28 @@
             "edition": "Standard",
             "maxSizeBytes": "1073741824",
             "requestedServiceObjectiveName": "S0"
-          }
+          },
+          "resources": [
+            {
+              "name": "Import",
+              "type": "extensions",
+              "apiVersion": "2014-04-01-preview",
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Demo Database NAV (10-0)')]"
+              ],
+              "tags": {
+                "displayName": "Import"
+              },
+              "properties": {
+                "storageKeyType": "Primary",
+                "storageUri": "[parameters('SqlStorageAppDbUri')]",
+                "storageKey": "[parameters('SqlStorageKey')]",
+                "administratorLogin": "[[parameters('sqlAdminUsername')]]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "operationMode": "Import"
+              }
+            }
+          ]
         },
         {
           "name": "Tenant Template",
@@ -194,7 +226,28 @@
             "edition": "Standard",
             "maxSizeBytes": "1073741824",
             "requestedServiceObjectiveName": "S0"
-          }
+          },
+          "resources": [
+            {
+              "name": "Import",
+              "type": "extensions",
+              "apiVersion": "2014-04-01-preview",
+              "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Tenant Template')]"
+              ],
+              "tags": {
+                "displayName": "Import"
+              },
+              "properties": {
+                "storageKeyType": "Primary",
+                "storageUri": "[parameters('SqlStorageTenantDbUri')]",
+                "storageKey": "[parameters('SqlStorageKey')]",
+                "administratorLogin": "[[parameters('sqlAdminUsername')]]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "operationMode": "Import"
+              }
+            }
+          ]
         }
       ]
     },
