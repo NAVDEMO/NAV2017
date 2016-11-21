@@ -69,6 +69,9 @@ PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integratio
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/O365 Integration.navx"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/Deltas/COD51401.DELTA"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/HelperFunctions.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
 
 # Download files for Task Registration
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\DEMO\Install\InstallationTask.xml"
@@ -139,13 +142,13 @@ prompt for credentials:i:1'")                                                   
 }
 $step = $next
 $next++
+('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log("Waiting for NAV Service Tier to start")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                             | Add-Content "c:\DEMO\Install\step$step.ps1"
+('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }')     | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log("NAV Service Tier started")')                                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($Office365UserName -ne "") {
-    ('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Waiting for NAV Service Tier to start")')                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("NAV Service Tier started")')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointAdminLoginname = "'+$Office365UserName+'"')                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -209,7 +212,6 @@ if ($clickonce -eq "Yes") {
 }
 
 if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
-
     # Setup Azure SQL
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("Setting up Azure SQL")')                                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
