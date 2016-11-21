@@ -177,7 +177,7 @@
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers', variables('sqlserverName'))]"
+            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
           ],
           "tags": {
             "displayName": "Demo Database NAV (10-0)"
