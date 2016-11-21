@@ -136,7 +136,7 @@
     "virtualNetworkName": "VNet",
     "server1Name": "Server1",
     "nic1Name": "Nic1",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "vnetID": "[concat('Microsoft.Network/virtualNetworks/',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
     "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
@@ -177,7 +177,7 @@
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]"
+            "[concat('Microsoft.Sql/servers', variables('sqlserverName'))]"
           ],
           "tags": {
             "displayName": "Demo Database NAV (10-0)"
@@ -194,7 +194,7 @@
               "type": "extensions",
               "apiVersion": "2014-04-01-preview",
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Demo Database NAV (10-0)')]"
+                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)')]"
               ],
               "tags": {
                 "displayName": "Import"
@@ -216,7 +216,7 @@
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers', variables('sqlserverName'))]"
+            "[concat('Microsoft.Sql/servers', variables('sqlserverName'))]"
           ],
           "tags": {
             "displayName": "Tenant Template"
@@ -233,7 +233,7 @@
               "type": "extensions",
               "apiVersion": "2014-04-01-preview",
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Tenant Template')]"
+                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Database')]"
               ],
               "tags": {
                 "displayName": "Import"
@@ -418,7 +418,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -439,8 +439,8 @@
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]",
-        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Demo Database NAV (10-0)', 'Import')]",
-        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlserverName'), 'Tenant Template', 'Import')]"
+        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)/extensions/Import')]",
+        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template/extensions/Import')]",
       ],
       "properties": {
         "diagnosticsProfile": {
