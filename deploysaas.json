@@ -203,7 +203,7 @@
                 "storageKeyType": "Primary",
                 "storageUri": "[parameters('SqlStorageAppDbUri')]",
                 "storageKey": "[parameters('SqlStorageKey')]",
-                "administratorLogin": "[[parameters('sqlAdminUsername')]]",
+                "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
               }
@@ -242,7 +242,7 @@
                 "storageKeyType": "Primary",
                 "storageUri": "[parameters('SqlStorageTenantDbUri')]",
                 "storageKey": "[parameters('SqlStorageKey')]",
-                "administratorLogin": "[[parameters('sqlAdminUsername')]]",
+                "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
               }
