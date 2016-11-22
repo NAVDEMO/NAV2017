@@ -87,32 +87,46 @@ if ($DatabaseServer -ne "localhost") {
 
         Set-NAVServerInstance $serverInstance -Stop
 
-        $defaultTenant = "default"
-        Copy-NavDatabase -SourceDatabaseName $DatabaseName -DestinationDatabaseName $defaultTenant
+        Copy-NavDatabase -SourceDatabaseName $DatabaseName -DestinationDatabaseName "Tenant Template"
         Remove-NavDatabase -DatabaseName $DatabaseName
-        Export-NAVApplication -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $defaultTenant -DestinationDatabaseName $DatabaseName -ServiceAccount "NT AUTHORITY\Network Service"
+        Export-NAVApplication -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName "Tenant Template" -DestinationDatabaseName $DatabaseName -ServiceAccount "NT AUTHORITY\Network Service"
         Set-NAVServerConfiguration $serverInstance -KeyName DatabaseName -KeyValue ""
         Set-NAVServerInstance $serverInstance -Start
 
         Mount-NAVApplication $serverInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Force
 
         # Change Tenant Id in Database
-        Set-NavDatabaseTenantId -DatabaseName $defaultTenant -TenantId $defaultTenant
-        Remove-NAVApplication -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $defaultTenant -Force
-        Start-Sleep -Seconds 30
-        Copy-NavDatabase -SourceDatabaseName $defaultTenant -DestinationDatabaseName "Tenant Template"
-
-        if ($SharePointInstallFolder) {
-            $SharePointSiteUrl = "$SharePointUrl/sites/$defaultTenant"
-            # Calculated            $FinanceManagementName = "FinanceManagement"            $FinanceManagementSiteUrl = "$SharePointSiteUrl/$FinanceManagementName"            $ServiceManagementName = "ServiceManagement"            $ServiceManagementSiteUrl = "$SharePointSiteUrl/$ServiceManagementName"            $OrderProcessingName = "OrderProcessing"            $OrderProcessingSiteUrl = "$SharePointSiteUrl/$OrderProcessingName"            $SalesProcessName = "Sales"            $SalesProcessSiteUrl = "$SharePointSiteUrl/$SalesProcessName"            Mount-NAVTenant $serverInstance -Id $defaultTenant -AllowAppDatabaseWrite -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $defaultTenant -AlternateId @($SharePointSiteUrl, $FinanceManagementSiteUrl, $ServiceManagementSiteUrl, $OrderProcessingSiteUrl, $SalesProcessSiteUrl)
-        } else {
-            Mount-NAVTenant $serverInstance -Id $defaultTenant -AllowAppDatabaseWrite -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $defaultTenant
-        }
-        $changesettings = $true
+        Remove-NAVApplication -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName "Tenant Template" -Force
     }
 }
 
-if ($changesettings) {
+[array]$tenants = Get-NAVTenant -ServerInstance $ServerInstance
+if (!($tenants)) {
+
+    Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $TenantID
+    Write-Host -ForegroundColor Yellow "Mounting tenant"
+
+    New-Item "C:\MT\$TenantID" -ItemType Directory -Force -ErrorAction Ignore
+
+    # Change Tenant Id in Database
+    Set-NavDatabaseTenantId -DatabaseName $TenantID -TenantId $TenantID
+
+    Write-Host -ForegroundColor Yellow "Mounting tenant"
+    if ($SharePointInstallFolder) {
+        $SharePointSiteUrl = "$SharePointUrl/sites/$TenantID"
+        $FinanceManagementName = "FinanceManagement"        $FinanceManagementSiteUrl = "$SharePointSiteUrl/$FinanceManagementName"        $ServiceManagementName = "ServiceManagement"        $ServiceManagementSiteUrl = "$SharePointSiteUrl/$ServiceManagementName"        $OrderProcessingName = "OrderProcessing"        $OrderProcessingSiteUrl = "$SharePointSiteUrl/$OrderProcessingName"        $SalesProcessName = "Sales"        $SalesProcessSiteUrl = "$SharePointSiteUrl/$SalesProcessName"
+        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID -AlternateId @($SharePointSiteUrl, $FinanceManagementSiteUrl, $ServiceManagementSiteUrl, $OrderProcessingSiteUrl, $SalesProcessSiteUrl)
+    } else {
+        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID
+    }
+    
+    Write-Host -ForegroundColor Yellow "Synchronizing tenant"
+    Sync-NAVTenant -Tenant $TenantID -Mode ForceSync -ServerInstance $serverInstance -Force
+    
+    Write-Host -ForegroundColor Yellow "Creating Click-Once manifest"
+    New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
+    Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
+
     Set-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $defaultTenant
 
     # Change global ClientUserSettings
@@ -121,14 +135,16 @@ if ($changesettings) {
     $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $defaultTenant
     $ClientUserSettings.Save($ClientUserSettingsFile)
     
-    $vmadmin = $env:USERNAME
+    if ([Environment]::UserName -ne "SYSTEM") {
+        $vmadmin = $env:USERNAME
 
-    # Change vmadmin ClientUserSettings
-    $ClientUserSettingsFile = "C:\Users\$vmadmin\AppData\Roaming\Microsoft\Microsoft Dynamics NAV\$NavVersion\ClientUserSettings.config"
-    if (Test-Path -Path $ClientUserSettingsFile) {
-        $ClientUserSettings = [xml](Get-Content $ClientUserSettingsFile)
-        $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $defaultTenant
-        $ClientUserSettings.Save($ClientUserSettingsFile)
+        # Change vmadmin ClientUserSettings
+        $ClientUserSettingsFile = "C:\Users\$vmadmin\AppData\Roaming\Microsoft\Microsoft Dynamics NAV\$NavVersion\ClientUserSettings.config"
+        if (Test-Path -Path $ClientUserSettingsFile) {
+            $ClientUserSettings = [xml](Get-Content $ClientUserSettingsFile)
+            $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $defaultTenant
+            $ClientUserSettings.Save($ClientUserSettingsFile)
+        }
     }
 
     # Remove Old Web Client
@@ -147,8 +163,6 @@ if ($changesettings) {
     New-DesktopShortcut -Name "Multitenancy Demo Admin Shell"     -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe" -Arguments "-NoExit & '$DemoAdminShell'"
 
     New-Item 'C:\MT' -ItemType Directory -Force -ErrorAction Ignore
-
-   # New-ClickOnceDeployment -Name $defaultTenant -PublicMachineName $PublicMachineName -TenantID $defaultTenant -clickOnceWebSiteDirectory $httpWebSiteDirectory
 }
 
 $URLsFile = "C:\Users\Public\Desktop\URLs.txt"$URLs = Get-Content $URLsFile

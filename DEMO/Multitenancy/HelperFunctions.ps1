@@ -174,20 +174,21 @@ function Copy-NavDatabase
 )
 {
     Push-Location
-    try
+
+    if (Test-NavDatabase -DatabaseName $DestinationDatabaseName)
     {
-        if (Test-NavDatabase -DatabaseName $DestinationDatabaseName)
+      Remove-NavDatabase -DatabaseName $DestinationDatabaseName
+    }
+
+
+    if (!($DatabaseServerParams.ServerInstance.StartsWith('localhost'))) {
+
+        Invoke-Sqlcmd @DatabaseServerParams -Query "CREATE Database [$DestinationDatabaseName] AS COPY OF [$SourceDatabaseName];"
+
+    } else {
+
+        try
         {
-          Remove-NavDatabase -DatabaseName $DestinationDatabaseName
-        }
-
-
-        if (!($DatabaseServerParams.ServerInstance.StartsWith('localhost'))) {
-
-            Invoke-Sqlcmd @DatabaseServerParams -Query "CREATE Database [$DestinationDatabaseName] AS COPY OF [$SourceDatabaseName];"
-
-        } else {
-
             Invoke-Sqlcmd @DatabaseServerParams -Query ("ALTER DATABASE [{0}] SET OFFLINE WITH ROLLBACK IMMEDIATE" -f $SourceDatabaseName)
     
             #copy database files for .mdf and .ldf
@@ -205,10 +206,10 @@ function Copy-NavDatabase
     
             Invoke-Sqlcmd @DatabaseServerParams -Query ("CREATE DATABASE [{0}] ON {1} FOR ATTACH" -f $DestinationDatabaseName, $Files.ToString())
         }
-    }
-    finally
-    {
-        Invoke-Sqlcmd @DatabaseServerParams -Query ("ALTER DATABASE [{0}] SET ONLINE" -f $SourceDatabaseName)
+        finally
+        {
+            Invoke-Sqlcmd @DatabaseServerParams -Query ("ALTER DATABASE [{0}] SET ONLINE" -f $SourceDatabaseName)
+        }
     }
     Pop-Location
 }
@@ -259,7 +260,9 @@ function Set-NavDatabaseTenantId
     [string]$TenantId
 )
 {
-    Invoke-sqlcmd @DatabaseServerParams -Query ('update [' + $DatabaseName + '].[dbo].[$ndo$tenantproperty] set tenantid = ''' + $TenantID + ''';')
+    if ($DatabaseServerParams.ServerInstance.StartsWith('localhost')) {
+        Invoke-sqlcmd @DatabaseServerParams -Query ('update [' + $DatabaseName + '].[dbo].[$ndo$tenantproperty] set tenantid = ''' + $TenantID + ''';')
+    }
 }
 
 function Mount-NavDatabase
@@ -272,13 +275,27 @@ function Mount-NavDatabase
     [string]$DatabaseName = $TenantId,
     [Parameter(Mandatory=$false)]
     [string[]]$AlternateId = @(),
-    [Parameter(Mandatory=$true)]
-    [string]$DatabaseServer,
     [Parameter(Mandatory=$false)]
-    [string]$DatabaseInstance = ""
+    [string[]]$AllowAppDatabaseWrite = $false
 )
 {
-    Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId
+    $Params = @{}
+    $DatabaseServer = ($DatabaseServerParams.ServerInstance+"\").Split('\')[0]
+    $DatabaseInstance = ($DatabaseServerParams.ServerInstance+"\").Split('\')[1]
+    if ($DatabaseServer -eq "localhost") {
+        if ($AllowAppDatabaseWrite) {
+            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId -AllowAppDatabaseWrite
+        } else {
+            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId
+        }
+    } else {
+        $DatabaseCredentials = New-Object PSCredential -ArgumentList $DatabaseServerParams.UserName, (ConvertTo-SecureString -String $DatabaseServerParams.Password -AsPlainText -Force)
+        if ($AllowAppDatabaseWrite) {
+            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId -DatabaseCredentials $DatabaseCredentials -AllowAppDatabaseWrite -OverwriteTenantIdInDatabase  -Force
+        } else {
+            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId -DatabaseCredentials $DatabaseCredentials -OverwriteTenantIdInDatabase -Force
+        }
+    }
 }
 
 function Get-NavDatabaseFiles
