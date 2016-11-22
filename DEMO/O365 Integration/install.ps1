@@ -130,7 +130,6 @@ $SharePointAdminCredential = New-Object System.Management.Automation.PSCredentia
 Write-Verbose "Connect to Microsoft Online Service"
 Connect-MsolService -Credential $SharePointAdminCredential -ErrorAction Stop
 
-
 $CreateSharePointPortal = ((Get-UserInput -Id CreateSharePointPortal -Text "Do you want to create a demo SharePoint Portal with App Parts from NAV? (Yes/No)" -Default "Yes") -eq "Yes")
 $sku = Get-MsolAccountSku | Select-Object -First 1
 
@@ -215,6 +214,8 @@ $publicWebBaseUrl = $publicWebBaseUrl.Replace("/$ServerInstance/", "/AAD/")
 if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
 
     Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
+
+    ('$SharePointAdminLoginName = "'+$SharePointAdminLoginName+'"') | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
 
     $AcsUri = "https://login.windows.net/$GLOBAL:AadTenant/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
     $federationMetadata = "https://login.windows.net/$GLOBAL:AadTenant/federationmetadata/2007-06/federationmetadata.xml"

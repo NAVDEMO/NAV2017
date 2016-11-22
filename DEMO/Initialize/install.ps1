@@ -185,7 +185,17 @@ $languageCode = $languageCodes[$Language]
 $vmadmin = $env:USERNAME
 
 $NavAdminUser = Get-UserInput -Id NavAdminUser -Text "NAV administrator username" -Default "admin"
-$NavAdminPassword = Get-UserInput -Id NavAdminPassword -Text "NAV administrator password"
+$NavAdminPassword = Get-Variable -name "HardcodeNavAdminPassword" -ValueOnly -ErrorAction SilentlyContinue
+if ($NavAdminPassword) {
+    $NavAdminSecurePassword = ConvertTo-SecureString -String $NavAdminPassword -AsPlainText -Force
+} else {
+    $NavAdminSecurePassword = Read-Host "NAV administrator Password" -AsSecureString
+}
+$NavAdminPassword = Decrypt-SecureString $NavAdminSecurePassword
+
+# Write NAV Admin Username and Password to multitenancy HardcodeInput
+('$NavAdminUser = "'+$NavAdminUser+'"')         | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
+('$NavAdminPassword = "'+$NavAdminPassword+'"') | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
 
 do
 {

@@ -190,6 +190,8 @@ function Copy-NavDatabase
     if (!($DatabaseServerParams.ServerInstance.StartsWith('localhost'))) {
 
         Invoke-Sqlcmd @DatabaseServerParams -Query "CREATE Database [$DestinationDatabaseName] AS COPY OF [$SourceDatabaseName];"
+        # Wait for the Database to become ready
+        Start-Sleep -Seconds 30
 
     } else {
 
