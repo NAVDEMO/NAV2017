@@ -61,28 +61,11 @@ if ($ARRisConfigured) {
     Throw-UserError -Text "Server is configured for Load Balancing. You need to apply this package before setting up Load Balancing."
 }
 
-$defaultTenant = "default"
-$changesettings = $false
-
-if ($DatabaseServer -ne "localhost") {
-    
-    # Using AzureSQL as database server
-    [array]$tenants = Get-NAVTenant -ServerInstance $ServerInstance
-    if ($tenants) {
-        Throw-UserError -Text "Server is not using SQL Express as database server. You need to apply this package before using Azure SQL."
-    }
-    
-    # AzureSQL with no tenants - create default tenant
-    $DatabaseCredentials = New-Object PSCredential -ArgumentList $DatabaseServerParams.UserName, (ConvertTo-SecureString -String $DatabaseServerParams.Password -AsPlainText -Force)
-    Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $defaultTenant
-    Mount-NAVTenant -ServerInstance $serverInstance -Id $defaultTenant -AllowAppDatabaseWrite -DatabaseServer $DatabaseServer -DatabaseName $defaultTenant -DatabaseCredentials $DatabaseCredentials -OverwriteTenantIdInDatabase -Force
-    New-NAVServerUser -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -Password (ConvertTo-SecureString -String "Coke4ever" -AsPlainText -Force)
-    New-NAVServerUserPermissionSet -ServerInstance $serverInstance -Tenant $defaultTenant -UserName "admin" -PermissionSetId "SUPER"
-    $changesettings = $true
-
-} else {
+if ($DatabaseServer -eq "localhost") {
 
     if (!$multitenant) {
+
+        # Switch to multi tenancy
         clear
 
         Set-NAVServerInstance $serverInstance -Stop
@@ -102,6 +85,9 @@ if ($DatabaseServer -ne "localhost") {
 
 [array]$tenants = Get-NAVTenant -ServerInstance $ServerInstance
 if (!($tenants)) {
+
+    # No tenants, Add default tenant
+    $TenantID = "default"
 
     Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $TenantID
     Write-Host -ForegroundColor Yellow "Mounting tenant"
@@ -125,14 +111,13 @@ if (!($tenants)) {
     
     Write-Host -ForegroundColor Yellow "Creating Click-Once manifest"
     New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
-    Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
 
-    Set-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $defaultTenant
+    Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
 
     # Change global ClientUserSettings
     $ClientUserSettingsFile = "C:\Users\All Users\Microsoft\Microsoft Dynamics NAV\$NavVersion\ClientUserSettings.config"
     $ClientUserSettings = [xml](Get-Content $ClientUserSettingsFile)
-    $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $defaultTenant
+    $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $TenantID
     $ClientUserSettings.Save($ClientUserSettingsFile)
     
     if ([Environment]::UserName -ne "SYSTEM") {
@@ -142,7 +127,7 @@ if (!($tenants)) {
         $ClientUserSettingsFile = "C:\Users\$vmadmin\AppData\Roaming\Microsoft\Microsoft Dynamics NAV\$NavVersion\ClientUserSettings.config"
         if (Test-Path -Path $ClientUserSettingsFile) {
             $ClientUserSettings = [xml](Get-Content $ClientUserSettingsFile)
-            $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $defaultTenant
+            $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $TenantID
             $ClientUserSettings.Save($ClientUserSettingsFile)
         }
     }
@@ -157,26 +142,25 @@ if (!($tenants)) {
     }
 
     New-DesktopShortcut -Name "Demo Environment Landing Page"     -TargetPath "http://$PublicMachineName" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-    New-DesktopShortcut -Name "NAV 2017 Web Client"               -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/?tenant=$defaultTenant" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-    New-DesktopShortcut -Name "NAV 2017 Tablet Client"            -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx?tenant=$defaultTenant" IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+    New-DesktopShortcut -Name "NAV 2017 Web Client"               -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/?tenant=$TenantID" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+    New-DesktopShortcut -Name "NAV 2017 Tablet Client"            -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx?tenant=$TenantID" IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     $DemoAdminShell = Join-Path $PSScriptRootV2 'MTDemoAdminShell.ps1'
     New-DesktopShortcut -Name "Multitenancy Demo Admin Shell"     -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe" -Arguments "-NoExit & '$DemoAdminShell'"
 
     New-Item 'C:\MT' -ItemType Directory -Force -ErrorAction Ignore
+
+    $URLsFile = "C:\Users\Public\Desktop\URLs.txt"    $URLs = Get-Content $URLsFile
+    
+    "Web Client URL                : https://$PublicMachineName/$serverInstance/WebClient?tenant=$TenantID"                  | Set-Content -Path $URLsFile
+    "Tablet Client URL             : https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx?tenant=$TenantID"      | Add-Content -Path $URLsFile
+    
+    if ($SharePointInstallFolder) {
+        "Web Client URL (AAD)          : https://$PublicMachineName/AAD/WebClient?tenant=$TenantID"                          | Add-Content -Path $URLsFile
+        "Tablet Client URL (AAD)       : https://$PublicMachineName/AAD/WebClient/tablet.aspx?tenant=$TenantID"              | Add-Content -Path $URLsFile
+    }
+    
+    $URLs | % { if ($_.StartsWith("NAV Admin")) { $_ | Add-Content -Path $URLsFile } }
 }
-
-$URLsFile = "C:\Users\Public\Desktop\URLs.txt"$URLs = Get-Content $URLsFile
-
-"Web Client URL                : https://$PublicMachineName/$serverInstance/WebClient?tenant=$defaultTenant"             | Set-Content -Path $URLsFile
-"Tablet Client URL             : https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx?tenant=$defaultTenant" | Add-Content -Path $URLsFile
-
-if ($SharePointInstallFolder) {
-    "Web Client URL (AAD)          : https://$PublicMachineName/AAD/WebClient?tenant=$defaultTenant"                     | Add-Content -Path $URLsFile
-    "Tablet Client URL (AAD)       : https://$PublicMachineName/AAD/WebClient/tablet.aspx?tenant=$defaultTenant"         | Add-Content -Path $URLsFile
-}
-
-$URLs | % { if ($_.StartsWith("NAV Admin")) { $_ | Add-Content -Path $URLsFile } }
-
 "Please open Multitenancy Demo Admin Shell on the desktop to add or remove tenants" | Add-Content -Path $URLsFile
 
 if ([Environment]::UserName -ne "SYSTEM") {

@@ -274,28 +274,23 @@ function Mount-NavDatabase
     [Parameter(Mandatory=$false)]
     [string]$DatabaseName = $TenantId,
     [Parameter(Mandatory=$false)]
-    [string[]]$AlternateId = @(),
-    [Parameter(Mandatory=$false)]
-    [string[]]$AllowAppDatabaseWrite = $false
+    [string[]]$AlternateId = @()
 )
 {
     $Params = @{}
+    if ($TenantId -eq "default") {
+        $Params += @{"AllowAppDatabaseWrite"=$true }
+    }
+
     $DatabaseServer = ($DatabaseServerParams.ServerInstance+"\").Split('\')[0]
     $DatabaseInstance = ($DatabaseServerParams.ServerInstance+"\").Split('\')[1]
-    if ($DatabaseServer -eq "localhost") {
-        if ($AllowAppDatabaseWrite) {
-            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId -AllowAppDatabaseWrite
-        } else {
-            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId
-        }
-    } else {
+
+    if ($DatabaseServer -ne "localhost") {
         $DatabaseCredentials = New-Object PSCredential -ArgumentList $DatabaseServerParams.UserName, (ConvertTo-SecureString -String $DatabaseServerParams.Password -AsPlainText -Force)
-        if ($AllowAppDatabaseWrite) {
-            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId -DatabaseCredentials $DatabaseCredentials -AllowAppDatabaseWrite -OverwriteTenantIdInDatabase  -Force
-        } else {
-            Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId -DatabaseCredentials $DatabaseCredentials -OverwriteTenantIdInDatabase -Force
-        }
+        $Params += @{ "DatabaseCredentials"=$DatabaseCredentials; "OverwriteTenantIdInDatabase"=$true; "Force"=$true }
     }
+
+    Mount-NAVTenant -ServerInstance $ServerInstance -DatabaseServer $DatabaseServer -DatabaseInstance $DatabaseInstance -DatabaseName $DatabaseName -Id $TenantID -AlternateId $AlternateId @Params
 }
 
 function Get-NavDatabaseFiles
