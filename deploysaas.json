@@ -438,9 +438,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]",
-        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)/extensions/Import')]",
-        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template/extensions/Import')]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]"
       ],
       "properties": {
         "diagnosticsProfile": {
@@ -1126,7 +1124,9 @@
         "displayName": "PowerShellScript2"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
+        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)/extensions/Import')]",
+        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template/extensions/Import')]",
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
