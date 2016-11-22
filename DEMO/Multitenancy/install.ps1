@@ -12,6 +12,7 @@ $DatabaseName = (Get-ChildItem -Path $DatabaseFolder -Filter "*.bak" -File).Base
 . ("c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\NavAdminTool.ps1")
 . ("C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\NavModelTools.ps1")
 Import-Module (Join-Path $DVDFolder "WindowsPowerShellScripts\Cloud\NAVAdministration\NAVAdministration.psm1")
+Import-Module (Join-Path $PSScriptRootV2 "MTDemoAdminShell.psm1")
 
 $httpWebSiteDirectory = "C:\inetpub\wwwroot\http"
 $CustomSettingsConfigFile = "c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\CustomSettings.config"
@@ -90,27 +91,30 @@ if (!($tenants)) {
     # No tenants, Add default tenant
     $TenantID = "default"
 
-    Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $TenantID
-    Write-Host -ForegroundColor Yellow "Mounting tenant"
+#    Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $TenantID
+#    Write-Host -ForegroundColor Yellow "Mounting tenant"
+#
+#    New-Item "C:\MT\$TenantID" -ItemType Directory -Force -ErrorAction Ignore
+#
+#    # Change Tenant Id in Database
+#    Set-NavDatabaseTenantId -DatabaseName $TenantID -TenantId $TenantID
+#
+#    Write-Host -ForegroundColor Yellow "Mounting tenant"
+#    if ($SharePointInstallFolder) {
+#        $SharePointSiteUrl = "$SharePointUrl/sites/$TenantID"
+#        $FinanceManagementName = "FinanceManagement"#        $FinanceManagementSiteUrl = "$SharePointSiteUrl/$FinanceManagementName"#        $ServiceManagementName = "ServiceManagement"#        $ServiceManagementSiteUrl = "$SharePointSiteUrl/$ServiceManagementName"#        $OrderProcessingName = "OrderProcessing"#        $OrderProcessingSiteUrl = "$SharePointSiteUrl/$OrderProcessingName"#        $SalesProcessName = "Sales"#        $SalesProcessSiteUrl = "$SharePointSiteUrl/$SalesProcessName"#
+#        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID -AlternateId @($SharePointSiteUrl, $FinanceManagementSiteUrl, $ServiceManagementSiteUrl, $OrderProcessingSiteUrl, $SalesProcessSiteUrl)
+#    } else {
+#        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID
+#    }
+#    
+#    Write-Host -ForegroundColor Yellow "Synchronizing tenant"
+#    Sync-NAVTenant -Tenant $TenantID -Mode ForceSync -ServerInstance $serverInstance -Force
+#    
+#    Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
 
-    New-Item "C:\MT\$TenantID" -ItemType Directory -Force -ErrorAction Ignore
 
-    # Change Tenant Id in Database
-    Set-NavDatabaseTenantId -DatabaseName $TenantID -TenantId $TenantID
-
-    Write-Host -ForegroundColor Yellow "Mounting tenant"
-    if ($SharePointInstallFolder) {
-        $SharePointSiteUrl = "$SharePointUrl/sites/$TenantID"
-        $FinanceManagementName = "FinanceManagement"        $FinanceManagementSiteUrl = "$SharePointSiteUrl/$FinanceManagementName"        $ServiceManagementName = "ServiceManagement"        $ServiceManagementSiteUrl = "$SharePointSiteUrl/$ServiceManagementName"        $OrderProcessingName = "OrderProcessing"        $OrderProcessingSiteUrl = "$SharePointSiteUrl/$OrderProcessingName"        $SalesProcessName = "Sales"        $SalesProcessSiteUrl = "$SharePointSiteUrl/$SalesProcessName"
-        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID -AlternateId @($SharePointSiteUrl, $FinanceManagementSiteUrl, $ServiceManagementSiteUrl, $OrderProcessingSiteUrl, $SalesProcessSiteUrl)
-    } else {
-        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID
-    }
-    
-    Write-Host -ForegroundColor Yellow "Synchronizing tenant"
-    Sync-NAVTenant -Tenant $TenantID -Mode ForceSync -ServerInstance $serverInstance -Force
-    
-    Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
+    New-DemoTenant -TenantID $TenantID
 
     # Change global ClientUserSettings
     Log("Modify public ClientUserSettings")
@@ -163,8 +167,6 @@ if (!($tenants)) {
     $URLs | % { if ($_.StartsWith("NAV Admin")) { $_ | Add-Content -Path $URLsFile } }
     "Please open Multitenancy Demo Admin Shell on the desktop to add or remove tenants" | Add-Content -Path $URLsFile
 
-    Write-Host -ForegroundColor Yellow "Creating Click-Once manifest"
-    New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
 }
 
 if ([Environment]::UserName -ne "SYSTEM") {

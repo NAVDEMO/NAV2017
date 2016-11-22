@@ -5,6 +5,7 @@ $verbosePreference = 'SilentlyContinue'
 $errorActionPreference = 'Inquire'
 
 $SharePointInstallFolder = ""
+$SharePointAdminLoginName = ""
 $HardcodeFile = (Join-Path $PSScriptRootV2 'HardcodeInput.ps1')
 if (Test-Path -Path $HardcodeFile) {
     . $HardcodeFile
@@ -65,8 +66,11 @@ function New-DemoTenant
         Write-Host -ForegroundColor Yellow "Synchronizing tenant"
         Sync-NAVTenant -Tenant $TenantID -Mode ForceSync -ServerInstance $serverInstance -Force
         
-        Write-Host -ForegroundColor Yellow "Creating Click-Once manifest"
-        New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
+        if ([Environment]::UserName -ne "SYSTEM") {
+            Write-Host -ForegroundColor Yellow "Creating Click-Once manifest"
+            New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
+        }
+
         Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
 
         if ($SharePointInstallFolder) {
@@ -100,15 +104,13 @@ function New-DemoTenant
         $createuser = $true
         Get-NavServerUser $serverInstance -Tenant $TenantID | % {
             if ($_.UserName -eq $NavAdminUser) {
-                $NewPassword = $NavAdminPassword
-                $UserName = $_.UserName
-                Set-NavServerUser $serverInstance -Tenant $TenantId -UserName $UserName -Password (ConvertTo-SecureString -String $NewPassword -AsPlainText -Force) @SharePointParams
+                Set-NavServerUser $serverInstance -Tenant $TenantId -UserName $NavAdminUser -Password (ConvertTo-SecureString -String $NavAdminPassword -AsPlainText -Force) @SharePointParams
                 $createuser = $false
             }
         }
         if ($createuser) {
-            New-NavServerUser $serverInstance -Tenant $TenantId -UserName $UserName -Password (ConvertTo-SecureString -String $NewPassword -AsPlainText -Force) @SharePointParams
-            New-NavServerUserPermissionSet $serverInstance -Tenant $TenantID -UserName $UserName -PermissionSetId "SUPER"
+            New-NavServerUser $serverInstance -Tenant $TenantId -UserName $NavAdminUser -Password (ConvertTo-SecureString -String $NavAdminPassword -AsPlainText -Force) @SharePointParams
+            New-NavServerUserPermissionSet $serverInstance -Tenant $TenantID -UserName $NavAdminUser -PermissionSetId "SUPER"
         }
 
         Get-Content $URLsFile | Write-Host -ForegroundColor Yellow
