@@ -103,9 +103,13 @@ Log("Creating Installation Scripts")
 
 $step = 1
 $next = $step+1
-#('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "NT AUTHORITY\SYSTEM" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Restart-Computer -Force')                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+$step = $next
+$next++
 ('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
@@ -139,6 +143,7 @@ prompt for credentials:i:1'")                                                   
     ('Log("Install new Azure PowerShell CmdLets and reboot")')                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')               | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
+
 $step = $next
 $next++
 ('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -235,9 +240,7 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
 ('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 
-#Log("Register installation task")
-#Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
-#Log("Restart computer and start Installation tasks")
-#Restart-Computer -Force
-
-. "c:\demo\install\step1.ps1"
+Log("Register installation task")
+Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
+Log("Restart computer and start Installation tasks")
+Restart-Computer -Force
