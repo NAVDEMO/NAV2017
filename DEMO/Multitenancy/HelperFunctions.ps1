@@ -1,4 +1,8 @@
-﻿function Throw-UserError
+﻿function Log([string]$line) { 
+    ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt"
+}
+
+function Throw-UserError
 {
     Param
     (
@@ -63,6 +67,7 @@ function New-ClickOnceDeployment
         [string]$clickOnceWebSiteDirectory
     )
 
+    Log("Creating Click-Once manifest for $TenantID")
     $clickOnceDirectory = Join-Path $clickOnceWebSiteDirectory $Name
     $webSiteUrl = ("http://" + $PublicMachineName + "/" + $Name)
 
@@ -173,6 +178,7 @@ function Copy-NavDatabase
     [string]$DestinationDatabaseName
 )
 {
+    Log("Copy NAV Database from $SourceDatabaseName to $DestinationDatabaseName")
     Push-Location
 
     if (Test-NavDatabase -DatabaseName $DestinationDatabaseName)
@@ -277,6 +283,7 @@ function Mount-NavDatabase
     [string[]]$AlternateId = @()
 )
 {
+    Log("Mount NAV Database for $TenantID on server ${DatabaseServerParams.ServerInstance}")
     $Params = @{}
     if ($TenantId -eq "default") {
         $Params += @{"AllowAppDatabaseWrite"=$true }

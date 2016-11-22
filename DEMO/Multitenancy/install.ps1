@@ -66,6 +66,7 @@ if ($DatabaseServer -eq "localhost") {
     if (!$multitenant) {
 
         # Switch to multi tenancy
+        Log("Switch to Multi-tenancy")
         clear
 
         Set-NAVServerInstance $serverInstance -Stop
@@ -109,12 +110,10 @@ if (!($tenants)) {
     Write-Host -ForegroundColor Yellow "Synchronizing tenant"
     Sync-NAVTenant -Tenant $TenantID -Mode ForceSync -ServerInstance $serverInstance -Force
     
-    Write-Host -ForegroundColor Yellow "Creating Click-Once manifest"
-    New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
-
     Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
 
     # Change global ClientUserSettings
+    Log("Modify public ClientUserSettings")
     $ClientUserSettingsFile = "C:\Users\All Users\Microsoft\Microsoft Dynamics NAV\$NavVersion\ClientUserSettings.config"
     $ClientUserSettings = [xml](Get-Content $ClientUserSettingsFile)
     $ClientUserSettings.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value= $TenantID
@@ -122,8 +121,8 @@ if (!($tenants)) {
     
     if ([Environment]::UserName -ne "SYSTEM") {
         $vmadmin = $env:USERNAME
-
         # Change vmadmin ClientUserSettings
+        Log("Modify ClientUserSettings for $vmadmin")
         $ClientUserSettingsFile = "C:\Users\$vmadmin\AppData\Roaming\Microsoft\Microsoft Dynamics NAV\$NavVersion\ClientUserSettings.config"
         if (Test-Path -Path $ClientUserSettingsFile) {
             $ClientUserSettings = [xml](Get-Content $ClientUserSettingsFile)
@@ -132,6 +131,7 @@ if (!($tenants)) {
         }
     }
 
+    Log("Remove old Desktop Shortcuts")
     # Remove Old Web Client
     get-item C:\Users\Public\Desktop\*.lnk | % {
         $Shell =  New-object -comobject WScript.Shell
@@ -141,6 +141,7 @@ if (!($tenants)) {
         }
     }
 
+    Log("Setup Desktop Shortcuts")
     New-DesktopShortcut -Name "Demo Environment Landing Page"     -TargetPath "http://$PublicMachineName" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     New-DesktopShortcut -Name "NAV 2017 Web Client"               -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/?tenant=$TenantID" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     New-DesktopShortcut -Name "NAV 2017 Tablet Client"            -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx?tenant=$TenantID" IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
@@ -160,8 +161,11 @@ if (!($tenants)) {
     }
     
     $URLs | % { if ($_.StartsWith("NAV Admin")) { $_ | Add-Content -Path $URLsFile } }
+    "Please open Multitenancy Demo Admin Shell on the desktop to add or remove tenants" | Add-Content -Path $URLsFile
+
+    Write-Host -ForegroundColor Yellow "Creating Click-Once manifest"
+    New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
 }
-"Please open Multitenancy Demo Admin Shell on the desktop to add or remove tenants" | Add-Content -Path $URLsFile
 
 if ([Environment]::UserName -ne "SYSTEM") {
     Get-Content $URLsFile | Write-Host -ForegroundColor Yellow
