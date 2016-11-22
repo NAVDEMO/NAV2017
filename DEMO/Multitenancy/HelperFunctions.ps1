@@ -283,7 +283,7 @@ function Mount-NavDatabase
     [string[]]$AlternateId = @()
 )
 {
-    Log("Mount NAV Database for $TenantID on server ${DatabaseServerParams.ServerInstance}")
+    Log("Mount NAV Database for $TenantID on server "+$DatabaseServerParams.ServerInstance)
     $Params = @{}
     if ($TenantId -eq "default") {
         $Params += @{"AllowAppDatabaseWrite"=$true }
