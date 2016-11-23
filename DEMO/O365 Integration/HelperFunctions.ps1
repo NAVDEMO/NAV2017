@@ -140,6 +140,10 @@ function Setup-AadApps
         [string]$SharePointAdminPassword
     )
 
+    # Load ADAL Assemblies
+    $adal = "${env:ProgramFiles(x86)}\Microsoft SDKs\Azure\PowerShell\ServiceManagement\Azure\Services\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+    [System.Reflection.Assembly]::LoadFrom($adal) | Out-Null
+
     # Login to AzureRm
     $SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
     $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
@@ -169,11 +173,22 @@ function Setup-AadApps
     $IdentifierUri = "${PublicWebBaseUrl}"
     Get-AzureRmADApplication -IdentifierUri $IdentifierUri | Remove-AzureRmADApplication -Force
 
-  
+    # Create AesKey
+    $GLOBAL:SsoAdAppKeyValue = Create-AesKey
+
+    # Create PSADCredential
+    $psadCredential = New-Object Microsoft.Azure.Commands.Resources.Models.ActiveDirectory.PSADPasswordCredential
+    $startDate = Get-Date
+    $psadCredential.StartDate = $startDate
+    $psadCredential.EndDate = $startDate.AddYears(10)
+    $psadCredential.KeyId = [guid]::NewGuid()
+    $psadCredential.Password = $GLOBAL:SsoAdAppKeyValue
+    
     # Create SSO AD Application
     $ssoAdApp = New-AzureRmADApplication –DisplayName ("NAV 2017 WebClient for "+$publicWebBaseUrl.Split("/")[2]) `
                                          -HomePage $publicWebBaseUrl `
                                          -IdentifierUris $publicWebBaseUrl `
+                                         -PasswordCredentials $psadCredential `
                                          -ReplyUrls "$publicWebBaseUrl"
     
     $GLOBAL:SsoAdAppId = $ssoAdApp.ApplicationId
@@ -263,10 +278,6 @@ function Setup-AadApps
     # Create AesKey
     $GLOBAL:PowerBiAdAppKeyValue = Create-AesKey
 
-    # Load ADAL Assemblies
-    $adal = "${env:ProgramFiles(x86)}\Microsoft SDKs\Azure\PowerShell\ServiceManagement\Azure\Services\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
-    [System.Reflection.Assembly]::LoadFrom($adal) | Out-Null
-    
     # Create PSADCredential
     $psadCredential = New-Object Microsoft.Azure.Commands.Resources.Models.ActiveDirectory.PSADPasswordCredential
     $startDate = Get-Date

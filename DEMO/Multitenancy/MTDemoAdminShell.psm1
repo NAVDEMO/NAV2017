@@ -48,7 +48,6 @@ function New-DemoTenant
     } else {
         Write-Host -ForegroundColor Yellow "Copying tenant template Database"
         Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $TenantID
-        Write-Host -ForegroundColor Yellow "Mounting tenant"
 
         # Change Tenant Id in Database
         Set-NavDatabaseTenantId -DatabaseName $TenantID -TenantId $TenantID
@@ -90,6 +89,7 @@ function New-DemoTenant
 
         Write-Host 
 
+        New-Item "C:\MT\$TenantID" -ItemType Directory -Force -ErrorAction Ignore
         $URLsFile = ("C:\MT\$TenantID\URLs.txt")        "Web Client URL                : https://$PublicMachineName/NAV/WebClient?tenant=$TenantID"                 | Set-Content -Path $URLsFile
         "Tablet Client URL             : https://$PublicMachineName/NAV/WebClient/tablet.aspx?tenant=$TenantID"     | Add-Content -Path $URLsFile
        ("Device URL                    : https://$PublicMachineName/NAV"+"?tenant=$TenantID")                       | Add-Content -Path $URLsFile

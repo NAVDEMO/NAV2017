@@ -89,6 +89,9 @@ if ($DatabaseServer -eq "localhost") {
 [array]$tenants = Get-NAVTenant -ServerInstance $ServerInstance
 if (!($tenants)) {
 
+    # Create MT folder  
+    New-Item 'C:\MT' -ItemType Directory -Force -ErrorAction Ignore
+
     # No tenants, Add default tenant
     $TenantID = "default"
     New-DemoTenant -TenantID $TenantID
@@ -129,9 +132,6 @@ if (!($tenants)) {
     $DemoAdminShell = Join-Path $PSScriptRootV2 'MTDemoAdminShell.ps1'
     New-DesktopShortcut -Name "Multitenancy Demo Admin Shell"     -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe" -Arguments "-NoExit & '$DemoAdminShell'"
 
-    
-    New-Item 'C:\MT' -ItemType Directory -Force -ErrorAction Ignore
-
     $URLsFile = "C:\Users\Public\Desktop\URLs.txt"    $URLs = Get-Content $URLsFile
     
     "Web Client URL                : https://$PublicMachineName/$serverInstance/WebClient?tenant=$TenantID"                  | Set-Content -Path $URLsFile
@@ -148,9 +148,8 @@ if (!($tenants)) {
     $URLs | % { if ($_.StartsWith("NAV Admin")) { $_ | Add-Content -Path $URLsFile } }
     "Please open Multitenancy Demo Admin Shell on the desktop to add or remove tenants" | Add-Content -Path $URLsFile
 
-}
-
-if ([Environment]::UserName -ne "SYSTEM") {
-    Get-Content $URLsFile | Write-Host -ForegroundColor Yellow
-    & notepad.exe $URLsFile
+    if ([Environment]::UserName -ne "SYSTEM") {
+        Get-Content $URLsFile | Write-Host -ForegroundColor Yellow
+        & notepad.exe $URLsFile
+    }
 }
