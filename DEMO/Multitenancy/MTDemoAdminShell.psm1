@@ -99,7 +99,7 @@ function New-DemoTenant
 
         $SharePointParams = @{}
         if ($SharePointAdminLoginName) {
-            $SharePointParams += @{"SharePointAdminLoginName" = "$SharePointAdminLoginName"}
+            $SharePointParams += @{"AuthenticationEmail" = "$SharePointAdminLoginName"}
         }
         $createuser = $true
         Get-NavServerUser $serverInstance -Tenant $TenantID | % {

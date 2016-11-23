@@ -90,30 +90,6 @@ if (!($tenants)) {
 
     # No tenants, Add default tenant
     $TenantID = "default"
-
-#    Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $TenantID
-#    Write-Host -ForegroundColor Yellow "Mounting tenant"
-#
-#    New-Item "C:\MT\$TenantID" -ItemType Directory -Force -ErrorAction Ignore
-#
-#    # Change Tenant Id in Database
-#    Set-NavDatabaseTenantId -DatabaseName $TenantID -TenantId $TenantID
-#
-#    Write-Host -ForegroundColor Yellow "Mounting tenant"
-#    if ($SharePointInstallFolder) {
-#        $SharePointSiteUrl = "$SharePointUrl/sites/$TenantID"
-#        $FinanceManagementName = "FinanceManagement"#        $FinanceManagementSiteUrl = "$SharePointSiteUrl/$FinanceManagementName"#        $ServiceManagementName = "ServiceManagement"#        $ServiceManagementSiteUrl = "$SharePointSiteUrl/$ServiceManagementName"#        $OrderProcessingName = "OrderProcessing"#        $OrderProcessingSiteUrl = "$SharePointSiteUrl/$OrderProcessingName"#        $SalesProcessName = "Sales"#        $SalesProcessSiteUrl = "$SharePointSiteUrl/$SalesProcessName"#
-#        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID -AlternateId @($SharePointSiteUrl, $FinanceManagementSiteUrl, $ServiceManagementSiteUrl, $OrderProcessingSiteUrl, $SalesProcessSiteUrl)
-#    } else {
-#        Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID
-#    }
-#    
-#    Write-Host -ForegroundColor Yellow "Synchronizing tenant"
-#    Sync-NAVTenant -Tenant $TenantID -Mode ForceSync -ServerInstance $serverInstance -Force
-#    
-#    Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
-
-
     New-DemoTenant -TenantID $TenantID
 
     # Change global ClientUserSettings
