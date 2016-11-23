@@ -6,6 +6,7 @@ $errorActionPreference = 'Inquire'
 
 $SharePointInstallFolder = ""
 $SharePointAdminLoginName = ""
+$CreateSharePointPortal = $false
 $HardcodeFile = (Join-Path $PSScriptRootV2 'HardcodeInput.ps1')
 if (Test-Path -Path $HardcodeFile) {
     . $HardcodeFile
@@ -49,13 +50,11 @@ function New-DemoTenant
         Copy-NavDatabase -SourceDatabaseName "Tenant Template" -DestinationDatabaseName $TenantID
         Write-Host -ForegroundColor Yellow "Mounting tenant"
 
-        New-Item "C:\MT\$TenantID" -ItemType Directory -Force -ErrorAction Ignore
-
         # Change Tenant Id in Database
         Set-NavDatabaseTenantId -DatabaseName $TenantID -TenantId $TenantID
 
         Write-Host -ForegroundColor Yellow "Mounting tenant"
-        if ($SharePointInstallFolder) {
+        if ($CreateSharePointPortal) {
             $SharePointSiteUrl = "$SharePointUrl/sites/$TenantID"
             $FinanceManagementName = "FinanceManagement"            $FinanceManagementSiteUrl = "$SharePointSiteUrl/$FinanceManagementName"            $ServiceManagementName = "ServiceManagement"            $ServiceManagementSiteUrl = "$SharePointSiteUrl/$ServiceManagementName"            $OrderProcessingName = "OrderProcessing"            $OrderProcessingSiteUrl = "$SharePointSiteUrl/$OrderProcessingName"            $SalesProcessName = "Sales"            $SalesProcessSiteUrl = "$SharePointSiteUrl/$SalesProcessName"
             Mount-NavDatabase -DatabaseName $TenantID -TenantId $TenantID -AlternateId @($SharePointSiteUrl, $FinanceManagementSiteUrl, $ServiceManagementSiteUrl, $OrderProcessingSiteUrl, $SalesProcessSiteUrl)
@@ -73,7 +72,7 @@ function New-DemoTenant
 
         Add-Content -Path  "$httpWebSiteDirectory\tenants.txt" -Value $TenantID
 
-        if ($SharePointInstallFolder) {
+        if ($CreateSharePointPortal) {
             Write-Host -ForegroundColor Yellow "Creating SharePoint Portal"
             CreatePortal -SharePointInstallFolder $SharePointInstallFolder `
                          -SharePointUrl $SharePointUrl `
@@ -91,11 +90,22 @@ function New-DemoTenant
 
         Write-Host 
 
-        $URLsFile = ("C:\MT\$TenantID\URLs.txt")        "Web Client URL                : https://$PublicMachineName/$ServerInstance/WebClient?tenant=$TenantID"             | Add-Content -Path $URLsFile
-       ("Device URL                    : https://$PublicMachineName/$ServerInstance"+"?tenant=$TenantID")                   | Add-Content -Path $URLsFile
-       ("Device (configure) URL        : ms-dynamicsnav://$PublicMachineName/$ServerInstance"+"?tenant=$TenantID")          | Add-Content -Path $URLsFile
-        "Windows Client (local) URL    : dynamicsnav://///?tenant=$TenantID"                                                | Add-Content -Path $URLsFile
-        "Windows Client (clickonce) URL: http://$PublicMachineName/$TenantID"                                               | Add-Content -Path $URLsFile
+        $URLsFile = ("C:\MT\$TenantID\URLs.txt")        "Web Client URL                : https://$PublicMachineName/NAV/WebClient?tenant=$TenantID"                 | Set-Content -Path $URLsFile
+        "Tablet Client URL             : https://$PublicMachineName/NAV/WebClient/tablet.aspx?tenant=$TenantID"     | Add-Content -Path $URLsFile
+       ("Device URL                    : https://$PublicMachineName/NAV"+"?tenant=$TenantID")                       | Add-Content -Path $URLsFile
+       ("Device (configure) URL        : ms-dynamicsnav://$PublicMachineName/NAV"+"?tenant=$TenantID")              | Add-Content -Path $URLsFile
+    
+        if ($SharePointAdminLoginName) {
+            "Web Client URL (AAD)          : https://$PublicMachineName/AAD/WebClient?tenant=$TenantID"             | Add-Content -Path $URLsFile
+            "Tablet Client URL (AAD)       : https://$PublicMachineName/AAD/WebClient/tablet.aspx?tenant=$TenantID" | Add-Content -Path $URLsFile
+           ("Device URL                    : https://$PublicMachineName/AAD"+"?tenant=$TenantID")                   | Add-Content -Path $URLsFile
+           ("Device (configure) URL        : ms-dynamicsnav://$PublicMachineName/AAD"+"?tenant=$TenantID")          | Add-Content -Path $URLsFile
+        }
+        if ($CreateSharePointPortal) {
+            "SharePoint Portal             : $SharePointUrl/sites/$TenantID"                                        | Add-Content -Path $URLsFile
+        }
+        "Windows Client (local) URL    : dynamicsnav://///?tenant=$TenantID"                                        | Add-Content -Path $URLsFile
+        "Windows Client (clickonce) URL: http://$PublicMachineName/$TenantID"                                       | Add-Content -Path $URLsFile
 
         $SharePointParams = @{}
         if ($SharePointAdminLoginName) {

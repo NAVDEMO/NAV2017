@@ -27,6 +27,8 @@ $DatabaseInstance = $config.SelectSingleNode("//appSettings/add[@key='DatabaseIn
 $ARRisConfigured = (Get-WebBinding -Name "Microsoft Dynamics NAV 2017 Web Client" | Where-Object { $_.bindingInformation -eq "*:8443:" })
 
 $SharePointInstallFolder = ""
+$SharePointAdminLoginName = ""
+$CreateSharePointPortal = $false
 $DatabaseServerInstance = "$DatabaseServer"
 if ($DatabaseInstance -ne "") {
     $DatabaseServerInstance += "\$DatabaseInstance"
@@ -41,7 +43,6 @@ if (Test-Path -Path $HardcodeFile) {
     . $HardcodeFile
 }
 
-
 # Is it OK to apply this package at this time
 if (!$thumbprint) {
     Throw-UserError -Text "You need to run the initialize Server script before applying demo packages."
@@ -49,7 +50,7 @@ if (!$thumbprint) {
 
 $webServerInstance = Get-NAVWebServerInstance -WebServerInstance AAD
 if ($webServerInstance) {
-    if (!$SharePointInstallFolder) {
+    if ($CreateSharePointPortal -and $SharePointInstallFolder -eq "") {
         Throw-UserError -Text "If you want to apply Multitenancy after installing O365 integration pack, you need to answer Yes to the question whether you want to install Multitenancy while installing O365 Integration."
     }
 }
@@ -128,6 +129,7 @@ if (!($tenants)) {
     $DemoAdminShell = Join-Path $PSScriptRootV2 'MTDemoAdminShell.ps1'
     New-DesktopShortcut -Name "Multitenancy Demo Admin Shell"     -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe" -Arguments "-NoExit & '$DemoAdminShell'"
 
+    
     New-Item 'C:\MT' -ItemType Directory -Force -ErrorAction Ignore
 
     $URLsFile = "C:\Users\Public\Desktop\URLs.txt"    $URLs = Get-Content $URLsFile
@@ -135,9 +137,12 @@ if (!($tenants)) {
     "Web Client URL                : https://$PublicMachineName/$serverInstance/WebClient?tenant=$TenantID"                  | Set-Content -Path $URLsFile
     "Tablet Client URL             : https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx?tenant=$TenantID"      | Add-Content -Path $URLsFile
     
-    if ($SharePointInstallFolder) {
+    if ($SharePointAdminLoginName) {
         "Web Client URL (AAD)          : https://$PublicMachineName/AAD/WebClient?tenant=$TenantID"                          | Add-Content -Path $URLsFile
         "Tablet Client URL (AAD)       : https://$PublicMachineName/AAD/WebClient/tablet.aspx?tenant=$TenantID"              | Add-Content -Path $URLsFile
+    }
+    if ($CreateSharePointPortal) {
+        "SharePoint Portal             : $SharePointUrl/sites/$TenantID"                                                     | Add-Content -Path $URLsFile
     }
     
     $URLs | % { if ($_.StartsWith("NAV Admin")) { $_ | Add-Content -Path $URLsFile } }

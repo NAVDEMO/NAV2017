@@ -137,6 +137,7 @@ if ($CreateSharePointPortal) {
 
     $SharePointMultitenant = ((Get-UserInput -Id SharePointMultitenant -Text "Is the SharePoint portal going to be integrated to a multitenant NAV? (Yes/No)" -Default "No") -eq "Yes")
 
+
     do {
         $err = $false
         $SharePointUrl = ('https://' + $sku.AccountName + '.sharepoint.com')
@@ -160,8 +161,6 @@ if ($CreateSharePointPortal) {
     if ($SharePointMultitenant) {
         $SharePointSite = "default"
         ('$SharePointInstallFolder = "' + $PSScriptRootV2 + '"')            | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
-        ('$SharePointAdminLoginname = "' + $SharePointAdminLoginname + '"') | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
-        ('$SharePointAdminPassword = "' + $SharePointAdminPassword + '"')   | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
         ('$SharePointUrl = "' + $SharePointUrl + '"')                       | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
         ('$SharePointLanguageFile = "' + $LanguageFile + '"')               | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
     } else {
@@ -215,7 +214,9 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
 
     Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
 
-    ('$SharePointAdminLoginName = "'+$SharePointAdminLoginName+'"') | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
+    ('$CreateSharePointPortal = '+$CreateSharePointPortal)            | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
+    ('$SharePointAdminLoginName = "'+$SharePointAdminLoginName+'"')   | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
+    ('$SharePointAdminPassword = "' + $SharePointAdminPassword + '"') | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
 
     $AcsUri = "https://login.windows.net/$GLOBAL:AadTenant/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
     $federationMetadata = "https://login.windows.net/$GLOBAL:AadTenant/federationmetadata/2007-06/federationmetadata.xml"
