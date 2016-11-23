@@ -234,8 +234,8 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
 
 ('Log("Cleaning up")')                                                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 

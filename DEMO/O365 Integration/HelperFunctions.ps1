@@ -211,6 +211,10 @@ function Setup-AadApps
             @{
               "id" = "a42657d6-7f20-40e3-b6f0-cee03008a62a";
               "type" = "Scope"
+            },
+            @{
+              "id": "5778995a-e1bf-45b8-affa-663a9f3f4d04";
+              "type": "Role"
             }
             )
          }
