@@ -214,7 +214,7 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
 
     Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
 
-    ('$CreateSharePointPortal = '+$CreateSharePointPortal)            | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
+    ('$CreateSharePointPortal = $'+$CreateSharePointPortal)           | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
     ('$SharePointAdminLoginName = "'+$SharePointAdminLoginName+'"')   | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
     ('$SharePointAdminPassword = "' + $SharePointAdminPassword + '"') | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
 
