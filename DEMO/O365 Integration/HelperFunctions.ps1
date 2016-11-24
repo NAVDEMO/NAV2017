@@ -213,8 +213,8 @@ function Setup-AadApps
               "type" = "Scope"
             },
             @{
-              "id": "5778995a-e1bf-45b8-affa-663a9f3f4d04";
-              "type": "Role"
+              "id" = "5778995a-e1bf-45b8-affa-663a9f3f4d04";
+              "type" = "Role"
             }
             )
          }
