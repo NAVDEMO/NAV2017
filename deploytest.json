@@ -1,0 +1,1021 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
+      }
+    },
+    "vmAdminUsername": {
+      "type": "string",
+      "defaultValue": "vmadmin",
+      "metadata": {
+        "Description": "Specify VM Administrator user name"
+      }
+    },
+    "navAdminUsername": {
+      "type": "string",
+      "defaultValue": "admin",
+      "metadata": {
+        "Description": "Specify NAV Administrator user name"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "Description": "Specify Administrator Password (for VM and NAV)"
+      }
+    },
+    "country": {
+      "type": "string",
+      "defaultValue": "W1 - International",
+      "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "GB - Great Britain", "IS - Iceland", "IT - Italy", "NA - North America", "NL - Netherlands", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden", "W1", "AT", "AU", "BE", "CH", "CZ", "DE", "DK", "ES", "FI", "FR", "GB", "IS", "IT", "NA", "NL", "NO", "NZ", "RU", "SE" ],
+      "metadata": {
+        "Description": "Select Microsoft Dynamics NAV 2016 Country version to deploy"
+      }
+    },
+    "CertificatePfxUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "URL for/Base64 of Certificate Pfx File (leave empty to use Self Signed Certificate)"
+      }
+    },
+    "CertificatePfxPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "Password for Certificate Pfx File (leave empty when using Self Signed Cerificate)"
+      }
+    },
+    "PublicMachineName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "Public Dns Name (CNAME record pointing to your cloud service, leave empty when using Self Signed Certificate)"
+      }
+    },
+    "bingMapsKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "Bing Maps Key (leave empty to skip Bing Maps Integration)"
+      }
+    },
+    "clickonce": {
+      "type": "string",
+      "defaultValue": "No",
+      "allowedValues": [ "Yes", "No" ],
+      "metadata": {
+        "Description": "Install Clickonce Support?"
+      }
+    },
+    "powerBI": {
+      "type": "string",
+      "defaultValue": "No",
+      "allowedValues": [ "Yes", "No" ],
+      "metadata": {
+        "Description": "Install PowerBI Demo?"
+      }
+    },
+    "Office365UserName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "Enter Office 365 Administrator Email (leave empty to skip Office 365 integration)"
+      }
+    },
+    "Office365Password": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "Enter Office 365 Administrator Password (leave empty if no Office 365 integration)"
+      }
+    },
+    "Office365CreatePortal": {
+      "type": "string",
+      "defaultValue": "Yes",
+      "allowedValues": [ "Yes", "No" ],
+      "metadata": {
+        "Description": "Create SharePoint Portal with NAV content (only if Office 365 Integration is installed)"
+      }
+    }
+  },
+  "variables": {
+    "storageAccountType": "Standard_LRS",
+    "vmStorageAccountContainerName": "vhds",
+    "publicIPAddressName": "PublicIP",
+    "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
+    "dnsName": "[tolower(parameters('vmName'))]",
+    "vmSize": "Standard_D2",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "networkSecurityGroupName": "NetSecurity",
+    "virtualNetworkName": "VNet",
+    "server1Name": "Server1",
+    "nic1Name": "Nic1",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+    "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
+    "ScriptCommandToExecute": "powershell.exe -File  "
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "StorageAccount"
+      },
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIPAddress"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('dnsName')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkSecurityGroup"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "HTTP",
+            "properties": {
+              "description": "Http access",
+              "protocol": "Tcp",
+              "sourcePortRange": "80",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "HTTPS",
+            "properties": {
+              "description": "Http access over Secure Socket Layer",
+              "protocol": "Tcp",
+              "sourcePortRange": "443",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Client",
+            "properties": {
+              "description": "Access for Windows Client",
+              "protocol": "Tcp",
+              "sourcePortRange": "7046",
+              "destinationPortRange": "7046",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Soap",
+            "properties": {
+              "description": "Access to Soap Web Services",
+              "protocol": "Tcp",
+              "sourcePortRange": "7047",
+              "destinationPortRange": "7047",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 400,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "OData",
+            "properties": {
+              "description": "Access to OData Services",
+              "protocol": "Tcp",
+              "sourcePortRange": "7048",
+              "destinationPortRange": "7048",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Help",
+            "properties": {
+              "description": "Access to Help Server",
+              "protocol": "Tcp",
+              "sourcePortRange": "49000",
+              "destinationPortRange": "49000",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 600,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualNetwork"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nic1Name')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('server1Name')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]"
+      ],
+      "properties": {
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net')]"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nic1Name'))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[variables('server1Name')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "storageProfile": {
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('server1Name'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "image": {
+              "uri": "https://nav2016wswe0.blob.core.windows.net/vhds/gqpwlfcr.i4d201611231602570765.vhd"
+            }
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "diagnostics",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "AzureDiagnostics"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "WadCfg": {
+                "DiagnosticMonitorConfiguration": {
+                  "overallQuotaInMB": "4096",
+                  "DiagnosticInfrastructureLogs": {
+                    "scheduledTransferLogLevelFilter": "Error"
+                  },
+                  "WindowsEventLog": {
+                    "scheduledTransferPeriod": "PT1M",
+                    "DataSource": [
+                      { "name": "Application!*[System[(Level = 1) or (Level = 2)]]" },
+                      { "name": "Security!*[System[(Level = 1 or Level = 2)]]" },
+                      { "name": "System!*[System[(Level = 1 or Level = 2)]]" }
+                    ]
+                  },
+                  "PerformanceCounters": {
+                    "scheduledTransferPeriod": "PT1M",
+                    "PerformanceCounterConfiguration": [
+                      {
+                        "counterSpecifier": "\\Processor(_Total)\\% Processor Time",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "CPU % Processor Time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Processor(_Total)\\% Privileged Time",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "CPU % Privileged Time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Processor(_Total)\\% User Time",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "CPU % User Time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Processor Information(_Total)\\Processor Frequency",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "CPU Processor Frequency",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\System\\Processes",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "Process Processes",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Process(_Total)\\Thread Count",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "Process Thread Count",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Process(_Total)\\Handle Count",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "Process Handle Count",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Memory\\% Committed Bytes In Use",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "Memory % Committed Bytes In Use",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Memory\\Available Bytes",
+                        "sampleRate": "PT15S",
+                        "unit": "Bytes",
+                        "annotation": [
+                          {
+                            "displayName": "Memory Available Bytes",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Memory\\Committed Bytes",
+                        "sampleRate": "PT15S",
+                        "unit": "Bytes",
+                        "annotation": [
+                          {
+                            "displayName": "Memory Committed Bytes",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Memory\\Commit Limit",
+                        "sampleRate": "PT15S",
+                        "unit": "Bytes",
+                        "annotation": [
+                          {
+                            "displayName": "Memory Commit Limit",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\% Disk Time",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "Disk % Disk Time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\% Disk Read Time",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "Disk % Disk Read Time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\% Disk Write Time",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "Disk % Disk Write Time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Transfers/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "CountPerSecond",
+                        "annotation": [
+                          {
+                            "displayName": "Disk Transfers/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Reads/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "CountPerSecond",
+                        "annotation": [
+                          {
+                            "displayName": "Disk Reads/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Writes/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "CountPerSecond",
+                        "annotation": [
+                          {
+                            "displayName": "Disk Writes/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Bytes/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "BytesPerSecond",
+                        "annotation": [
+                          {
+                            "displayName": "Disk Bytes/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Read Bytes/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "BytesPerSecond",
+                        "annotation": [
+                          {
+                            "displayName": "Disk Read Bytes/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\PhysicalDisk(_Total)\\Disk Write Bytes/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "BytesPerSecond",
+                        "annotation": [
+                          {
+                            "displayName": "Disk Write Bytes/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\LogicalDisk(_Total)\\% Free Space",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "Disk % Free Space",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Active sessions",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Active Sessions",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Available tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Available tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Calculated fields cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Calculated fields cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Command cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Command cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Mounted tenants",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Mounted tenants",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# of task errors/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # of task errors/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Open application connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Open application connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Open connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Open connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Open tenant connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Open tenant connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Preferred connection total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Preferred connection total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Primary key cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Primary key cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Result set cache total requests",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Result set cache total requests",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Rows in all temporary tables",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Rows in all temporary tables",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\# Running tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV # Running tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Calculated fields cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Calculated fields cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Command cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Command cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Preferred connection cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Preferred connection cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Primary key cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Primary key cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Query repositioning rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Query repositioning rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\% Result set cache hit rate",
+                        "sampleRate": "PT15S",
+                        "unit": "Percent",
+                        "annotation": [
+                          {
+                            "displayName": "NAV % Result set cache hit rate",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Average server operation time (ms)",
+                        "sampleRate": "PT15S",
+                        "unit": "Milliseconds",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Average server operation time (ms)",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Average task execution time",
+                        "sampleRate": "PT15S",
+                        "unit": "Milliseconds",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Average task execution time",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Hard throttled connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Hard throttled connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Heartbeat time (ms)",
+                        "sampleRate": "PT15S",
+                        "unit": "Milliseconds",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Heartbeat time (ms)",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Maximum # of tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Maximum # of tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Server operations/sec",
+                        "sampleRate": "PT15S",
+                        "unit": "Operations/second",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Server operations/sec",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Soft throttled connections",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Soft throttled connections",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Time (ms) since the list of running tasks last had capacity for new tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Milliseconds",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Time (ms) since the list of running tasks last had capacity for new tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Total # Pending tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Total # Pending tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Total # Running tasks",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Total # Running tasks",
+                            "locale": "en-us"
+                          }
+                        ]
+                      },
+                      {
+                        "counterSpecifier": "\\Microsoft Dynamics NAV(nav)\\Transient errors",
+                        "sampleRate": "PT15S",
+                        "unit": "Count",
+                        "annotation": [
+                          {
+                            "displayName": "NAV Transient errors",
+                            "locale": "en-us"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "Metrics": {
+                    "resourceId": "[variables('wadmetricsresourceid')]",
+                    "MetricAggregation": [
+                      {
+                        "scheduledTransferPeriod": "PT1H"
+                      },
+                      {
+                        "scheduledTransferPeriod": "PT1M"
+                      }
+                    ]
+                  }
+                }
+              },
+              "storageAccount": "[variables('storageAccountName')]"
+            },
+            "protectedSettings": {
+              "storageAccountName": "[variables('storageAccountName')]",
+              "storageAccountKey": "[listKeys(variables('accountid'),'2015-06-15').key1]",
+              "storageAccountEndPoint": "https://core.windows.net"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('server1Name'),'/vmextension1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PowerShellScript2"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(deployment().properties.templateLink.uri, 'initialize.ps1')]"
+          ],
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\"')]"
+        },
+        "protectedSettings": {
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "Landing page URL": {
+      "type": "string",
+      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+    }
+  }
+}
