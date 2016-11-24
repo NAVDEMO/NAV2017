@@ -340,14 +340,15 @@
         },
         "storageProfile": {
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('server1Name'),'.vhd')]"
-            },
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "image": {
               "uri": "https://nav2016wswe0.blob.core.windows.net/vhds/gqpwlfcr.i4d201611231602570765.vhd"
+            },
+            "name": "osdisk",
+            "osType": "Windows",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('server1Name'),'.vhd')]"
             }
           }
         }
