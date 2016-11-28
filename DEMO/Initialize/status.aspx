@@ -53,6 +53,7 @@
             font-family: "Segoe UI","Lucida Grande",Verdana,Arial,Helvetica,sans-serif;
             font-size: 12px;
             color: #5f5f5f;
+            background: #000000;
             margin-left: 20px;
         }
 

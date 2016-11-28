@@ -8,53 +8,53 @@
         "Description": "Select the name of the Microsoft Dynamics NAV 2017 deployment"
       }
     },
-    "vmAdminUsername": {
+    "VM Admin Username": {
       "type": "string",
       "defaultValue": "vmadmin",
       "metadata": {
         "Description": "Specify VM Administrator user name"
       }
     },
-    "navAdminUsername": {
+    "NAV Admin Username": {
       "type": "string",
       "defaultValue": "admin",
       "metadata": {
         "Description": "Specify NAV Administrator user name"
       }
     },
-    "adminPassword": {
+    "Admin Password": {
       "type": "securestring",
       "metadata": {
         "Description": "Specify Administrator Password (for VM and NAV)"
       }
     },
-    "CertificatePfxUrl": {
+    "Certificate Pfx Url": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
         "Description": "URL for/Base64 of Certificate Pfx File (leave empty to use Self Signed Certificate)"
       }
     },
-    "CertificatePfxPassword": {
+    "Certificate Pfx Password": {
       "type": "securestring",
       "defaultValue": "",
       "metadata": {
         "Description": "Password for Certificate Pfx File (leave empty when using Self Signed Cerificate)"
       }
     },
-    "PublicMachineName": {
+    "Public MachineName": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
         "Description": "Public Dns Name (CNAME record pointing to your cloud service, leave empty when using Self Signed Certificate)"
       }
     },
-    "NewDeveloperExperience": {
+    "Dynamics NAV Dev Tools": {
       "type": "string",
       "defaultValue": "Yes",
       "allowedValues": [ "Yes", "No" ],
       "metadata": {
-        "Description": "Install Visual Studio Code and the new Developer Experience"
+        "Description": "Install Visual Studio Code and the Dynamics NAV Developer Tools"
       }
     }
   },
@@ -287,8 +287,8 @@
         },
         "osProfile": {
           "computerName": "[variables('server1Name')]",
-          "adminUsername": "[parameters('vmAdminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
+          "adminUsername": "[parameters('VM Admin Username')]",
+          "adminPassword": "[parameters('Admin Password')]",
           "windowsConfiguration": {
             "provisionVmAgent": "true"
           }
@@ -963,7 +963,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('VM Admin Username'),'\" -NAVAdminUsername \"',parameters('NAV Admin Username'),'\" -AdminPassword \"',parameters('Admin Password'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('Certificate Pfx Url'),'\" -CertificatePfxPassword \"',parameters('Certificate Pfx Password'),'\" -PublicMachineName \"',parameters('Public MachineName'),'\"')]"
         },
         "protectedSettings": {
         }
