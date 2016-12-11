@@ -60,28 +60,13 @@ new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 Log("Machine Name is $MachineName")
 
 # Update RTM files
-$date = (Get-Date -Date "2016-11-01 00:00:00Z").ToUniversalTime()
+$date = (Get-Date -Date "2016-12-12 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/Default.aspx"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/status.aspx"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/O365 Integration.navx"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/Deltas/COD51401.DELTA"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/MTDemoAdminShell.psm1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
 
 # Download files for Task Registration
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFile "c:\DEMO\Install\InstallAzurePowerShell.cmd"
-
-# Remove DynamicsNAV.Key
-Remove-Item -Path "C:\DEMO\AzureSQL\DynamicsNAV.key" -Force -ErrorAction Ignore
 
 if ($CertificatePfxUrl -eq "")
 {
