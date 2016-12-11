@@ -231,7 +231,7 @@
                         "publisher": "MicrosoftDynamicsNAV",
                         "offer": "DynamicsNAV",
                         "sku": "2017",
-                        "version": "10.0.14200"
+                        "version": "latest"
                     },
                     "osDisk": {
                         "name": "osdisk",
@@ -883,32 +883,6 @@
           }
         }
       ]
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('server1Name'),'/vmextension1')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "PowerShellScript"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.4",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[uri(deployment().properties.templateLink.uri, 'initialize.ps1')]"
-          ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\"')]"
-        },
-        "protectedSettings": {
-        }
-      }
     }
   ]
 }
