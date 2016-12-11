@@ -28,7 +28,7 @@
         "publicIPAddressName" : "PublicIP",
         "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
         "dnsName" : "[tolower(parameters('vmName'))]",
-        "vmSize" : "Standard_D2",
+        "vmSize" : "Standard_D2v2",
         "addressPrefix":"10.0.0.0/16",
         "subnetName" : "Subnet",
         "subnetPrefix" : "10.0.0.0/24",
@@ -904,7 +904,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\"')]"
         },
         "protectedSettings": {
         }

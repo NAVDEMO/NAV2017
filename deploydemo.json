@@ -109,7 +109,7 @@
     "publicIPAddressName": "PublicIP",
     "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
     "dnsName": "[tolower(parameters('vmName'))]",
-    "vmSize": "Standard_D2",
+    "vmSize": "Standard_D2v2",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
