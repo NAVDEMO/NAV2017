@@ -66,7 +66,6 @@ $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 # Download files for Task Registration
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml" -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
-DownloadFile -SourceUrl "${PatchPath}InstallAzurePowerShell.cmd" -destinationFile "c:\DEMO\Install\InstallAzurePowerShell.cmd"
 
 if ($CertificatePfxUrl -eq "")
 {
@@ -117,15 +116,10 @@ if ($NAVAdminUsername -ne "") {
     ("Set-Content -Path ""c:\inetpub\wwwroot\http\$MachineName.rdp"" -Value 'full address:s:${PublicMachineName}:3389
 prompt for credentials:i:1'")                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Install new Azure PowerShell CmdLets and reboot")')                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("ERROR (Initialize): "+$_.Exception.Message)')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-} else {
-    ('Log("Install new Azure PowerShell CmdLets and reboot")')                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Start-Process -FilePath "c:\DEMO\Install\InstallAzurePowerShell.cmd" -Wait -Passthru')               | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 $step = $next
