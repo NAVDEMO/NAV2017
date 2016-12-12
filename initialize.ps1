@@ -29,7 +29,7 @@ Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Start-Transcript -Path "C:\DEMO\initialize.txt"
 ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " Starting VM Initialization") | Add-Content -Path "c:\demo\status.txt"
 
-function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }
+function Log([string]$line) { ('<font color="Gray">' + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
@@ -88,13 +88,8 @@ Log("Creating Installation Scripts")
 
 $step = 1
 $next = $step+1
-#('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')       | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('Restart-Computer -Force')                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
-#$step = $next
-#$next++
-('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Unregister-ScheduledTask -TaskName "Start Installation Task" -Confirm:$false')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+('function Log([string]$line) { (''<font color="Gray">'' + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
@@ -119,17 +114,9 @@ prompt for credentials:i:1'")                                                   
     ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("ERROR (Initialize): "+$_.Exception.Message)')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("ERROR (Initialize): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
-
-#$step = $next
-#$next++
-#('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('Log("Waiting for NAV Service Tier to start")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                             | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }')     | Add-Content "c:\DEMO\Install\step$step.ps1"
-#('Log("NAV Service Tier started")')                                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($Office365UserName -ne "") {
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -213,7 +200,6 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
 }
 
 ('Log("Cleaning up")')                                                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
