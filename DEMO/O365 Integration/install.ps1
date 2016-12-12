@@ -1,8 +1,27 @@
 ﻿$PSScriptRootV2 = Split-Path $MyInvocation.MyCommand.Definition -Parent 
 Set-StrictMode -Version 2.0
-$VerbosePreference = 'Continue'
-$ErrorActionPreference = 'Stop'
+$verbosePreference =  'SilentlyContinue'
+$errorActionPreference = 'Stop'
+. (Join-Path $PSScriptRootV2 '..\Common\HelperFunctions.ps1')
 
+Clear
+Log -kind Emphasis -OnlyInfo "Welcome to the O365 Integration Installation script."
+Log -kind Info -OnlyInfo ""
+Log -kind Info -OnlyInfo "This script will help you setup O365 integration in your Microsoft Dynamics NAV DEMO Environment."
+Log -kind Info -OnlyInfo "The script will help you:"
+Log -kind Info -OnlyInfo "- Setup AAD App in Azure AD for Single Signon with O365."
+Log -kind Info -OnlyInfo "- Create AAD WebClient instance."
+Log -kind Info -OnlyInfo "- Setup AAD Apps in Azure AD for the Excel AddIn and the PowerBI service."
+Log -kind Info -OnlyInfo "- Uninstall and unpublish previous versions of the O365 Extension."
+Log -kind Info -OnlyInfo "- Publish and install the O365 Extension."
+Log -kind Info -OnlyInfo "- Remove X-FRAME option to allow NAV parts to be hosted in SharePoint."
+Log -kind Info -OnlyInfo "- Create Provider Hosted App for SharePoint."
+Log -kind Info -OnlyInfo "- Create SharePoint portal with NAV App Parts.."
+Log -kind Info -OnlyInfo ""
+Log -kind Info -OnlyInfo "The landing page will automatically be updated."
+Log -kind Info -OnlyInfo ""
+
+Log "Read Settings"
 $HardcodeFile = (Join-Path $PSScriptRootV2 'HardcodeInput.ps1')
 if (Test-Path -Path $HardcodeFile) {
     . $HardcodeFile
@@ -11,17 +30,35 @@ $DVDfolder = (Get-ChildItem -Path "C:\NAVDVD" -Directory | where-object { Test-P
 $NavVersion = (Get-ChildItem -Path "c:\program files\Microsoft Dynamics NAV" -Directory | Select-Object -Last 1).Name
 $DatabaseFolder = Join-Path (Get-ChildItem -Path "$DVDFolder\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV" -Directory | Select-Object -Last 1).FullName "Database"
 $DatabaseName = (Get-ChildItem -Path $DatabaseFolder -Filter "*.bak" -File).BaseName
+. (Join-Path $PSScriptRootV2 'AppSettings.ps1')
 
-. (Join-Path $PSScriptRootV2 'HelperFunctions.ps1')
-Import-Module -Name "AzureRM.Resources"
+Log "NAV Version: $NavVersion"
+Log "Database Name: [$DatabaseName]"
+
+if (Get-Module -ListAvailable -Name AzureRM) {
+    Log "AzureRM Powershell module already installed"
+} else {
+    Log "Install AzureRM PowerShell Module"
+    Unregister-PackageSource -name "PSGallery" -ErrorAction Ignore
+    Log "Unregistered"
+    Register-PackageSource -Name "PSGallery" -Location "https://www.powershellgallery.com/api/v2/" -ProviderName PowerShellGet -Trusted
+    Log "Registered"
+    Install-Module -Name "AzureRM" -Repository "PSGallery" -Force
+    Log "Installed"
+}
+Import-Module -Name "AzureRM"
+
+Log "Import Modules"
 . (Join-Path $PSScriptRootV2 '..\Profiles.ps1')
+. (Join-Path $PSScriptRootV2 'HelperFunctions.ps1')
 . (Join-Path $PSScriptRootV2 'createportal.ps1')
-. ("c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\NavAdminTool.ps1")
-. ("C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\NavModelTools.ps1")
+. ("c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\NavAdminTool.ps1") | Out-null
+. ("C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\NavModelTools.ps1") | Out-Null
 Import-module Microsoft.Online.SharePoint.PowerShell -DisableNameChecking
 Import-Module (Join-Path $DVDFolder "WindowsPowerShellScripts\Cloud\NAVAdministration\NAVAdministration.psm1")
 Import-Module (Join-Path $DVDFolder "WindowsPowerShellScripts\NAVOffice365Administration\NAVOffice365Administration.psm1")
 
+Log "Read CustomSettings.config"
 $CustomSettingsConfigFile = "c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\CustomSettings.config"
 $config = [xml](Get-Content $CustomSettingsConfigFile)
 $thumbprint = $config.SelectSingleNode("//appSettings/add[@key='ServicesCertificateThumbprint']").value
@@ -32,25 +69,20 @@ $multitenant = ($config.SelectSingleNode("//appSettings/add[@key='Multitenant']"
 $DatabaseServer = $config.SelectSingleNode("//appSettings/add[@key='DatabaseServer']").value
 $ARRisConfigured = (Get-WebBinding -Name "Microsoft Dynamics NAV 2017 Weblogin  Client" | Where-Object { $_.bindingInformation -eq "*:8443:" })
 
+Log "Server Instance: $ServerInstance"
+
+Log "Read Web Config"
 $WebConfigFile = "C:\inetpub\wwwroot\$ServerInstance\Web.config"
 $WebConfig = [xml](Get-Content $WebConfigFile)
 $dnsidentity = $WebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='DnsIdentity']").Value
 
 # Is it OK to apply this package at this time
 if (!$thumbprint) {
-    Throw-UserError -Text "You need to run the initialize Server script before applying demo packages."
+    throw "You need to run the initialize Server script before applying demo packages."
 }
 
 if ($multitenant) {
-    Throw-UserError -Text "Server is multi-tenant. You need to apply this package before installing multi-tenancy."
-}
-
-if ($DatabaseServer -ne "localhost") {
-    Throw-UserError -Text "Server is not using SQL Express as database server. You need to apply this package before using Azure SQL."
-}
-
-if ($ARRisConfigured) {
-    Throw-UserError -Text "Server is configured for Load Balancing. You need to apply this package before setting up Load Balancing."
+    throw "Server is multi-tenant. You need to apply this package before installing multi-tenancy."
 }
 
 $languages = @{ 
@@ -117,43 +149,36 @@ $regionCodes = @{
 
 $NAVAdminUser = Get-UserInput -Id NavAdminUser -Text "NAV administrator username" -Default "admin"
 $SharePointAdminLoginname = Get-UserInput -Id SharePointAdminLoginname -Text "Office 365 administrator E-mail (example: somebody@cronus.onmicrosoft.com)"
-$SharePointAdminPassword = Get-Variable -name "HardcodeSharePointAdminPassword" -ValueOnly -ErrorAction SilentlyContinue
-if ($SharePointAdminPassword) {
-    $SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
-} else {
-    $SharePointAdminSecurePassword = Read-Host "Office 365 administrator Password" -AsSecureString
-}
-$SharePointAdminPassword = Decrypt-SecureString $SharePointAdminSecurePassword
+$SharePointAdminPassword = Get-SecureUserInput -Id SharePointAdminPassword -Text "Office 365 administrator Password"
+$SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
 $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
 
-# Connect to Microsoft Online Service
-Write-Verbose "Connect to Microsoft Online Service"
-Connect-MsolService -Credential $SharePointAdminCredential -ErrorAction Stop
-
-
 $CreateSharePointPortal = ((Get-UserInput -Id CreateSharePointPortal -Text "Do you want to create a demo SharePoint Portal with App Parts from NAV? (Yes/No)" -Default "Yes") -eq "Yes")
-$sku = Get-MsolAccountSku | Select-Object -First 1
 
 if ($CreateSharePointPortal) {
 
     $SharePointMultitenant = ((Get-UserInput -Id SharePointMultitenant -Text "Is the SharePoint portal going to be integrated to a multitenant NAV? (Yes/No)" -Default "No") -eq "Yes")
 
+    $SharePointUrl = ""
+    if ($SharePointAdminLoginname.EndsWith(".onmicrosoft.com") -and $SharePointAdminLoginname.Contains("@")) {
+        $idx = $SharePointAdminLoginname.LastIndexOf("@")
+        $SharePointUrl = ('https://' + $SharePointAdminLoginname.Substring($idx+1, $SharePointAdminLoginname.Length-$idx-17) + '.sharepoint.com')
+    }
     do {
         $err = $false
-        $SharePointUrl = ('https://' + $sku.AccountName + '.sharepoint.com')
         $SharePointUrl = Get-UserInput -Id SharePointUrl -Text "SharePoint Base URL (example: https://cronus.sharepoint.com)" -Default $SharePointUrl
         while ($SharePointUrl.EndsWith('/')) {
             $SharePointUrl = $SharePointUrl.SubString(0, $SharePointUrl.Length-1)
         }
         if ((!$SharePointUrl.ToLower().EndsWith(".sharepoint.com")) -or (!$SharePointUrl.ToLower().StartsWith("https://"))) {
             $err = $true
-            Write-Host -ForegroundColor Red "SharePoint URL must be formed like: https://tenant.sharepoint.com"
+            Log -kind Error "SharePoint URL must be formed like: https://tenant.sharepoint.com"
         }
     } while ($err)
 
     do {
-        Write-Host "Languages:"
-        $languages.GetEnumerator() | % { Write-Host ($_.Name + " = " + $_.Value) }
+        Log -kind Emphasis -OnlyInfo "Languages:"
+        $languages.GetEnumerator() | % { Log -OnlyInfo ($_.Name + " = " + $_.Value) }
         $SharePointLanguage = Get-UserInput -Id SharePointLanguage -Text "SharePoint Language" -Default $regionCodes[$Language]
         $LanguageFile = (Join-Path $PSScriptRootV2 "O365Translations\$SharePointLanguage.ps1")
     } while (!(Test-Path $LanguageFile))
@@ -161,8 +186,6 @@ if ($CreateSharePointPortal) {
     if ($SharePointMultitenant) {
         $SharePointSite = "default"
         ('$SharePointInstallFolder = "' + $PSScriptRootV2 + '"')            | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
-        ('$SharePointAdminLoginname = "' + $SharePointAdminLoginname + '"') | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
-        ('$SharePointAdminPassword = "' + $SharePointAdminPassword + '"')   | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
         ('$SharePointUrl = "' + $SharePointUrl + '"')                       | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
         ('$SharePointLanguageFile = "' + $LanguageFile + '"')               | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
     } else {
@@ -173,40 +196,6 @@ if ($CreateSharePointPortal) {
     
     $SharePointTimezoneId = Get-UserInput -Id SharePointTimezoneId -Text "SharePoint Timezone ID (see http://blog.jussipalo.com/2013/10/list-of-sharepoint-timezoneid-values.html)" -Default $SharePointTimezoneId
     $SharePointSiteTitle = "Team Site"
-
-    # Setup online doc. storage configuration
-    Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
-    "USE [$DatabaseName]
-    GO
-    IF EXISTS (SELECT * FROM [dbo].[Document Service] WHERE [Service ID]='SERVICE 1')
-        UPDATE [dbo].[Document Service]
-           SET [Description] = 'Office 365 Documents repository'
-              ,[Location] = '$SharePointUrl/sites/$SharePointSite'
-              ,[User Name] = '$SharePointAdminLoginname'
-              ,[Password] = '$SharePointAdminPassword'
-              ,[Document Repository] = '$DocumentsTitle'
-              ,[Folder] = 'Temp'
-         WHERE [Service ID] = 'SERVICE 1'
-    ELSE
-        INSERT INTO [dbo].[Document Service]
-                   ([Service ID]
-                   ,[Description]
-                   ,[Location]
-                   ,[User Name]
-                   ,[Password]
-                   ,[Document Repository]
-                   ,[Folder])
-             VALUES
-                   ('SERVICE 1'
-                   ,'Office 365'
-                   ,'$SharePointUrl/sites/$SharePointSite'
-                   ,'$SharePointAdminLoginname'
-                   ,'$SharePointAdminPassword'
-                   ,'$DocumentsTitle'
-                   ,'Temp')
-    GO"
-    
-    cd $PSScriptRootV2
 }
 
 $publicWebBaseUrl = $publicWebBaseUrl.Replace("/$ServerInstance/", "/AAD/")
@@ -216,14 +205,18 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
 
     Setup-AadApps -publicWebBaseUrl $publicWebBaseUrl -SharePointAdminLoginname $SharePointAdminLoginname -SharePointAdminPassword $SharePointAdminPassword
 
-    $AcsUri = "https://login.windows.net/$GLOBAL:AadTenant/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
-    $federationMetadata = "https://login.windows.net/$GLOBAL:AadTenant/federationmetadata/2007-06/federationmetadata.xml"
+    ('$CreateSharePointPortal = $'+$CreateSharePointPortal)           | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
+    ('$SharePointAdminLoginName = "'+$SharePointAdminLoginName+'"')   | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
+    ('$SharePointAdminPassword = "' + $SharePointAdminPassword + '"') | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
 
-    Write-Verbose "Set FederationMetada $federationMetadata"
-    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ClientServicesFederationMetadataLocation" -KeyValue $federationMetadata
+    $AcsUri = "https://login.windows.net/Common/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
+    $federationMetadata = "https://login.windows.net/Common/federationmetadata/2007-06/federationmetadata.xml"
+
+    Log "Set FederationMetada $federationMetadata"
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ClientServicesFederationMetadataLocation" -KeyValue $federationMetadata -WarningAction Ignore
     
-    Write-Verbose "Create NAV WebServerInstance with ACSUri $ACSUri"
-    New-NAVWebServerInstance -ClientServicesCredentialType "AccessControlService" -ClientServicesPort 7046 -DnsIdentity $dnsidentity -Server "localhost" -ServerInstance $serverInstance -WebServerInstance "AAD" -AcsUri $AcsUri -Company $Company
+    Log "Create NAV WebServerInstance with ACSUri $ACSUri"
+    New-NAVWebServerInstance -ClientServicesCredentialType "AccessControlService" -ClientServicesPort 7046 -DnsIdentity $dnsidentity -Server "localhost" -ServerInstance $serverInstance -WebServerInstance "AAD" -Company $Company -ACSUri $AcsUri
 
     # Change AAD Web.config
     $NAVWebConfigFile = "C:\inetpub\wwwroot\$ServerInstance\Web.config"
@@ -233,91 +226,70 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     $AADWebConfig = [xml](Get-Content $AADWebConfigFile)
     $AADWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value
     $AADWebConfig.Save($AADWebConfigFile)
-
-    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AppIdUri" -KeyValue $publicWebBaseUrl
-    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl
-    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AzureActiveDirectoryClientId" -KeyValue $GLOBAL:ssoAdAppId
-    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ExcelAddInAzureActiveDirectoryClientId" -KeyValue $GLOBAL:ExcelAdAppId
-    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "WSFederationLoginEndpoint" -KeyValue $ACSUri
-    Set-NAVServerUser -ServerInstance $serverInstance -UserName $NAVAdminUser -AuthenticationEmail $SharePointAdminLoginname
-
-    # Copy Client Add-ins
-    Write-Verbose "Copy Client Add-ins"
-    XCopy (Join-Path $PSScriptRootV2 "Client Add-Ins\*.*") "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Add-ins" /Y
-    XCopy (Join-Path $PSScriptRootV2 "Client Add-Ins\*.*") "C:\Program Files\Microsoft Dynamics NAV\$NavVersion\Service\Add-ins" /Y
     
-    Write-Verbose "Register Client Add-in"
-    Remove-NAVAddIn -ServerInstance $serverInstance -AddInName "HTMLViewer" -PublicKeyToken "5be233b58c6bf929" -Force -ErrorAction Ignore
-    New-NAVAddIn    -ServerInstance $serverInstance -AddInName "HTMLViewer" -PublicKeyToken "5be233b58c6bf929" -Category JavaScriptControlAddIn -Description "HTML Viewer Control Add-In" -ResourceFile "C:\DEMO\O365 Integration\HtmlViewerControlAddIn\ControlAddIn\Resource\manifest.zip" 
-    
-    # Uninstall and unpublish NAV App if already installed
-    UnInstall-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo" -ErrorAction Ignore
-    UnPublish-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo" -ErrorAction Ignore
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AppIdUri" -KeyValue $publicWebBaseUrl -WarningAction Ignore
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "PublicWebBaseUrl" -KeyValue $publicWebBaseUrl -WarningAction Ignore
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AzureActiveDirectoryClientId" -KeyValue $GLOBAL:ssoAdAppId -WarningAction Ignore
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AzureActiveDirectoryClientSecret" -KeyValue $GLOBAL:SsoAdAppKeyValue -WarningAction Ignore
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ExcelAddInAzureActiveDirectoryClientId" -KeyValue $GLOBAL:ExcelAdAppId -WarningAction Ignore
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "WSFederationLoginEndpoint" -KeyValue $ACSUri -WarningAction Ignore
+    Set-NAVServerUser -ServerInstance $serverInstance -UserName $NAVAdminUser -AuthenticationEmail $SharePointAdminLoginname -WarningAction Ignore
+
+    Log "Uninstall and unpublish NAV App if already installed"
+    UnInstall-NAVApp -ServerInstance $serverInstance -Name $AppName -ErrorAction Ignore
+    UnPublish-NAVApp -ServerInstance $serverInstance -Name $AppName -ErrorAction Ignore
     
     # Install pre-requisites if they exist
     $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
     $PrereqFile = Join-Path $PSScriptRootV2 "$Language Prereq.fob"
     if (Test-Path -Path $PrereqFile) {
-        Write-Host -ForegroundColor Green "Import pre-requisite .fob file"
+        Log "Import pre-requisite .fob file"
         Import-NAVApplicationObject -DatabaseServer 'localhost\NAVDEMO' -DatabaseName $DatabaseName -Path $PrereqFile -SynchronizeSchemaChanges Force -NavServerName localhost -NavServerInstance $ServerInstance -NavServerManagementPort 7045 -ImportAction Overwrite -Confirm:$false
     }
-    
-    # Publish and Install NAV App 
-    Publish-NAVApp -ServerInstance $serverInstance -Path (Join-Path $PSScriptRootV2 "O365 Integration.navx") -SkipVerification
-    Install-NAVApp -ServerInstance $serverInstance -Name "O365 Integration Demo"
+
+    # Publish and Install NAV App
+    $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
+    Log "Publish O365 Integration App"
+    Publish-NAVApp -ServerInstance $serverInstance -Path $AppFilename -SkipVerification
+    Log "Install O365 Integration App"
+    Install-NAVApp -ServerInstance $serverInstance -Name $AppName
     
     # Copy misc. files
-    Copy-Item (Join-Path $PSScriptRootV2 "Translations") "C:\Program Files\Microsoft Dynamics NAV\$NavVersion\Service" -Recurse -Force
     Copy-Item (Join-Path $PSScriptRootV2 "Office.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\Office.png" -Force
     Copy-Item (Join-Path $PSScriptRootV2 "myapps.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\myapps.png" -Force
     
     # Restart NAV Service Tier
-    Write-Verbose "Restart Service Tier"
+    Log "Restart Service Tier"
     Set-NAVServerInstance -ServerInstance $serverInstance -Restart
-    
-    Push-Location
-    #Install local DB
-    Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
-    "USE [$DatabaseName]
-    GO
-    DELETE FROM [dbo].[Web Service] WHERE [Service Name] = 'AzureAdAppSetup'
-    GO
-    INSERT INTO [dbo].[Web Service] ([Object Type],[Service Name],[Object ID],[Published]) VALUES (5,'AzureAdAppSetup',51401,1)
-    GO"
-    Pop-Location
-    
-    # Restart Service Tier
-    Write-Verbose "Restart Service Tier"
-    Set-NAVServerInstance $ServerInstance -Restart
     
     $O365Username = "o365user"
     $O365Password = "o365P@ssw0rd"
     if (!(Get-NAVServerUser $serverInstance | Where-Object { $_.UserName -eq $O365Username })) {
-        Write-Verbose "Create O365 user"
+        Log "Create O365 temp user"
         New-NAVServerUser -ServerInstance $serverInstance -UserName $O365Username -Password (ConvertTo-SecureString -String $O365Password -AsPlainText -Force) 
         New-NAVServerUserPermissionSet -ServerInstance $serverInstance -UserName $O365Username -PermissionSetId SUPER
     } else {
-        Write-Verbose "Enable O365 user"
+        Log "Enable O365 temp user"
         Set-NAVServerUser $serverInstance -UserName $O365Username -State Enabled
     }
     
     # Invoke Web Service
-    Write-Verbose "Create Web Service Proxy"
+    Log "Create Web Service Proxy"
     $secureO365Password = ConvertTo-SecureString -String $O365Password -AsPlainText -Force
     $credential = New-Object System.Management.Automation.PSCredential ($O365Username, $secureO365Password)
     $Uri = ("$publicSoapBaseUrl" + "$Company/Codeunit/AzureAdAppSetup")
     $proxy = New-WebServiceProxy -Uri $Uri -Credential $credential
     # Timout 1 hour
     $proxy.timeout = 60*60*1000
-    Write-Verbose "Setup Azure Ad App"
+    Log "Setup Azure Ad App"
     $proxy.SetAzureAdAppSetup($GLOBAL:PowerBiAdAppId, $GLOBAL:PowerBiAdAppKeyValue)
     
-    Write-Verbose "Disable O365 user"
+    Log "Disable O365 temp user"
     Set-NAVServerUser $Serverinstance -UserName $O365Username -State Disabled
     Get-NAVServerSession -ServerInstance $serverInstance | % { Remove-NAVServerSession -ServerInstance $serverInstance -SessionId $_.SessionID -Force }
     
     # Modify Default.aspx to include a link to SharePoint
-    Write-Verbose "Modify default.aspx"
+    Log "Modify default.aspx"
     
     $insertcode = ""
     if ($CreateSharePointPortal) {
@@ -416,7 +388,7 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
 
 if ($CreateSharePointPortal) {
     # Remove X-FRAME OPTIONS
-    Write-Verbose "Remove X-FRAME Options"
+    Log "Remove X-FRAME Options"
     $WebConfigFile = 'C:\inetpub\wwwroot\AAD\WebClient\Web.config'
     $WebConfig = [xml](Get-Content $WebConfigFile)
     $xframeoptions = $WebConfig.SelectSingleNode("//httpProtocol/customHeaders/add[@name='X-FRAME-OPTIONS']")
@@ -446,7 +418,4 @@ if ($CreateSharePointPortal) {
     "SharePoint Team Site          : $SharePointSiteUrl"        | Add-Content -Path $URLsFile
 }
 
-if ([Environment]::UserName -ne "SYSTEM") {
-    Get-Content $URLsFile | Write-Host -ForegroundColor Yellow
-    & notepad.exe $URLsFile
-}
+Log -kind Success "O365 Integration Installation succeeded"

@@ -22,17 +22,10 @@
         "Description": "Specify NAV Administrator user name"
       }
     },
-    "sqlAdminUsername": {
-      "type": "string",
-      "defaultValue": "sqladmin",
-      "metadata": {
-        "Description": "Specify SQL Administrator user name"
-      }
-    },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "Description": "Specify Administrator Password (for VM, NAV and SQL)"
+        "Description": "Specify Administrator Password (for VM and NAV)"
       }
     },
     "country": {
@@ -108,17 +101,6 @@
       "metadata": {
         "Description": "Create SharePoint Portal with NAV content (only if Office 365 Integration is installed)"
       }
-    },
-    "SqlStorageAppDbUri": {
-      "type": "string",
-      "minLength": 1
-    },
-    "SqlStorageTenantDbUri": {
-      "type": "string",
-      "minLength": 1
-    },
-    "SqlStorageKey": {
-      "type": "securestring"
     }
   },
   "variables": {
@@ -126,7 +108,6 @@
     "vmStorageAccountContainerName": "vhds",
     "publicIPAddressName": "PublicIP",
     "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
-    "sqlServerName" : "[concat('sql', replace(tolower(parameters('vmName')),'-',''))]",
     "dnsName": "[tolower(parameters('vmName'))]",
     "vmSize": "Standard_D2",
     "addressPrefix": "10.0.0.0/16",
@@ -140,117 +121,9 @@
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
     "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
-    "ScriptCommandToExecute": "powershell.exe -File  ",
-    "SqlCollation":  "Latin1_General_100_CS_AS"
+    "ScriptCommandToExecute": "powershell.exe -File  "
   },
   "resources": [
-    {
-      "name": "[variables('sqlserverName')]",
-      "type": "Microsoft.Sql/servers",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "SqlServer"
-      },
-      "apiVersion": "2014-04-01-preview",
-      "properties": {
-        "administratorLogin": "[parameters('sqlAdminUsername')]",
-        "administratorLoginPassword": "[parameters('adminPassword')]",
-        "version": "12.0"
-      },
-      "resources": [
-        {
-          "type": "firewallrules",
-          "apiVersion": "2014-04-01-preview",
-          "dependsOn": [
-            "[variables('sqlserverName')]"
-          ],
-          "location": "[resourceGroup().location]",
-          "name": "AllowAllAzureIps",
-          "properties": {
-            "endIpAddress": "0.0.0.0",
-            "startIpAddress": "0.0.0.0"
-          }
-        },
-        {
-          "name": "Demo Database NAV (10-0)",
-          "type": "databases",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2014-04-01-preview",
-          "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
-          ],
-          "tags": {
-            "displayName": "Demo Database NAV (10-0)"
-          },
-          "properties": {
-            "collation": "[variables('SqlCollation')]",
-            "edition": "Standard",
-            "maxSizeBytes": "1073741824",
-            "requestedServiceObjectiveName": "S0"
-          },
-          "resources": [
-            {
-              "name": "Import",
-              "type": "extensions",
-              "apiVersion": "2014-04-01-preview",
-              "dependsOn": [
-                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)')]"
-              ],
-              "tags": {
-                "displayName": "Import"
-              },
-              "properties": {
-                "storageKeyType": "Primary",
-                "storageUri": "[parameters('SqlStorageAppDbUri')]",
-                "storageKey": "[parameters('SqlStorageKey')]",
-                "administratorLogin": "[parameters('sqlAdminUsername')]",
-                "administratorLoginPassword": "[parameters('adminPassword')]",
-                "operationMode": "Import"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Tenant Template",
-          "type": "databases",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2014-04-01-preview",
-          "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
-          ],
-          "tags": {
-            "displayName": "Tenant Template"
-          },
-          "properties": {
-            "collation": "[variables('SqlCollation')]",
-            "edition": "Standard",
-            "maxSizeBytes": "1073741824",
-            "requestedServiceObjectiveName": "S0"
-          },
-          "resources": [
-            {
-              "name": "Import",
-              "type": "extensions",
-              "apiVersion": "2014-04-01-preview",
-              "dependsOn": [
-                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template')]"
-              ],
-              "tags": {
-                "displayName": "Import"
-              },
-              "properties": {
-                "storageKeyType": "Primary",
-                "storageUri": "[parameters('SqlStorageTenantDbUri')]",
-                "storageKey": "[parameters('SqlStorageKey')]",
-                "administratorLogin": "[parameters('sqlAdminUsername')]",
-                "administratorLoginPassword": "[parameters('adminPassword')]",
-                "operationMode": "Import"
-              }
-            }
-          ]
-        }
-      ]
-    },
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
@@ -466,19 +339,17 @@
           }
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftDynamicsNAV",
-            "offer": "DynamicsNAV",
-            "sku": "2017",
-            "version": "latest"
-          },
           "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "image": {
+              "uri": "https://nav2016wswe0.blob.core.windows.net/vhds/gqpwlfcr.i4d201611231602570765.vhd"
+            },
             "name": "osdisk",
+            "osType": "Windows",
             "vhd": {
               "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('server1Name'),'.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+            }
           }
         }
       },
@@ -1124,9 +995,7 @@
         "displayName": "PowerShellScript2"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
-        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)/extensions/Import')]",
-        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template/extensions/Import')]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -1137,7 +1006,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -sqlServerName \"',variables('sqlServerName'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\"')]"
         },
         "protectedSettings": {
         }
