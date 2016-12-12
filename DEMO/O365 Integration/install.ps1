@@ -41,7 +41,7 @@ if (Get-Module -ListAvailable -Name AzureRM) {
     Log "Install AzureRM PowerShell Module"
     Unregister-PackageSource -name "PSGallery" -ErrorAction Ignore
     Register-PackageSource -Name "PSGallery" -Location "https://www.powershellgallery.com/api/v2/" -ProviderName PowerShellGet -Trusted
-    Install-Module -Name "AzureRM"-Repository "PSGallery" -Force
+    Install-Module -Name "AzureRM" -Repository "PSGallery" -Force
 }
 Import-Module -Name "AzureRM"
 
