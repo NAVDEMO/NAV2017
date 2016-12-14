@@ -47,8 +47,9 @@ function Setup-AadApps
     $SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
     $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
     $account = Add-AzureRmAccount -Credential $SharePointAdminCredential
-    
     $GLOBAL:AadTenant = $account.Context.Account.Tenants[0]
+    Set-AzureRmContext -TenantId $GLOBAL:AadTenant | Out-Null
+
     $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
     $adUserObjectId = $adUser.Id
 
