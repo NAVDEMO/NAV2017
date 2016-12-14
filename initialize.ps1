@@ -64,6 +64,7 @@ $date = (Get-Date -Date "2016-12-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/HelperFunctions.ps1"
 
