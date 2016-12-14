@@ -45,8 +45,8 @@ if (Get-Module -ListAvailable -Name AzureRM) {
     Log "Registered"
     Install-Module -Name "AzureRM" -Repository "PSGallery" -Force
     Log "Installed"
+    Import-Module -Name "AzureRM"
 }
-Import-Module -Name "AzureRM"
 
 Log "Import Modules"
 . (Join-Path $PSScriptRootV2 '..\Profiles.ps1')
@@ -148,10 +148,24 @@ $regionCodes = @{
 }
 
 $NAVAdminUser = Get-UserInput -Id NavAdminUser -Text "NAV administrator username" -Default "admin"
-$SharePointAdminLoginname = Get-UserInput -Id SharePointAdminLoginname -Text "Office 365 administrator E-mail (example: somebody@cronus.onmicrosoft.com)"
-$SharePointAdminPassword = Get-SecureUserInput -Id SharePointAdminPassword -Text "Office 365 administrator Password"
-$SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
-$SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
+$SharePointAdminLoginname = ""
+do {
+    $Ok = $false
+    $SharePointAdminLoginname = Get-UserInput -Id SharePointAdminLoginname -Text "Office 365 administrator E-mail (example: somebody@cronus.onmicrosoft.com)" -default $SharePointAdminLoginName
+    $SharePointAdminPassword = Get-SecureUserInput -Id SharePointAdminPassword -Text "Office 365 administrator Password"
+    $SharePointAdminSecurePassword = ConvertTo-SecureString -String $SharePointAdminPassword -AsPlainText -Force
+    $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
+    $account = Add-AzureRmAccount -Credential $SharePointAdminCredential -ErrorAction Ignore
+    if ($account) {
+        $Ok = ($account.Context.Account.Tenants.Count -gt 0)
+        if (!$Ok) {
+            Log -kind Warning "Cannot use this Office 365 Account, there are no AAD tenants defined."
+            $SharePointAdminLoginname = ""
+        }
+    } else {
+        Log -kind Warning "Wrong Office 365 Account Email or Password"
+    }
+} while (!$Ok)
 
 $CreateSharePointPortal = ((Get-UserInput -Id CreateSharePointPortal -Text "Do you want to create a demo SharePoint Portal with App Parts from NAV? (Yes/No)" -Default "Yes") -eq "Yes")
 
