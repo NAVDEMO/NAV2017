@@ -48,7 +48,9 @@ function Setup-AadApps
     $SharePointAdminCredential = New-Object System.Management.Automation.PSCredential ($SharePointAdminLoginname, $SharePointAdminSecurePassword)
     $account = Add-AzureRmAccount -Credential $SharePointAdminCredential
     $GLOBAL:AadTenant = $account.Context.Account.Tenants[0]
-    Set-AzureRmContext -TenantId $GLOBAL:AadTenant | Out-Null
+    if (!($account.Context.Tenant)) {
+        Set-AzureRmContext -TenantId $GLOBAL:AadTenant | Out-Null
+    }
 
     $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
     $adUserObjectId = $adUser.Id
