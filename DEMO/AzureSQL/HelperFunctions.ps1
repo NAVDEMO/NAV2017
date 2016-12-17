@@ -9,7 +9,7 @@
         Log "Unregistered"
         Register-PackageSource -Name "NuGet" -Location "https://www.nuget.org/api/v2" -Provider "NuGet" -Trusted | Out-Null
         Log "Registered"
-        Install-Package -Name $packageName -MinimumVersion "130.3485.1" -ProviderName "NuGet" -Force | Out-Null
+        Install-Package -Name $packageName -MinimumVersion "130.3485.1" -ProviderName "NuGet" -Source "NuGet" -Force | Out-Null
         Log "Installed"
     }
     (Get-Package -name $packageName).Version

@@ -45,8 +45,8 @@ if (Get-Module -ListAvailable -Name Azure) {
 } else {
     Log "Install Azure PowerShell Module"
     Install-Module -Name "Azure"-Repository "PSGallery" -Force
+    Import-Module -Name "Azure"
 }
-Import-Module -Name "Azure"
 
 Log "Import Modules"
 # Import modules
@@ -152,7 +152,7 @@ if ($ExistingAzureSqlDatabase -ne "Yes") {
     try
     {
         $newcontainer = New-AzureStorageContainer -Context $StorageContext -Container $ContainerName
-        Log "Soorage Container created"
+        Log "Storage Container created"
     }
     catch
     {
@@ -337,7 +337,11 @@ if ($multitenant) {
     'QueryTimeout' = 0
     'ea' = 'stop'
     }" | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
-    . "C:\DEMO\Multitenancy\install.ps1" 4> "C:\DEMO\Multitenancy\install.log"
+
+    if ($ExistingAzureSqlDatabase -eq "Yes") {
+        Log "Mounted an existing multitenant database - run Multitenancy script"
+        . "C:\DEMO\Multitenancy\install.ps1" 4> "C:\DEMO\Multitenancy\install.log"
+    }
 }
 
 if ($ExistingAzureSqlDatabase -ne "Yes") {
@@ -346,13 +350,14 @@ if ($ExistingAzureSqlDatabase -ne "Yes") {
         1..($DatabaseNames.Length-2) | % {
             $DatabaseName = $DatabaseNames[$_]
             $TenantId = $DatabaseName
-            Mount-NAVTenant -ServerInstance $serverInstance -DatabaseServer $DatabaseServerFull -DatabaseName $DatabaseName -Id $TenantId -DatabaseCredentials $DatabaseCredentials -Force
+            Log "Mount $TenantId"
+            Mount-NAVTenant -ServerInstance $serverInstance -DatabaseServer $DatabaseServerFull -DatabaseName $DatabaseName -Id $TenantId -DatabaseCredentials $DatabaseCredentials -Force -WarningAction Ignore
         }
     }
 }
 
 if ($AzureStorageAccountCreated) {
-    Remove-AzureStorageAccount -storageAccountName $StorageAccountName
+    Remove-AzureStorageAccount -storageAccountName $StorageAccountName | Out-Null
 }
 
 Log -kind Success "AzureSQL Installation succeeded"
