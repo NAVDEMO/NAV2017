@@ -1,12 +1,16 @@
 ﻿function Install-DACFx
 {
     $packageName = "Microsoft.SqlServer.DacFx.x64"
-    if (Get-Package -Name $packageName) {
+    if (Get-Package -Name $packageName -ErrorAction Ignore) {
         Log "$PackageName Powershell module already installed"
     } else {
         Log "Install $PackageName PowerShell Module"
-        Register-PackageSource -Name NuGet -Location https://www.nuget.org/api/v2 -Provider NuGet -Trusted -Verbose | Out-Null
-        Install-Package -Name $packageName -MinimumVersion 130.3485.1 -ProviderName NuGet -Force | Out-Null
+        Unregister-PackageSource -name "NuGet" -ErrorAction Ignore
+        Log "Unregistered"
+        Register-PackageSource -Name "NuGet" -Location "https://www.nuget.org/api/v2" -Provider "NuGet" -Trusted | Out-Null
+        Log "Registered"
+        Install-Package -Name $packageName -MinimumVersion "130.3485.1" -ProviderName "NuGet" -Source "NuGet" -Force | Out-Null
+        Log "Installed"
     }
     (Get-Package -name $packageName).Version
 }
