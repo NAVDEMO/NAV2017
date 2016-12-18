@@ -46,6 +46,7 @@ if ($PublicWebBaseUrl -ne "") {
     $appConfig.Save($appConfigFile)
 }
 
+. ("c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\NavAdminTool.ps1") | Out-Null
 0..9 | % {
     New-NAVServerUser -ServerInstance $serverInstance -UserName "$navAdminUser$_" -Password (ConvertTo-SecureString -String $NavAdminPassword -AsPlainText -Force) -LicenseType Full
     New-NAVServerUserPermissionSet -ServerInstance $serverInstance -UserName "$navAdminUser$_" -PermissionSetId SUPER
