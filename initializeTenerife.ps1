@@ -8,7 +8,7 @@ param
       ,[string]$VMAdminUsername = ""
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
-      ,[string]$Country = "W1"
+      ,[string]$Country = "US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
       ,[string]$CertificatePfxUrl = ""
@@ -62,12 +62,7 @@ Log("Machine Name is $MachineName")
 # Update RTM files
 $date = (Get-Date -Date "2016-12-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Setup Perf Tests.ps1"
+#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
@@ -126,6 +121,16 @@ prompt for credentials:i:1'")                                                   
     ('Log("ERROR (Initialize): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
+
+('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log("Installing New Developer Experience")')                                                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+('. "c:\DEMO\New Developer Experience\install.ps1" 4> "C:\DEMO\New Developer Experience\install.log"') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log("Done installing New Developer Experience")')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
+('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Set-Content -Path "c:\DEMO\New Developer Experience\error.txt" -Value $_.Exception.Message')         | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log("ERROR (New Dev Exp): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($Office365UserName -ne "") {
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -213,7 +218,6 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
 ('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-
 
 Log("Register installation task")
 Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
