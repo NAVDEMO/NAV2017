@@ -177,7 +177,8 @@ if ([Environment]::UserName -ne "SYSTEM") {
 Log "install vsix"
 $code = "C:\Program Files (x86)\Microsoft VS Code\bin\Code.cmd"
 Get-ChildItem -Path $PSScriptRootV2 -Filter "*.vsix" | % {
-   Start-Process -FilePath "$code" -ArgumentList @('--install-extension', $_.FullName) -WorkingDirectory $PSScriptRootV2 -Wait
+   Log $_.FullName
+   & $code @('--install-extension', $_.FullName) | Log
 }
 
 Log "Create Desktop Shortcuts"
