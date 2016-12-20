@@ -186,7 +186,7 @@ if ([Environment]::UserName -ne "SYSTEM") {
     $username = [Environment]::UserName
     if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction Ignore) {
         if (!(Test-Path -path "c:\Users\$username\.vscode" -PathType Container -ErrorAction Ignore)) {
-            "copy"
+            Log "Copy .vscode to $username"
             Copy-Item -Path "c:\Users\Default\.vscode" -Destination "c:\Users\$username\" -Recurse -Force -ErrorAction Ignore
         }
     }
