@@ -181,6 +181,17 @@ Get-ChildItem -Path $PSScriptRootV2 -Filter "*.vsix" | % {
    & $code @('--install-extension', $_.FullName) | Log
 }
 
+if ([Environment]::UserName -ne "SYSTEM") {
+    # If installation is from template - the vsix ends up under default user...:-(
+    $username = [Environment]::UserName
+    if (Test-Path -path "c:\Users\Default\.vscode" -PathType Container -ErrorAction Ignore) {
+        if (!(Test-Path -path "c:\Users\$username\.vscode" -PathType Container -ErrorAction Ignore)) {
+            "copy"
+            Copy-Item -Path "c:\Users\Default\.vscode" -Destination "c:\Users\$username\" -Recurse -Force -ErrorAction Ignore
+        }
+    }
+}
+
 Log "Create Desktop Shortcuts"
 New-DesktopShortcut -Name "$DevInstance Web Client"               -TargetPath "http://localhost:8080/$DevInstance/WebClient/?tenant=default" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 
