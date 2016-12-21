@@ -193,18 +193,18 @@ if ([Environment]::UserName -ne "SYSTEM") {
 }
 
 Log "Create Desktop Shortcuts"
-New-DesktopShortcut -Name "$DevInstance Web Client"               -TargetPath "http://localhost:8080/$DevInstance/WebClient/?tenant=default" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "$DevInstance Web Client" -TargetPath "http://localhost:8080/$DevInstance/WebClient/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\VSCode" -Recurse -Force -ErrorAction Ignore
 Remove-Item "C:\DOWNLOAD\samples.zip" -Force -ErrorAction Ignore
 
-#if ([Environment]::UserName -ne "SYSTEM") {
-#    Log "Start VS Code with the Hello World app"
-#    $HelloWorldFolder = ('"'+"C:\Users\$([Environment]::UserName)\Documents\AL\samples\HelloWorld"+'"')
-#    $codeexe = "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
-#    Start-Process -FilePath "$codeexe" -ArgumentList @($HelloWorldFolder)
-#}
+if ([Environment]::UserName -ne "SYSTEM") {
+    Log "Start VS Code with the Hello World app"
+    $HelloWorldFolder = ('"'+"C:\Users\$([Environment]::UserName)\Documents\AL\samples\HelloWorld"+'"')
+    $codeexe = "C:\Program Files (x86)\Microsoft VS Code\Code.exe"
+    Start-Process -FilePath "$codeexe" -ArgumentList @($HelloWorldFolder)
+}
 
 Log -kind Success "New Developer Experience Installation succeeded"
