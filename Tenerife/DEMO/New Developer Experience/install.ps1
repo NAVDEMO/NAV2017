@@ -193,7 +193,7 @@ if ([Environment]::UserName -ne "SYSTEM") {
 }
 
 Log "Create Desktop Shortcuts"
-New-DesktopShortcut -Name "$DevInstance Web Client"               -TargetPath "http://localhost:8080/$DevInstance/WebClient/?tenant=default" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+New-DesktopShortcut -Name "$DevInstance Web Client" -TargetPath "http://localhost:8080/$DevInstance/WebClient/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
 
 Log "Cleanup"
 Remove-Item "C:\DOWNLOAD\AL-master" -Recurse -Force -ErrorAction Ignore
