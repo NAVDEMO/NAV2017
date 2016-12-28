@@ -35,6 +35,12 @@
         "Description": "Specify Administrator Password (for VM, NAV and SQL)"
       }
     },
+    "NAVDVDUri": {
+      "type": "string",
+      "metadata": {
+        "Description": "Specify the Uri of the NAV DVD image to download and install"
+      }
+    },
     "country": {
       "type": "string",
       "defaultValue": "W1 - International",
@@ -43,11 +49,11 @@
         "Description": "Select Microsoft Dynamics NAV 2016 Country version to deploy"
       }
     },
-    "CertificatePfxUrl": {
+    "CertificatePfxUri": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "Description": "URL for/Base64 of Certificate Pfx File (leave empty to use Self Signed Certificate)"
+        "Description": "Uri for/Base64 of Certificate Pfx File (leave empty to use Self Signed Certificate)"
       }
     },
     "CertificatePfxPassword": {
@@ -116,9 +122,6 @@
     "SqlStorageTenantDbUri": {
       "type": "string",
       "minLength": 1
-    },
-    "SqlStorageKey": {
-      "type": "securestring"
     }
   },
   "variables": {
@@ -200,9 +203,8 @@
                 "displayName": "Import"
               },
               "properties": {
-                "storageKeyType": "Primary",
+                "storageKeyType": "SharedAccessKey",
                 "storageUri": "[parameters('SqlStorageAppDbUri')]",
-                "storageKey": "[parameters('SqlStorageKey')]",
                 "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
@@ -239,9 +241,8 @@
                 "displayName": "Import"
               },
               "properties": {
-                "storageKeyType": "Primary",
+                "storageKeyType": "SharedAccessKey",
                 "storageUri": "[parameters('SqlStorageTenantDbUri')]",
-                "storageKey": "[parameters('SqlStorageKey')]",
                 "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
@@ -1137,7 +1138,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initialize.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -sqlServerName \"',variables('sqlServerName'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initialize.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUri \"',parameters('CertificatePfxUri'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -bingMapsKey \"',parameters('bingMapsKey'),'\" -ClickOnce \"',parameters('clickonce'),'\" -PowerBI \"',parameters('powerBI'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -Office365CreatePortal \"',parameters('Office365CreatePortal'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -sqlServerName \"',variables('sqlServerName'),'\"')]"
         },
         "protectedSettings": {
         }
@@ -1145,7 +1146,7 @@
     }
   ],
   "outputs": {
-    "Landing page URL": {
+    "Landing page Url": {
       "type": "string",
       "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     }
