@@ -180,7 +180,7 @@
               "properties": {
                 "storageKeyType": "SharedAccessKey",
                 "storageUri": "[split(parameters('SqlStorageAppDbUri'),'?')[0]]",
-                "storageKey": "[concat('?',split(parameters('SqlStorageAppDbUri'),'?')[0])]",
+                "storageKey": "[concat('?',split(parameters('SqlStorageAppDbUri'),'?')[1])]",
                 "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
@@ -219,7 +219,7 @@
               "properties": {
                 "storageKeyType": "SharedAccessKey",
                 "storageUri": "[split(parameters('SqlStorageTenantDbUri'),'?')[0]]",
-                "storageKey": "[concat('?',split(parameters('SqlStorageTenantDbUri'),'?')[0])]",
+                "storageKey": "[concat('?',split(parameters('SqlStorageTenantDbUri'),'?')[1])]",
                 "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
