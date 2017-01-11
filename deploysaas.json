@@ -104,6 +104,7 @@
     "vmStorageAccountContainerName": "vhds",
     "publicIPAddressName": "PublicIP",
     "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
+    "sqlServerName" : "[concat('sql', replace(tolower(parameters('vmName')),'-',''))]",
     "dnsName": "[tolower(parameters('vmName'))]",
     "vmSize": "Standard_D2_v2",
     "addressPrefix": "10.0.0.0/16",
@@ -179,6 +180,7 @@
               "properties": {
                 "storageKeyType": "SharedAccessKey",
                 "storageUri": "[parameters('SqlStorageAppDbUri')]",
+                "storageKey": "",
                 "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
@@ -217,6 +219,7 @@
               "properties": {
                 "storageKeyType": "SharedAccessKey",
                 "storageUri": "[parameters('SqlStorageTenantDbUri')]",
+                "storageKey": "",
                 "administratorLogin": "[parameters('sqlAdminUsername')]",
                 "administratorLoginPassword": "[parameters('adminPassword')]",
                 "operationMode": "Import"
