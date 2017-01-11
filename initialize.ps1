@@ -60,14 +60,9 @@ new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 Log("Machine Name is $MachineName")
 
 # Update RTM files
-$date = (Get-Date -Date "2016-12-11 00:00:00Z").ToUniversalTime()
+$date = (Get-Date -Date "2017-11-01 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Setup Perf Tests.ps1"
+#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
@@ -120,7 +115,6 @@ if ($NAVAdminUsername -ne "") {
     ('Log("Done initializing Virtual Machine")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
     ("Set-Content -Path ""c:\inetpub\wwwroot\http\$MachineName.rdp"" -Value 'full address:s:${PublicMachineName}:3389
 prompt for credentials:i:1'")                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')             | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("ERROR (Initialize): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
