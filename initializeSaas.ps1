@@ -8,8 +8,8 @@ param
       ,[string]$VMAdminUsername = ""
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
-      ,[string]$NavDvdUrl = ""
-      ,[string]$Country = "W1"
+      ,[string]$NavDvdUri = ""
+      ,[string]$Country = "US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
       ,[string]$CertificatePfxUrl = ""
@@ -110,7 +110,7 @@ $next++
 if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeNavDvdUri = "'+$NavDvdUrl+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeNavDvdUri = "'+$NavDvdUri+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
