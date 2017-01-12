@@ -1,0 +1,153 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlServerName": {
+      "type": "string",
+      "metadata": {
+        "Description": "Name of SQL Server"
+      }
+    },
+    "sqlAdminUsername": {
+      "type": "string",
+      "defaultValue": "sqladmin",
+      "metadata": {
+        "Description": "Specify SQL Administrator user name"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "Description": "Specify Administrator Password (for VM and NAV)"
+      }
+    },
+    "SqlStorageAppDbUri": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "Description": "Specify the Uri of the App Db Bacpac file"
+      }
+    },
+    "SqlStorageTenantDbUri": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "Description": "Specify the Uri of the Tenant Db Bacpac file"
+      }
+    }
+  },
+  "variables": {
+    "SqlCollation":  "Latin1_General_100_CS_AS"
+  },
+  "resources": [
+    {
+      "name": "[parameters('sqlserverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "apiVersion": "2014-04-01-preview",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdminUsername')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "firewallrules",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[parameters('sqlserverName')]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "AllowAllAzureIps",
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "Demo Database NAV (10-0)",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
+          ],
+          "tags": {
+            "displayName": "Demo Database NAV (10-0)"
+          },
+          "properties": {
+            "collation": "[variables('SqlCollation')]",
+            "edition": "Standard",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "S0"
+          },
+          "resources": [
+            {
+              "name": "Import",
+              "type": "extensions",
+              "apiVersion": "2014-04-01-preview",
+              "dependsOn": [
+                "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'), '/databases/Demo Database NAV (10-0)')]"
+              ],
+              "tags": {
+                "displayName": "Import"
+              },
+              "properties": {
+                "storageKeyType": "SharedAccessKey",
+                "storageUri": "[split(parameters('SqlStorageAppDbUri'),'?')[0]]",
+                "storageKey": "[concat('?',split(parameters('SqlStorageAppDbUri'),'?')[1])]",
+                "administratorLogin": "[parameters('sqlAdminUsername')]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "operationMode": "Import"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tenant Template",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
+          ],
+          "tags": {
+            "displayName": "Tenant Template"
+          },
+          "properties": {
+            "collation": "[variables('SqlCollation')]",
+            "edition": "Standard",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "S0"
+          },
+          "resources": [
+            {
+              "name": "Import",
+              "type": "extensions",
+              "apiVersion": "2014-04-01-preview",
+              "dependsOn": [
+                "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'), '/databases/Tenant Template')]"
+              ],
+              "tags": {
+                "displayName": "Import"
+              },
+              "properties": {
+                "storageKeyType": "SharedAccessKey",
+                "storageUri": "[split(parameters('SqlStorageTenantDbUri'),'?')[0]]",
+                "storageKey": "[concat('?',split(parameters('SqlStorageTenantDbUri'),'?')[1])]",
+                "administratorLogin": "[parameters('sqlAdminUsername')]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "operationMode": "Import"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}
