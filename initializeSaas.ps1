@@ -65,6 +65,7 @@ $date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/HelperFunctions.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/US Prereq.fob"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
