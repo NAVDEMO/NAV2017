@@ -56,7 +56,6 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
 
 # Other variables
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
-new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 Log("Machine Name is $MachineName")
 
 # Update RTM files
@@ -67,9 +66,11 @@ $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
     Restart-Computer -Force
+	exit
 }
 
 # Download files for Task Registration
+new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 
 if ($CertificatePfxUrl -eq "")

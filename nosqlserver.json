@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlServerName": {
+      "type": "string",
+      "metadata": {
+        "Description": "Name of Sql Server"
+      }
+    },
+    "sqlAdminUsername": {
+      "type": "string",
+      "defaultValue": "sqladmin",
+      "metadata": {
+        "Description": "Specify SQL Administrator user name"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "Description": "Specify Administrator Password (for VM and NAV)"
+      }
+    },
+    "SqlStorageAppDbUri": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "Description": "Specify the Uri of the App Db Bacpac file"
+      }
+    },
+    "SqlStorageTenantDbUri": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "Description": "Specify the Uri of the Tenant Db Bacpac file"
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+  ],
+  "outputs": {
+  }
+}

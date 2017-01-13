@@ -8,19 +8,19 @@ param
       ,[string]$VMAdminUsername = ""
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
-      ,[string]$NavDvdUrl = ""
-      ,[string]$Country = "W1"
+      ,[string]$NavDvdUri = ""
+      ,[string]$Country = "US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
       ,[string]$CertificatePfxUrl = ""
       ,[string]$CertificatePfxPassword = "" 
       ,[string]$PublicMachineName = ""
       ,[string]$bingMapsKey = ""
-      ,[string]$clickonce = ""
-      ,[string]$powerBI = ""
+      ,[string]$clickonce = "No"
+      ,[string]$powerBI = "No"
       ,[string]$Office365UserName = ""
       ,[string]$Office365Password = ""
-      ,[string]$Office365CreatePortal = ""
+      ,[string]$Office365CreatePortal = "No"
       ,[string]$Multitenancy = ""
       ,[string]$sqlAdminUsername = ""
       ,[string]$sqlServerName = ""
@@ -61,14 +61,10 @@ new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 Log("Machine Name is $MachineName")
 
 # Update RTM files
-$date = (Get-Date -Date "2016-12-11 00:00:00Z").ToUniversalTime()
+$date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Setup Perf Tests.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/HelperFunctions.ps1"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
@@ -110,7 +106,7 @@ $next++
 if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeNavDvdUri = "'+$NavDvdUrl+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeNavDvdUri = "'+$NavDvdUri+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
