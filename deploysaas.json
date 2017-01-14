@@ -55,18 +55,18 @@
         "Description": "Specify the Uri of the Tenant Db Bacpac file"
       }
     },
-    "Office365UserName": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "Description": "Enter Office 365 Administrator Email (leave empty to skip Office 365 integration)"
-      }
-    },
     "noOfTestTenants": {
       "type": "int",
       "defaultValue": 1,
       "metadata": {
         "Description": "No Of Test Tenants to deploy"
+      }
+    },
+    "Office365UserName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "Enter Office 365 Administrator Email (leave empty to skip Office 365 integration)"
       }
     },
     "Office365Password": {
