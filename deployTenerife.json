@@ -267,7 +267,7 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "MicrosoftDynamicsNAV",
-            "offer": "DynamicsNAV",
+            "offer": "zx2DynamicsNAV",
             "sku": "Tenerife",
             "version": "latest"
           },
