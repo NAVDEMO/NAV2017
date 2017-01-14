@@ -24,6 +24,7 @@ param
       ,[string]$Multitenancy = ""
       ,[string]$sqlAdminUsername = ""
       ,[string]$sqlServerName = ""
+	  ,[int]$noOfTestTenants = 1
 )
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
@@ -65,6 +66,7 @@ $date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/HelperFunctions.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/US Prereq.fob"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
@@ -192,14 +194,22 @@ if ($clickonce -eq "Yes") {
 if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
     # Setup Azure SQL
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Setting up Azure SQL")')                                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Setting up Azure SQL and Multitenancy")')                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeExistingAzureSqlDatabase = "Yes"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseName = "default"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. "c:\DEMO\AzureSQL\install.ps1" 4> "C:\DEMO\AzureSQL\install.log"')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done setting up Azure SQL")')                                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Done setting up Azure SQL and Multitenancy")')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    if ($noOfTestTenants -gt 0) {
+        ('Log("Adding '+$noOfTestTenants+' test tenants")')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+        ('1..'+$noOfTestTenants+' | % {')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+        ('    Log("Add test tenant Tenant$_")')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+        ('    New-DemoTenant Tenant$_')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
+        ('}')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+        ('Log("Done adding '+$noOfTestTenants+' test tenants")')                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+    }
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("ERROR (AzureSQL): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"

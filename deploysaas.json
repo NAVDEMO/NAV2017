@@ -55,6 +55,13 @@
         "Description": "Specify the Uri of the Tenant Db Bacpac file"
       }
     },
+    "noOfTestTenants": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "Description": "No Of Test Tenants to deploy"
+      }
+    },
     "Office365UserName": {
       "type": "string",
       "defaultValue": "",
@@ -1105,7 +1112,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initializeSaas.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeSaas.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -NavDvdUri \"',parameters('NavDvdUri'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeSaas.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -NavDvdUri \"',parameters('NavDvdUri'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -sqlServerName \"',variables('sqlServerName'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -noOfTestTenants \"',parameters('noOfTestTenants'),'\"')]"
         },
         "protectedSettings": {
         }
