@@ -61,7 +61,7 @@ $MachineName = [Environment]::MachineName.ToLowerInvariant()
 new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 Log("Machine Name is $MachineName")
 
-# Update RTM files
+# Update CU2 files
 $date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"

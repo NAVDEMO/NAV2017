@@ -44,7 +44,11 @@ if (Get-Module -ListAvailable -Name Azure) {
     Log "Azure Powershell module already installed"
 } else {
     Log "Install Azure PowerShell Module"
-    Install-Module -Name "Azure"-Repository "PSGallery" -Force -AllowClobber
+    if ([System.Environment]::OSVersion.Version.Major -lt 10) {
+        Install-Module -Name "Azure"-Repository "PSGallery" -Force
+    } else {
+        Install-Module -Name "Azure"-Repository "PSGallery" -Force -AllowClobber
+    }
     Import-Module -Name "Azure"
 }
 

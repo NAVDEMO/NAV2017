@@ -58,10 +58,12 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
 Log("Machine Name is $MachineName")
 
-# Update RTM files
-$date = (Get-Date -Date "2017-11-01 00:00:00Z").ToUniversalTime()
+# Update CU2 files
+$date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Initialize/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/HelperFunctions.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/US Prereq.fob"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
