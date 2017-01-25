@@ -228,13 +228,13 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     ('$SharePointAdminLoginName = "'+$SharePointAdminLoginName+'"')   | Add-Content 'C:\DEMO\Multitenancy\HardcodeInput.ps1'
     ('$SharePointAdminPassword = "' + $SharePointAdminPassword + '"') | Add-Content "C:\DEMO\Multitenancy\HardcodeInput.ps1"
 
-    $AcsUri = "https://login.windows.net/Common/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
+    $FederationLoginEndpoint = "https://login.windows.net/Common/wsfed?wa=wsignin1.0%26wtrealm=$publicWebBaseUrl"
     $federationMetadata = "https://login.windows.net/Common/federationmetadata/2007-06/federationmetadata.xml"
 
     Log "Set FederationMetada $federationMetadata"
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ClientServicesFederationMetadataLocation" -KeyValue $federationMetadata -WarningAction Ignore
     
-    Log "Create NAV WebServerInstance with ACSUri $ACSUri"
+    Log "Create NAV WebServerInstance"
     New-NAVWebServerInstance -ClientServicesCredentialType "AccessControlService" -ClientServicesPort 7046 -DnsIdentity $dnsidentity -Server "localhost" -ServerInstance $serverInstance -WebServerInstance "AAD"
 
     # Change AAD Web.config
@@ -251,7 +251,7 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AzureActiveDirectoryClientId" -KeyValue $GLOBAL:ssoAdAppId -WarningAction Ignore
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "AzureActiveDirectoryClientSecret" -KeyValue $GLOBAL:SsoAdAppKeyValue -WarningAction Ignore
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "ExcelAddInAzureActiveDirectoryClientId" -KeyValue $GLOBAL:ExcelAdAppId -WarningAction Ignore
-    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "WSFederationLoginEndpoint" -KeyValue $ACSUri -WarningAction Ignore
+    Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "WSFederationLoginEndpoint" -KeyValue $FederationLoginEndpoint -WarningAction Ignore
     Set-NAVServerUser -ServerInstance $serverInstance -UserName $NAVAdminUser -AuthenticationEmail $SharePointAdminLoginname -WarningAction Ignore
 
     Log "Uninstall and unpublish NAV App if already installed"
