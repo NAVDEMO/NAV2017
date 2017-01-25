@@ -42,7 +42,7 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 
 function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
 {
-    $destinationFile = ("C:\"+$path.Replace("/","\"))
+    $destinationFile = ("C:\"+$path.Replace("SAAS/","DEMO/").Replace("/","\"))
     $sourceUrl = "${baseUrl}$path"
     if (Test-Path -path $destinationFile) {
         if ((get-item $destinationFile).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
