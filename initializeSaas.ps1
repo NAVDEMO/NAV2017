@@ -12,7 +12,8 @@ param
       ,[string]$Country = "US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
-      ,[string]$CertificatePfxUrl = ""
+      ,[string]$LicenseFileUri = ""
+      ,[string]$CertificatePfxUri = ""
       ,[string]$CertificatePfxPassword = "" 
       ,[string]$PublicMachineName = ""
       ,[string]$bingMapsKey = ""
@@ -78,19 +79,32 @@ if ($VMAdminUsername -eq "") {
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"      -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 
-if ($CertificatePfxUrl -eq "")
+if ($CertificatePfxUri -eq "")
 {
     $PublicMachineName = $CloudServiceName
     $CertificatePfxFile = "default"
 } else {
     $CertificatePfxFile = "C:\DEMO\certificate.pfx"
-    if ($certificatePfxUrl.StartsWith("http://") -or $certificatePfxUrl.StartsWith("https://")) {
-        Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
-        DownloadFile -SourceUrl $certificatePfxUrl -destinationFile $CertificatePfxFile
+    if ($certificatePfxUri.StartsWith("http://") -or $certificatePfxUri.StartsWith("https://")) {
+        Write-Verbose "Downloading $certificatePfxUri to $CertificatePfxFile"
+        DownloadFile -SourceUrl $certificatePfxUri -destinationFile $CertificatePfxFile
     } else {
         Log("Unpack base64 encoded Certificate Pfx File to $certificatePfxFile")
         # Assume Base64
-        [System.IO.File]::WriteAllBytes($CertificatePfxFile, [System.Convert]::FromBase64String($CertificatePfxUrl))
+        [System.IO.File]::WriteAllBytes($CertificatePfxFile, [System.Convert]::FromBase64String($CertificatePfxUri))
+    }
+}
+
+if ($LicenseFileUri -ne "")
+{
+    $LicenseFile = "C:\DEMO\license.flf"
+    if ($LicenseFileUri.StartsWith("http://") -or $LicenseFileUri.StartsWith("https://")) {
+        Write-Verbose "Downloading $LicenseFileUri to $LicenseFile"
+        DownloadFile -SourceUrl $LicenseFileUri -destinationFile $LicenseFile
+    } else {
+        Log("Unpack base64 encoded Certificate Pfx File to $LicenseFile")
+        # Assume Base64
+        [System.IO.File]::WriteAllBytes($LicenseFile, [System.Convert]::FromBase64String($LicenseFileUri))
     }
 }
 

@@ -55,6 +55,13 @@
         "Description": "Specify the Uri of the Tenant Db Bacpac file"
       }
     },
+    "LicenseFileUri": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "Description": "Specify the Uri of the License File to use"
+      }
+    },
     "noOfTestTenants": {
       "type": "int",
       "defaultValue": 1,
@@ -76,11 +83,11 @@
         "Description": "Enter Office 365 Administrator Password (leave empty if no Office 365 integration)"
       }
     },
-    "CertificatePfxUrl": {
+    "CertificatePfxUri": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "Description": "URL for/Base64 of Certificate Pfx File (leave empty to use Self Signed Certificate)"
+        "Description": "Uri for/Base64 of Certificate Pfx File (leave empty to use Self Signed Certificate)"
       }
     },
     "CertificatePfxPassword": {
@@ -1114,7 +1121,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initializeSaas.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeSaas.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -NavDvdUri \"',parameters('NavDvdUri'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -CertificatePfxUrl \"',parameters('CertificatePfxUrl'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -sqlServerName \"',variables('sqlServerName'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -noOfTestTenants \"',parameters('noOfTestTenants'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeSaas.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -NavDvdUri \"',parameters('NavDvdUri'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -LicenseFileUri \"',parameters('LicenseFileUri'),'\" -CertificatePfxUri \"',parameters('CertificatePfxUri'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -sqlServerName \"',variables('sqlServerName'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -noOfTestTenants \"',parameters('noOfTestTenants'),'\"')]"
         },
         "protectedSettings": {
         }
