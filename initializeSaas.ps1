@@ -12,7 +12,8 @@ param
       ,[string]$Country = "US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
-      ,[string]$CertificatePfxUrl = ""
+      ,[string]$LicenseFileUri = ""
+      ,[string]$CertificatePfxUri = ""
       ,[string]$CertificatePfxPassword = "" 
       ,[string]$PublicMachineName = ""
       ,[string]$bingMapsKey = ""
@@ -42,7 +43,7 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 
 function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
 {
-    $destinationFile = ("C:\"+$path.Replace("/","\"))
+    $destinationFile = ("C:\"+$path.Replace("SAAS/","DEMO/").Replace("/","\"))
     $sourceUrl = "${baseUrl}$path"
     if (Test-Path -path $destinationFile) {
         if ((get-item $destinationFile).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
@@ -64,9 +65,10 @@ Log("Machine Name is $MachineName")
 # Update CU2 files
 $date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/AzureSQL/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/Multitenancy/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/US Prereq.fob"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/US Prereq.fob"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/install.ps1"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
@@ -77,19 +79,32 @@ if ($VMAdminUsername -eq "") {
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"      -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 
-if ($CertificatePfxUrl -eq "")
+if ($CertificatePfxUri -eq "")
 {
     $PublicMachineName = $CloudServiceName
     $CertificatePfxFile = "default"
 } else {
     $CertificatePfxFile = "C:\DEMO\certificate.pfx"
-    if ($certificatePfxUrl.StartsWith("http://") -or $certificatePfxUrl.StartsWith("https://")) {
-        Write-Verbose "Downloading $certificatePfxUrl to $CertificatePfxFile"
-        DownloadFile -SourceUrl $certificatePfxUrl -destinationFile $CertificatePfxFile
+    if ($certificatePfxUri.StartsWith("http://") -or $certificatePfxUri.StartsWith("https://")) {
+        Write-Verbose "Downloading $certificatePfxUri to $CertificatePfxFile"
+        DownloadFile -SourceUrl $certificatePfxUri -destinationFile $CertificatePfxFile
     } else {
         Log("Unpack base64 encoded Certificate Pfx File to $certificatePfxFile")
         # Assume Base64
-        [System.IO.File]::WriteAllBytes($CertificatePfxFile, [System.Convert]::FromBase64String($CertificatePfxUrl))
+        [System.IO.File]::WriteAllBytes($CertificatePfxFile, [System.Convert]::FromBase64String($CertificatePfxUri))
+    }
+}
+
+if ($LicenseFileUri -ne "")
+{
+    $LicenseFile = "C:\DEMO\license.flf"
+    if ($LicenseFileUri.StartsWith("http://") -or $LicenseFileUri.StartsWith("https://")) {
+        Write-Verbose "Downloading $LicenseFileUri to $LicenseFile"
+        DownloadFile -SourceUrl $LicenseFileUri -destinationFile $LicenseFile
+    } else {
+        Log("Unpack base64 encoded Certificate Pfx File to $LicenseFile")
+        # Assume Base64
+        [System.IO.File]::WriteAllBytes($LicenseFile, [System.Convert]::FromBase64String($LicenseFileUri))
     }
 }
 
