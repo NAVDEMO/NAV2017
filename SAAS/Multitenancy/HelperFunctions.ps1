@@ -106,7 +106,7 @@ function Copy-NavDatabase([string]$SourceDatabaseName, [string]$DestinationDatab
     if (!($DatabaseServerParams.ServerInstance.StartsWith('localhost'))) {
 
         Log "Create [$DestinationDatabaseName] on $($DatabaseServerParams.ServerInstance)"
-        Invoke-Sqlcmd @DatabaseServerParams -Query "CREATE Database [$DestinationDatabaseName] AS COPY OF [$SourceDatabaseName];"
+        Invoke-SqlCmdWithRetry -Query "CREATE Database [$DestinationDatabaseName] AS COPY OF [$SourceDatabaseName];"
         # Wait for the Database to become ready
         Start-Sleep -Seconds 30
 
@@ -116,11 +116,11 @@ function Copy-NavDatabase([string]$SourceDatabaseName, [string]$DestinationDatab
         {
             Log "Using SQL Express"
             Log "Take database [$SourceDatabaseName] offline"
-            Invoke-Sqlcmd @DatabaseServerParams -Query ("ALTER DATABASE [{0}] SET OFFLINE WITH ROLLBACK IMMEDIATE" -f $SourceDatabaseName)
+            Invoke-SqlCmdWithRetry -Query ("ALTER DATABASE [{0}] SET OFFLINE WITH ROLLBACK IMMEDIATE" -f $SourceDatabaseName)
     
             Log "copy database files"
             $DatabaseFiles = @()
-            (Invoke-Sqlcmd @DatabaseServerParams -Query ("SELECT Physical_Name as filename FROM sys.master_files WHERE DB_NAME(database_id) = '{0}'" -f $SourceDatabaseName)).filename | ForEach-Object {
+            (Invoke-SqlCmdWithRetry -Query ("SELECT Physical_Name as filename FROM sys.master_files WHERE DB_NAME(database_id) = '{0}'" -f $SourceDatabaseName)).filename | ForEach-Object {
                   $FileInfo = Get-Item -Path $_
                   $DestinationFile = "{0}\{1}{2}" -f $FileInfo.DirectoryName, $DestinationDatabaseName, $FileInfo.Extension
     
@@ -132,12 +132,12 @@ function Copy-NavDatabase([string]$SourceDatabaseName, [string]$DestinationDatab
             $Files = "(FILENAME = N'{0}'), (FILENAME = N'{1}')" -f $DatabaseFiles[0], $DatabaseFiles[1]
     
             Log "Attach files as new Database [$DestinationDatabaseName]"
-            Invoke-Sqlcmd @DatabaseServerParams -Query ("CREATE DATABASE [{0}] ON {1} FOR ATTACH" -f $DestinationDatabaseName, $Files.ToString())
+            Invoke-SqlCmdWithRetry -Query ("CREATE DATABASE [{0}] ON {1} FOR ATTACH" -f $DestinationDatabaseName, $Files.ToString())
         }
         finally
         {
             Log "Put database [$SourceDatabaseName] back online"
-            Invoke-Sqlcmd @DatabaseServerParams -Query ("ALTER DATABASE [{0}] SET ONLINE" -f $SourceDatabaseName)
+            Invoke-SqlCmdWithRetry -Query ("ALTER DATABASE [{0}] SET ONLINE" -f $SourceDatabaseName)
         }
     }
 }
@@ -150,7 +150,7 @@ function Test-NavDatabase([string]$DatabaseName)
     GO
 "@
 
-    return ((Invoke-SqlCmd @DatabaseServerParams -Query $sqlCommandText) -ne $null)
+    return ((Invoke-SqlCmdWithRetry -Query $sqlCommandText) -ne $null)
 }
 
 function Remove-NavDatabase
@@ -166,9 +166,9 @@ function Remove-NavDatabase
  
     # SQL Express - take database offline
     if ($DatabaseServerParams.ServerInstance.StartsWith('localhost')) {
-        Invoke-SqlCmd @DatabaseServerParams -Query "ALTER DATABASE [$DatabaseName] SET OFFLINE WITH ROLLBACK IMMEDIATE"
+        Invoke-SqlCmdWithRetry -Query "ALTER DATABASE [$DatabaseName] SET OFFLINE WITH ROLLBACK IMMEDIATE"
     }
-    Invoke-Sqlcmd @DatabaseServerParams -Query "DROP DATABASE [$DatabaseName]"
+    Invoke-SqlCmdWithRetry -Query "DROP DATABASE [$DatabaseName]"
  
     # According to MSDN database files are not removed after dropping an offline database, we need to manually delete them
     $DatabaseFiles | ? { Test-Path $_ } | Remove-Item -Force
@@ -183,7 +183,7 @@ function Set-NavDatabaseTenantId
     [string]$TenantId
 )
 {
-    Invoke-Sqlcmd @DatabaseServerParams -Database $DatabaseName -Query ('UPDATE [dbo].[$ndo$tenantproperty] SET [tenantid] = '''+$TenantId+''';')
+    Invoke-SqlCmdWithRetry -Database $DatabaseName -Query ('UPDATE [dbo].[$ndo$tenantproperty] SET [tenantid] = '''+$TenantId+''';')
 }
 
 function Mount-NavDatabase
@@ -226,7 +226,7 @@ function Get-NavDatabaseFiles
 )
 {
     if ($DatabaseServerParams.ServerInstance.StartsWith('localhost')) {
-        Invoke-SqlCmd @DatabaseServerParams -Query "SELECT f.physical_name FROM sys.sysdatabases db INNER JOIN sys.master_files f ON f.database_id = db.dbid WHERE db.name = '$DatabaseName'" |
+        Invoke-SqlCmdWithRetry -Query "SELECT f.physical_name FROM sys.sysdatabases db INNER JOIN sys.master_files f ON f.database_id = db.dbid WHERE db.name = '$DatabaseName'" |
             % {
                 $file = $_.physical_name
                 if (Test-Path $file)
@@ -235,5 +235,43 @@ function Get-NavDatabaseFiles
                 }
                 $file
             }
+    }
+}
+
+function Invoke-SqlCmdWithRetry
+(
+    [Parameter(Mandatory=$false)]
+    [string]$Database,
+    [Parameter(Mandatory=$true)]
+    [string]$Query
+)
+{
+    $maxattempts = 10
+    if ($DatabaseServerParams.ServerInstance.StartsWith('localhost')) {
+        $maxattempts = 1
+    }
+    $attempt = 1
+    $success = $false
+    while (!$success) {
+        try
+        {
+            if ($Database) {
+                Invoke-SqlCmd @DatabaseServerParams -Database $Database -Query $Query
+            } else {
+                Invoke-SqlCmd @DatabaseServerParams -Query $Query
+            }
+            $success = $true
+        }
+        catch {
+            if ($attempt -ge $maxattempts) {
+                Log -kind Error "Error when running: $Query"
+                throw    
+            }
+            Log -kind Warning "Warning, exception when running: $Query"
+            $waittime = (Get-Random -Minimum 1 -Maximum 3)*60
+            Start-Sleep -Seconds $waittime
+            Log "Retrying..."
+            $attempt = $attempt + 1
+        }
     }
 }

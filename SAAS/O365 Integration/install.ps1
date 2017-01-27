@@ -301,105 +301,106 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     Log "Setup Azure Ad App"
     $proxy.SetAzureAdAppSetup($GLOBAL:PowerBiAdAppId, $GLOBAL:PowerBiAdAppKeyValue)
     
-    # Modify Default.aspx to include a link to SharePoint
-    Log "Modify default.aspx"
-    
-    $insertcode = ""
     if ($CreateSharePointPortal) {
-        $SharePointSiteUrl = "$SharePointUrl/sites/$SharePointSite"
-        $insertcode = "var officeDiv = InsertTopBarButton(helpDiv, ""Resources/Images/Office.png"", ""$SharePointSiteUrl"", ""_self"", ""Go to Office 365"");"
-    }
-    
-    $codesnippet = "if (window.location.href.toLowerCase().indexOf(""/aad/"") >= 0) {
-      var intRef = setInterval(AddTopBarButtons, 1000);
-    }
-    
-    function AddTopBarButtons() {
-      var helpDivs= document.getElementsByClassName(""system-help"");
-      if (helpDivs.length > 0) {
-        clearInterval(intRef);
-        var helpDiv = helpDivs[helpDivs.length-1];
-        $insertCode   
-        var productnameDivs = document.getElementsByClassName(""productname"");
-        productnameDiv = productnameDivs[0];
-        if (productnameDivs.length > 0) {
-          var waffleDiv = InsertTopBarButton(productnameDiv, ""Resources/Images/MyApps.png"", ""https://portal.office.com/myapps"", ""_self"", ""Go to My Apps"");   
-        }
-      }
-    }
-    
-    function InsertTopBarButton(beforeDiv, src, link, target, title) {
-        var myDiv = CreateTopBarButton(src, link, target, title);
-        beforeDiv.parentNode.insertBefore(myDiv, beforeDiv);
-        return myDiv;
-    }
-    
-    function CreateTopBarButton(src, link, target, title) {
-        var myDiv = document.createElement(""div"");
-        myDiv.className = ""system-help"";
-        var myLink = document.createElement(""a"");
-        myLink.href = link;
-        myLink.setAttribute('target', target);
-        var myImage = document.createElement(""img"");
-        myImage.src = src;
-        myImage.title = title;
-        myImage.setAttribute(""style"",""vertical-align: middle"");
-        myLink.appendChild(myImage);
-        myDiv.appendChild(myLink);
-        return myDiv;
-    }"
-    
-    $defaultAspxFile = "C:\inetpub\wwwroot\NAV\WebClient\default.aspx"
-    $defaultAspx = (Get-Content $defaultAspxFile)
-    $idx = 0
-    $end1 = 0
-    $start2 = 0
-    
-    # Find location to insert code snippet
-    while ($idx -lt ($defaultAspx.Length-2))
-    {
-        if (($end1 -eq 0) -and
-            $defaultAspx[$idx].Trim().Startswith('Microsoft.Dynamics.NAV.App.initialize') -and 
-            ($defaultAspx[$idx-2].Trim().Equals('<script type="text/javascript">') -or 
-             $defaultAspx[$idx-11].Trim().Equals('<script type="text/javascript">')))
-        {
-            if ($defaultAspx[$idx+1].Trim().Equals('}') -or 
-                $defaultAspx[$idx+1].Trim().Equals('if (window.location.href.toLowerCase().indexOf("/aad/") >= 0) {'))
-            {
-                # Insert code snippet after Initialize if it wasn't modified by others
-                $end1 = $idx
-            }
-        }
-    
-        if (($end1 -gt 0) -and
-            $defaultAspx[$idx].Trim().Equals('}') -and
-            $defaultAspx[$idx+1].Trim().Equals('</script>'))
-        {
-            # End of code snippet        
-            $start2 = $idx
-            break;
-        }
-    
-        $idx++
-    }
-    
-    # Write default.aspx with modified code snippet
-    if ($start2 -gt 0) {
-        $stream = [System.IO.StreamWriter] $defaultAspxFile
-        0..$end1 | % {
-            $stream.WriteLine($defaultAspx[$_])
-        }
-    
-        $stream.WriteLine($codesnippet)
-        
-        $start2..($defaultAspx.Length-1) | % {
-            $stream.WriteLine($defaultAspx[$_])
-        }
-        $stream.close()
-    }
-}
 
-if ($CreateSharePointPortal) {
+        # Modify Default.aspx to include a link to SharePoint
+        Log "Modify default.aspx"
+        
+        $insertcode = ""
+        if ($CreateSharePointPortal) {
+            $SharePointSiteUrl = "$SharePointUrl/sites/$SharePointSite"
+            $insertcode = "var officeDiv = InsertTopBarButton(helpDiv, ""Resources/Images/Office.png"", ""$SharePointSiteUrl"", ""_self"", ""Go to Office 365"");"
+        }
+        
+        $codesnippet = "if (window.location.href.toLowerCase().indexOf(""/aad/"") >= 0) {
+          var intRef = setInterval(AddTopBarButtons, 1000);
+        }
+        
+        function AddTopBarButtons() {
+          var helpDivs= document.getElementsByClassName(""system-help"");
+          if (helpDivs.length > 0) {
+            clearInterval(intRef);
+            var helpDiv = helpDivs[helpDivs.length-1];
+            $insertCode   
+            var productnameDivs = document.getElementsByClassName(""productname"");
+            productnameDiv = productnameDivs[0];
+            if (productnameDivs.length > 0) {
+              var waffleDiv = InsertTopBarButton(productnameDiv, ""Resources/Images/MyApps.png"", ""https://portal.office.com/myapps"", ""_self"", ""Go to My Apps"");   
+            }
+          }
+        }
+        
+        function InsertTopBarButton(beforeDiv, src, link, target, title) {
+            var myDiv = CreateTopBarButton(src, link, target, title);
+            beforeDiv.parentNode.insertBefore(myDiv, beforeDiv);
+            return myDiv;
+        }
+        
+        function CreateTopBarButton(src, link, target, title) {
+            var myDiv = document.createElement(""div"");
+            myDiv.className = ""system-help"";
+            var myLink = document.createElement(""a"");
+            myLink.href = link;
+            myLink.setAttribute('target', target);
+            var myImage = document.createElement(""img"");
+            myImage.src = src;
+            myImage.title = title;
+            myImage.setAttribute(""style"",""vertical-align: middle"");
+            myLink.appendChild(myImage);
+            myDiv.appendChild(myLink);
+            return myDiv;
+        }"
+        
+        $defaultAspxFile = "C:\inetpub\wwwroot\NAV\WebClient\default.aspx"
+        $defaultAspx = (Get-Content $defaultAspxFile)
+        $idx = 0
+        $end1 = 0
+        $start2 = 0
+        
+        # Find location to insert code snippet
+        while ($idx -lt ($defaultAspx.Length-2))
+        {
+            if (($end1 -eq 0) -and
+                $defaultAspx[$idx].Trim().Startswith('Microsoft.Dynamics.NAV.App.initialize') -and 
+                ($defaultAspx[$idx-2].Trim().Equals('<script type="text/javascript">') -or 
+                 $defaultAspx[$idx-11].Trim().Equals('<script type="text/javascript">')))
+            {
+                if ($defaultAspx[$idx+1].Trim().Equals('}') -or 
+                    $defaultAspx[$idx+1].Trim().Equals('if (window.location.href.toLowerCase().indexOf("/aad/") >= 0) {'))
+                {
+                    # Insert code snippet after Initialize if it wasn't modified by others
+                    $end1 = $idx
+                }
+            }
+        
+            if (($end1 -gt 0) -and
+                $defaultAspx[$idx].Trim().Equals('}') -and
+                $defaultAspx[$idx+1].Trim().Equals('</script>'))
+            {
+                # End of code snippet        
+                $start2 = $idx
+                break;
+            }
+        
+            $idx++
+        }
+        
+        # Write default.aspx with modified code snippet
+        if ($start2 -gt 0) {
+            $stream = [System.IO.StreamWriter] $defaultAspxFile
+            0..$end1 | % {
+                $stream.WriteLine($defaultAspx[$_])
+            }
+        
+            $stream.WriteLine($codesnippet)
+            
+            $start2..($defaultAspx.Length-1) | % {
+                $stream.WriteLine($defaultAspx[$_])
+            }
+            $stream.close()
+        }
+    }
+
     # Remove X-FRAME OPTIONS
     Log "Remove X-FRAME Options"
     $WebConfigFile = 'C:\inetpub\wwwroot\AAD\WebClient\Web.config'
