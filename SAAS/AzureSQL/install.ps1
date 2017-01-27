@@ -293,7 +293,9 @@ if ($ExistingAzureSqlDatabase -ne "Yes") {
     # If the database doesn't have a USER table, we assume that it is multi tenant
     $multitenant = (Invoke-Sqlcmd -ServerInstance $DatabaseServerFull -Username $DatabaseUserName -Password $DatabasePassword -Database $DatabaseName -Query "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME='USER'") -eq $null
 
-    New-Item -Path  "$httpWebSiteDirectory\tenants.txt" -ItemType File
+    if ($multitenant) {
+        New-Item -Path  "$httpWebSiteDirectory\tenants.txt" -ItemType File
+    }
 }
 
 Log "Configure NAV to use Azure SQL Database [$DatabaseServer][$DatabaseName]"

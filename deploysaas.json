@@ -1,6 +1,7 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
+  "title": "Saas deployment",
   "parameters": {
     "vmName": {
       "type": "string",
@@ -179,6 +180,45 @@
               "apiVersion": "2014-04-01-preview",
               "dependsOn": [
                 "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)')]"
+              ],
+              "tags": {
+                "displayName": "Import"
+              },
+              "properties": {
+                "storageKeyType": "SharedAccessKey",
+                "storageUri": "[split(parameters('SqlStorageAppDbUri'),'?')[0]]",
+                "storageKey": "[concat('?',split(parameters('SqlStorageAppDbUri'),'?')[1])]",
+                "administratorLogin": "[parameters('sqlAdminUsername')]",
+                "administratorLoginPassword": "[parameters('adminPassword')]",
+                "operationMode": "Import"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sandbox Database",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+          ],
+          "tags": {
+            "displayName": "Sandbox Database"
+          },
+          "properties": {
+            "collation": "[variables('SqlCollation')]",
+            "edition": "Standard",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "S0"
+          },
+          "resources": [
+            {
+              "name": "Import",
+              "type": "extensions",
+              "apiVersion": "2014-04-01-preview",
+              "dependsOn": [
+                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Sandbox Database')]"
               ],
               "tags": {
                 "displayName": "Import"
@@ -1110,6 +1150,7 @@
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
         "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)/extensions/Import')]",
+        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Sandbox Database/extensions/Import')]",
         "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template/extensions/Import')]"
       ],
       "properties": {

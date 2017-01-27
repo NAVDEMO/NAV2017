@@ -7,6 +7,7 @@
 <script runat="server">
 
 private XmlDocument customSettings = null;
+private bool isSaaS = File.Exists(@"c:\inetpub\wwwroot\http\isSaaS.txt");
 
 private void include(string Filename)
 {
@@ -70,7 +71,7 @@ private string createQrImg(string link, string title, int width = 100, int heigh
 
 private string createQrForLandingPage()
 {
-  return createQrImg(string.Format("http://{0}",getHost()), string.Format("Microsoft Dynamics NAV 2017 {0} Demonstration Environment Landing Page", getCountryVersion()));
+  return createQrImg(string.Format("http://{0}",getHost()), string.Format("Microsoft Dynamics NAV 2017 {0} <%=getPurpose() %> Environment Landing Page", getCountryVersion()));
 }
 
 private string getServerInstance()
@@ -121,11 +122,21 @@ private string getBuildNumber()
   var dir = Directory.EnumerateDirectories(@"C:\Program Files\Microsoft Dynamics NAV").Last();
   return System.Diagnostics.FileVersionInfo.GetVersionInfo(dir+@"\Service\Microsoft.Dynamics.Nav.Server.exe").ProductVersion;
 }
+
+private string getProduct()
+{
+  return isSaaS ? "365" : "NAV 2017";
+}
+
+private string getPurpose()
+{
+  return isSaaS ? "Private Test" : "Demonstration";
+}
 </script>
 
 <html>
 <head>
-    <title>Microsoft Dynamics NAV 2017 <%=getCountryVersion() %> Demonstration Environment</title>
+    <title>Microsoft Dynamics <%=getProduct() %> <%=getCountryVersion() %> <%=getPurpose() %> Environment</title>
     <style type="text/css">
         h1 {
             font-size: 2em;
@@ -250,7 +261,7 @@ function showPowerBiUrl(unsecure) {
     <td rowspan="2" width="110"><% =createQrForLandingPage() %></td>
     <td style="vertical-align:bottom">&nbsp;<img src="Microsoft.png" width="108" height="23"></td>
     </tr><tr>
-    <td style="vertical-align:top"><h1>Dynamics NAV 2017 <%=getCountryVersion() %> Demonstration Environment</h1><%=getBuildNumber() %></td>
+    <td style="vertical-align:top"><h1>Dynamics <%=getProduct() %> <%=getCountryVersion() %> <%=getPurpose() %> Environment</h1><%=getBuildNumber() %></td>
     </tr>
     </table>
     </td>
@@ -263,7 +274,7 @@ function showPowerBiUrl(unsecure) {
 %>
     <tr><td colspan="4"><h3>Download Self Signed Certificate</h3></td></tr>
     <tr>
-      <td colspan="2">The Demonstration Environment is secured with a self-signed certificate. In order to connect to the environment, you must trust this certificate. Select operating system and browser to view the process for downloading and trusting the certificate:</td>
+      <td colspan="2">The <%=getPurpose() %> Environment is secured with a self-signed certificate. In order to connect to the environment, you must trust this certificate. Select operating system and browser to view the process for downloading and trusting the certificate:</td>
       <td></td>
       <td rowspan="2" style="white-space: nowrap"><a href="http://<% =getHost() %>/Certificate.cer" target="_blank">Download Certificate</a></td>
     </tr>
@@ -304,11 +315,11 @@ function showPowerBiUrl(unsecure) {
       if (i == 0) {
         if (rdps.Length > 1) {
 %>
-The demo environment contains multiple servers. You can connect to the individual servers by following these links.
+The <%=getPurpose() %> Environment contains multiple servers. You can connect to the individual servers by following these links.
 <%
         } else {
 %>
-You can connect to the server in the demo environment by following this link.
+You can connect to the server in the <%=getPurpose() %> Environment by following this link.
 <%
         }
       }
@@ -345,14 +356,14 @@ You can view the installation status by following this link.
   {
   if (Directory.Exists(@"c:\inetpub\wwwroot\AAD")) {
 %>
-    <tr><td colspan="4"><h3>Access the Demonstration Environment using Microsoft Azure Active Directory or Office 365 authentication</h3></td></tr>
+    <tr><td colspan="4"><h3>Access the <%=getPurpose() %> Environment using Microsoft Azure Active Directory or Office 365 authentication</h3></td></tr>
     <tr>
-      <td colspan="2">If you have installed the Microsoft Dynamics NAV Universal App on your phone, tablet or desktop computer and want to configure the app to connect to this Microsoft Dynamics NAV 2017 Demonstration Environment, choose this link.</td>
+      <td colspan="2">If you have installed the Microsoft Dynamics NAV Universal App on your phone, tablet or desktop computer and want to configure the app to connect to this Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment, choose this link.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="ms-dynamicsnav://<% =getHost() %>/AAD">Configure App</a></td>
     </tr>
     <tr>
-      <td colspan="2">Choose this link to access the Demonstration Environment using the Microsoft Dynamics NAV 2017 Web client.</td>
+      <td colspan="2">Choose this link to access the <%=getPurpose() %> Environment using the Microsoft Dynamics <%=getProduct() %> Web client.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="https://<% =getHost() %>/AAD" target="_blank">Access Web Client</a></td>
     </tr>
@@ -361,7 +372,7 @@ You can view the installation status by following this link.
     if (!string.IsNullOrEmpty(sharePointUrl)) {
 %>
     <tr>
-      <td colspan="2">Choose this link to access the Demonstration Environment from Microsoft Dynamics NAV 2017 embedded in an Office 365 SharePoint site.</td>
+      <td colspan="2">Choose this link to access the <%=getPurpose() %> Environment from Microsoft Dynamics <%=getProduct() %> embedded in an Office 365 SharePoint site.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="<% =sharePointUrl %>" target="_blank">Access SharePoint Site</a></td>
     </tr>
@@ -370,7 +381,7 @@ You can view the installation status by following this link.
     if (File.Exists(@"c:\inetpub\wwwroot\AAD\WebClient\map.aspx")) {
 %>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment is integrated with Bing Maps. Choose this link to view a map showing all customers.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment is integrated with Bing Maps. Choose this link to view a map showing all customers.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="https://<% =getHost() %>/AAD/WebClient/map.aspx" target="_blank">Show Customer Map</a></td>
     </tr>
@@ -379,7 +390,7 @@ You can view the installation status by following this link.
     if (Directory.Exists(Server.MapPath(".") + @"\AAD")) {
 %>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment supports running the Microsoft Dynamics NAV Windows client over the internet. Choose this link to install the Microsoft Dynamics NAV Windows client using ClickOnce.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment supports running the Microsoft Dynamics NAV Windows client over the internet. Choose this link to install the Microsoft Dynamics NAV Windows client using ClickOnce.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="http://<% =getHost() %>/AAD" target="_blank">Install Windows Client</a></td>
     </tr>
@@ -388,14 +399,14 @@ You can view the installation status by following this link.
   }
   if (Directory.Exists(@"c:\inetpub\wwwroot\NAV")) {
 %>
-    <tr><td colspan="4"><h3>Access the Demonstration Environment using UserName/Password Authentication</h3></td></tr>
+    <tr><td colspan="4"><h3>Access the <%=getPurpose() %> Environment using UserName/Password Authentication</h3></td></tr>
     <tr>
-      <td colspan="2">If you have installed the Microsoft Dynamics NAV Universal App on your phone, tablet or desktop computer and want to configure the app to connect to this Microsoft Dynamics NAV 2017 Demonstration Environment, choose this link.</td>
+      <td colspan="2">If you have installed the Microsoft Dynamics NAV Universal App on your phone, tablet or desktop computer and want to configure the app to connect to this Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment, choose this link.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="ms-dynamicsnav://<% =getHost() %>/NAV">Configure App</a></td>
     </tr>
     <tr>
-      <td colspan="2">Choose this link to access the Demonstration Environment using the Microsoft Dynamics NAV 2017 Web client.</td>
+      <td colspan="2">Choose this link to access the <%=getPurpose() %> Environment using the Microsoft Dynamics <%=getProduct() %> Web client.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="https://<% =getHost() %>/NAV" target="_blank">Access Web Client</a></td>
     </tr>
@@ -403,7 +414,7 @@ You can view the installation status by following this link.
     if (File.Exists(@"c:\inetpub\wwwroot\NAV\WebClient\map.aspx")) {
 %>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment is integrated with Bing Maps. Choose this link to view a map showing all customers.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment is integrated with Bing Maps. Choose this link to view a map showing all customers.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="https://<% =getHost() %>/NAV/WebClient/map.aspx" target="_blank">Show Customer Map</a></td>
     </tr>
@@ -412,7 +423,7 @@ You can view the installation status by following this link.
     if (Directory.Exists(Server.MapPath(".") + @"\NAV")) {
 %>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment supports running the Microsoft Dynamics NAV Windows client over the internet. Choose this link to install the Microsoft Dynamics NAV Windows client using ClickOnce.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment supports running the Microsoft Dynamics NAV Windows client over the internet. Choose this link to install the Microsoft Dynamics NAV Windows client using ClickOnce.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="http://<% =getHost() %>/NAV" target="_blank">Install Windows Client</a></td>
     </tr>
@@ -420,13 +431,13 @@ You can view the installation status by following this link.
     }
   }
 %>
-    <tr><td colspan="4"><h3>Integrate the Demonstration Environment with <a href="https://powerbi.microsoft.com" target="_blank">Power BI</a></h3></td></tr>
+    <tr><td colspan="4"><h3>Integrate the <%=getPurpose() %> Environment with <a href="https://powerbi.microsoft.com" target="_blank">Power BI</a></h3></td></tr>
     <tr>
 <%
   var company = getCompanyName();
   if (company.Contains("/")) {
 %>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment is using a company name which includes a forward slash (<%=company %>).<br>Forward slash in the company name is not supported by Power BI.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment is using a company name which includes a forward slash (<%=company %>).<br>Forward slash in the company name is not supported by Power BI.</td>
       <td></td>  
       <td></td>
 <%
@@ -438,17 +449,17 @@ You can view the installation status by following this link.
       <td></td>  
       <td style="white-space: nowrap"><a href="javascript:showPowerBiUrl(1);">Get OData Feed Url</a></td>
     </tr><tr>
-      <td colspan="2"><b>Note:</b>  You will be connecting to an unsecure sevices endpoint. Your credentials will be sent over the wire in clear text. Consider using the Web Services Key instead of your password, as this won't give access to the Demo Environment if compromised, only the demo data will be compromised.</td>
+      <td colspan="2"><b>Note:</b>  You will be connecting to an unsecure sevices endpoint. Your credentials will be sent over the wire in clear text. Consider using the Web Services Key instead of your password, as this won't give access to the <%=getPurpose() %> Environment if compromised, only the demo data will be compromised.</td>
       <td></td>  
       <td></td>
 <%
     } else {
 %>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment is secured with a self signed certificate. Power BI does not trust self signed certificates. Please run the PowerBI demo installer to expose Web Services UNSECURE, which will allow Power BI to connect.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment is secured with a self signed certificate. Power BI does not trust self signed certificates. Please run the PowerBI demo installer to expose Web Services UNSECURE, which will allow Power BI to connect.</td>
       <td></td>  
       <td></td>
     </tr><tr>
-      <td colspan="2"><b>Note:</b>  When connecting to unsecure sevices endpoints, your credentials will be sent over the wire in clear text. Consider using the Web Services Key instead of your password, as this won't give access to the Demo Environment if compromised, only the demo data will be compromised.</td>
+      <td colspan="2"><b>Note:</b>  When connecting to unsecure sevices endpoints, your credentials will be sent over the wire in clear text. Consider using the Web Services Key instead of your password, as this won't give access to the <%=getPurpose() %> Environment if compromised, only the demo data will be compromised.</td>
       <td></td>  
       <td></td>
 <%
@@ -464,14 +475,14 @@ You can view the installation status by following this link.
   }
 %>
     </tr>
-    <tr><td colspan="4"><h3>Access the Demonstration Environment using Web Services</h3></td></tr>
+    <tr><td colspan="4"><h3>Access the <%=getPurpose() %> Environment using Web Services</h3></td></tr>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment exposes functionality as SOAP web services. Choose this link to view the web services.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment exposes functionality as SOAP web services. Choose this link to view the web services.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="https://<% =getHost() %>:7047/NAV/WS/Services" target="_blank">View SOAP Web Services</a></td>
     </tr>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment exposes data as restful OData web services. Choose this link to view the web services</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment exposes data as restful OData web services. Choose this link to view the web services</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="https://<% =getHost() %>:7048/NAV/OData" target="_blank">View OData Web Services</a></td>
     </tr>
@@ -479,7 +490,7 @@ You can view the installation status by following this link.
     if (File.Exists(@"c:\inetpub\wwwroot\http\NAV.webtile")) {
 %>
     <tr>
-      <td colspan="2">Download and open NAV.webtile on the phone, that is connected to your Microsoft Band in order to get a web tile which is connected to this Microsoft Dynamics NAV 2017 Demonstration Environment on your wrist.</td>
+      <td colspan="2">Download and open NAV.webtile on the phone, that is connected to your Microsoft Band in order to get a web tile which is connected to this Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment on your wrist.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="http://<% =getHost() %>/NAV.webtile" target="_blank">Download NAV.webtile</a></td>
     </tr>
@@ -488,15 +499,15 @@ You can view the installation status by following this link.
     var dir = Directory.EnumerateDirectories(@"C:\Program Files\Microsoft Dynamics NAV").Last();
     if (Directory.Exists(dir + @"\Service\Instances\UNSECURE")) {
 %>
-    <tr><td colspan="4"><h3>Access the Demonstration Environment using UNSECURE Web Services</h3></td></tr>
-    <tr><td colspan="2"><p>Your demonstration environment is secured with a self signed certificate. PowerBI and some other online services cannot connect to services secured by a self signed certificate.<br /><b>Note:</b> that when connecting to unsecure sevices endpoints, your credentials will be sent over the wire in clear text. Consider using the Web Services Key instead of your password, as this won't give access to the Demo Environment if compromised, only the demo data will be compromised.</p></td><td colspan="2"></td></tr>
+    <tr><td colspan="4"><h3>Access the <%=getPurpose() %> Environment using UNSECURE Web Services</h3></td></tr>
+    <tr><td colspan="2"><p>Your <%=getPurpose() %> environment is secured with a self signed certificate. PowerBI and some other online services cannot connect to services secured by a self signed certificate.<br /><b>Note:</b> that when connecting to unsecure sevices endpoints, your credentials will be sent over the wire in clear text. Consider using the Web Services Key instead of your password, as this won't give access to the <%=getPurpose() %> Environment if compromised, only the demo data will be compromised.</p></td><td colspan="2"></td></tr>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment exposes functionality as UNSECURE SOAP web services. Choose this link to view the web services.</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment exposes functionality as UNSECURE SOAP web services. Choose this link to view the web services.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="http://<% =getHost() %>/UNSECURE/WS/Services" target="_blank">View UNSECURE SOAP Web Services</a></td>
     </tr>
     <tr>
-      <td colspan="2">The Microsoft Dynamics NAV 2017 Demonstration Environment exposes data as restful UNSECURE OData web services. Choose this link to view the web services</td>
+      <td colspan="2">The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment exposes data as restful UNSECURE OData web services. Choose this link to view the web services</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="http://<% =getHost() %>/UNSECURE/OData" target="_blank">View UNSECURE OData Web Services</a></td>
     </tr>
@@ -507,24 +518,23 @@ You can view the installation status by following this link.
   {
 var hardCodeInput = File.ReadAllText(@"C:\DEMO\Multitenancy\HardcodeInput.ps1");
 var noSharePoint = hardCodeInput.Contains("$CreateSharePointPortal = $False");
-var noWindowsClient = false;
-var aid = "";
-if (File.Exists(@"c:\inetpub\wwwroot\http\isSaaS.txt")) { aid = "&aid=fin"; noWindowsClient = true; }
+var includeWindowsClient = !isSaaS;
+var aid = isSaaS ? "&aid=fin" : "";
 %>
-    <tr><td colspan="4"><h3>Multitenant Demonstration Environment</h3></td></tr>
+    <tr><td colspan="4"><h3>Multitenant <%=getPurpose() %> Environment</h3></td></tr>
     <tr>
       <td colspan="4">
-      <p>The Microsoft Dynamics NAV 2017 Demonstration Environment is multitenant. The Tenants section lists the tenants, and you can choose links to access each of them.</p>
-      <p>If you have installed the Microsoft Dynamics NAV Universal App on your phone, tablet or desktop computer and want to configure the app to connect to a tenant in this Demonstration Environment, choose the <i>Configure app</i> link.</p>
-      <p>You can access this Demonstration Environment using the Microsoft Dynamics NAV 2017 Web client by choosing the <i>Web Client</i> link.</p>
+      <p>The Microsoft Dynamics <%=getProduct() %> <%=getPurpose() %> Environment is multitenant. The Tenants section lists the tenants, and you can choose links to access each of them.</p>
+      <p>If you have installed the Microsoft Dynamics NAV Universal App on your phone, tablet or desktop computer and want to configure the app to connect to a tenant in this <%=getPurpose() %> Environment, choose the <i>Configure app</i> link.</p>
+      <p>You can access this <%=getPurpose() %> Environment using the Microsoft Dynamics <%=getProduct() %> Web client by choosing the <i>Web Client</i> link.</p>
 <%
-if (!noWindowsClient) {
+if (includeWindowsClient) {
 %>
-      <p>You can access the Demonstration Environment from the Microsoft Dynamics NAV Windows client over the internet. You can install the Microsoft Dynamics NAV 2017 Windows client and connect to a specific tenant using ClickOnce by choosing the <i>Windows Client</i> link.</p>
+      <p>You can access the <%=getPurpose() %> Environment from the Microsoft Dynamics NAV Windows client over the internet. You can install the Microsoft Dynamics <%=getProduct() %> Windows client and connect to a specific tenant using ClickOnce by choosing the <i>Windows Client</i> link.</p>
 <%
 }
 %>
-      <p>The Demonstration Environment exposes functionality as SOAP web services and restful OData web services. You can view the services by choosing the relevant link. <b>Note:</b> You must specify the tenant in the username (<i>&lt;tenant&gt;\&lt;username&gt;</i>).
+      <p>The <%=getPurpose() %> Environment exposes functionality as SOAP web services and restful OData web services. You can view the services by choosing the relevant link. <b>Note:</b> You must specify the tenant in the username (<i>&lt;tenant&gt;\&lt;username&gt;</i>).
       </td>
     </tr>
     <tr>
@@ -539,7 +549,7 @@ if (Directory.Exists(@"c:\inetpub\wwwroot\AAD")) {
 <%
 }
 %>
-            <td colspan="<% =(File.Exists(@"c:\inetpub\wwwroot\AAD\WebClient\map.aspx")?3:2)+(noWindowsClient?0:1) %>" align="center"><b>Username/Password Authentication</b></td>
+            <td colspan="<% =(File.Exists(@"c:\inetpub\wwwroot\AAD\WebClient\map.aspx")?3:2)+(includeWindowsClient?1:0) %>" align="center"><b>Username/Password Authentication</b></td>
             <td colspan="2" align="center"><b>Web Services</b></td>
           </tr>
 <%
@@ -593,7 +603,7 @@ if (File.Exists(@"c:\inetpub\wwwroot\AAD\WebClient\map.aspx")) {
               <a href="https://<% =getHost() %>/NAV?tenant=<% =tenant %><% = aid %>" target="_blank">Web Client</a>
             </td>
 <%
-if (!noWindowsClient) {
+if (includeWindowsClient) {
 %>
             <td>
 <%
@@ -630,9 +640,9 @@ if (File.Exists(@"c:\inetpub\wwwroot\NAV\WebClient\map.aspx")) {
 <%
   }
 %>
-    <tr><td colspan="4"><h3>Access the Demonstration Environment Help Server</h3></td></tr>
+    <tr><td colspan="4"><h3>Access the <%=getPurpose() %> Environment Help Server</h3></td></tr>
     <tr>
-      <td colspan="2">Choose this link to access the Microsoft Dynamics NAV 2017 Help Server.</td>
+      <td colspan="2">Choose this link to access the Microsoft Dynamics <%=getProduct() %> Help Server.</td>
       <td></td>  
       <td style="white-space: nowrap"><a href="http://<% =getHost() %>:49000/main.aspx?lang=en&content=madeira-get-started.html" target="_blank">View Help Content</a></td>
     </tr>
