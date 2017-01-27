@@ -301,7 +301,7 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     Log "Setup Azure Ad App"
     $proxy.SetAzureAdAppSetup($GLOBAL:PowerBiAdAppId, $GLOBAL:PowerBiAdAppKeyValue)
     
-    if ($CreateSharePointPortal) {
+    if (!$isSaaS) {
 
         # Modify Default.aspx to include a link to SharePoint
         Log "Modify default.aspx"
@@ -400,6 +400,9 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
             $stream.close()
         }
     }
+}
+
+if ($CreateSharePointPortal) {
 
     # Remove X-FRAME OPTIONS
     Log "Remove X-FRAME Options"
