@@ -67,12 +67,16 @@ $date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Common/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/MTDemoAdminShell.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Common/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/US Prereq.fob"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/default.aspx"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/Default.aspx"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/install.ps1"
+
+# Set $isSaaS to true
+$file = "C:\DEMO\Common\HelperFunctions.ps1"
+[System.IO.File]::WriteAllText($file, [System.IO.File]::ReadAllText($file).Replace('$isSaaS = $false','$isSaaS = $true'))
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
@@ -145,7 +149,6 @@ prompt for credentials:i:1'")                                                   
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("ERROR (Initialize): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('''$isSaaS = $true'' | Add-Content ''c:\DEMO\Common\HelperFunctions.ps1''')                           | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($Office365UserName -ne "") {
@@ -168,7 +171,6 @@ if ($Office365UserName -ne "") {
     ('Log("ERROR (O365): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('''$CreateClickOnceManifest = $False'' | Add-Content ''c:\DEMO\Multitenancy\HardCodeInput.ps1''')     | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 # Setup Azure SQL

@@ -507,7 +507,9 @@ You can view the installation status by following this link.
   {
 var hardCodeInput = File.ReadAllText(@"C:\DEMO\Multitenancy\HardcodeInput.ps1");
 var noSharePoint = hardCodeInput.Contains("$CreateSharePointPortal = $False");
-var noWindowsClient = hardCodeInput.Contains("$CreateClickOnceManifest = $False");
+var noWindowsClient = false;
+var aid = "";
+if (File.Exists(@"c:\inetpub\wwwroot\http\isSaaS.txt")) { aid = "&aid=fin"; noWindowsClient = true; }
 %>
     <tr><td colspan="4"><h3>Multitenant Demonstration Environment</h3></td></tr>
     <tr>
@@ -565,7 +567,7 @@ if (Directory.Exists(@"c:\inetpub\wwwroot\AAD")) {
               <a href="ms-dynamicsnav://<% =getHost() %>/AAD?tenant=<% =tenant %>" target="_blank">Configure app</a>
             </td>
             <td>
-              <a href="https://<% =getHost() %>/AAD?tenant=<% =tenant %>" target="_blank">Web Client</a>
+              <a href="https://<% =getHost() %>/AAD?tenant=<% =tenant %><% = aid %>" target="_blank">Web Client</a>
             </td>
 <%
 if (!noSharePoint) {
@@ -588,7 +590,7 @@ if (File.Exists(@"c:\inetpub\wwwroot\AAD\WebClient\map.aspx")) {
               <a href="ms-dynamicsnav://<% =getHost() %>/NAV?tenant=<% =tenant %>" target="_blank">Configure app</a>
             </td>
             <td>
-              <a href="https://<% =getHost() %>/NAV?tenant=<% =tenant %>" target="_blank">Web Client</a>
+              <a href="https://<% =getHost() %>/NAV?tenant=<% =tenant %><% = aid %>" target="_blank">Web Client</a>
             </td>
 <%
 if (!noWindowsClient) {

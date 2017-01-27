@@ -29,7 +29,6 @@ $ARRisConfigured = (Get-WebBinding -Name "Microsoft Dynamics NAV 2017 Web Client
 $SharePointInstallFolder = ""
 $SharePointAdminLoginName = ""
 $CreateSharePointPortal = $false
-$CreateClickOnceManifest = $true
 $DatabaseServerInstance = "$DatabaseServer"
 if ($DatabaseInstance -ne "") {
     $DatabaseServerInstance += "\$DatabaseInstance"
@@ -79,7 +78,7 @@ function New-DemoTenant
         Log "Synchronize tenant $TenantID"
         Sync-NAVTenant -Tenant $TenantID -Mode ForceSync -ServerInstance $serverInstance -Force
         
-        if ([Environment]::UserName -ne "SYSTEM") {
+        if (([Environment]::UserName -ne "SYSTEM") -and (!$isSaaS)) {
             New-ClickOnceDeployment -Name $TenantID -PublicMachineName $PublicMachineName -TenantID $TenantID -clickOnceWebSiteDirectory $httpWebSiteDirectory
         }
 
@@ -116,8 +115,9 @@ function New-DemoTenant
         if ($CreateSharePointPortal) {
             "SharePoint Portal      : $SharePointUrl/sites/$TenantID"                                        | Add-Content -Path $URLsFile
         }
-        "WinClient Local URL    : dynamicsnav://///?tenant=$TenantID"                                        | Add-Content -Path $URLsFile
-        "WinClient ClickOnce URL: http://$PublicMachineName/$TenantID"                                       | Add-Content -Path $URLsFile
+        if (!$isSaaS) {            "WinClient Local URL    : dynamicsnav://///?tenant=$TenantID"                                    | Add-Content -Path $URLsFile
+            "WinClient ClickOnce URL: http://$PublicMachineName/$TenantID"                                   | Add-Content -Path $URLsFile
+        }
 
         $SharePointParams = @{}
         if ($SharePointAdminLoginName) {
