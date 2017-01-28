@@ -60,6 +60,13 @@ if ($LanguageCol.Length -eq 0) {
         }
     } until (($NavDvdUri) -and (Test-Path -Path $NavDvdUri -PathType Leaf))
 
+            
+    $AppDbPath = Get-UserInput -Id AppDbPath -Text "Specify Path for AppDb bacpac (blank for DVD Demo Database)" 
+    if ($AppDbPath) {
+        $TenantDbPath = $AppDbPath.Replace("App","Tenant")
+        $TenantDbPath = Get-UserInput -Id TenantDbPath -Text "Specify Path for TenantDb bacpac" -Default $TenantDbPath
+    }
+
     $LanguageCol += $Language
 
     $NavDvdFolder = "C:\NAVDVD"
@@ -79,7 +86,27 @@ if ($LanguageCol.Length -eq 0) {
     $NavVersion = (Get-ChildItem -Path "$NavSetupWorkingDir\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV" -Directory | Select-Object -Last 1).Name
     $DatabaseFolder = "$NavSetupWorkingDir\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV\$NavVersion\Database"
     $DatabaseName = (Get-ChildItem -Path $DatabaseFolder -Filter "*.bak" -File).BaseName
-    
+
+    if ($AppDbPath) {
+        Add-Type -path "C:\Program Files (x86)\Microsoft SQL Server\130\DAC\bin\Microsoft.SqlServer.Dac.dll"
+        $conn = "Data Source=localhost\NAVDEMO;Initial Catalog=master;Connection Timeout=0;Integrated Security=True;"
+
+        if ($TenantDbPath) {
+            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
+            $AppimportBac.ImportBacpac($ApploadBac, "App Database")
+            $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+            $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
+            $TenantimportBac.ImportBacpac($TenantloadBac, $DatabaseName)
+            Remove-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName $DatabaseName -Force
+            Export-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName 'App Database' -DestinationDatabaseName $DatabaseName -Force
+        } else {
+            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
+            $AppimportBac.ImportBacpac($ApploadBac, $DatabaseName)
+        }
+    }
+  
     $SetupConfig = [xml](Get-Content $NavSetupConfigFile)
     $SetupConfig.SelectSingleNode("//Configuration/Parameter[@Id='TargetPath']").Value = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion"
     $SetupConfig.SelectSingleNode("//Configuration/Parameter[@Id='TargetPathX64']").Value = "C:\Program Files\Microsoft Dynamics NAV\$NavVersion"

@@ -9,6 +9,8 @@ param
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
       ,[string]$NavDvdUri = ""
+      ,[string]$AppDbUri = ""
+      ,[string]$TenantDbUri = ""
       ,[string]$Country = "US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
@@ -36,7 +38,8 @@ function Log([string]$line) { ('<font color="Gray">' + [DateTime]::Now.ToString(
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
-    Log("Downloading '$sourceUrl' to '$destinationFile'")
+    # Do not log Sas Signature
+    Log("Downloading '"+$sourceUrl.Split('?')[0]+"' to '$destinationFile'")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
@@ -68,11 +71,15 @@ $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/MTDemoAdminShell.psm1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/Development.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/Development.psm1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Common/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/US Prereq.fob"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/Default.aspx"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/SetupConfig.xml"
 
 # Set $isSaaS to true
 $file = "C:\DEMO\Common\HelperFunctions.ps1"
@@ -86,6 +93,8 @@ if ($VMAdminUsername -eq "") {
 # Download files for Task Registration
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"      -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
+DownloadFile -sourceUrl $AppDbUri                               -destinationFile "C:\DEMO\AzureSQL\AppDb.bacpac"
+DownloadFile -sourceUrl $TenantDbUri                            -destinationFile "C:\DEMO\AzureSQL\TenantDb.bacpac"
 
 if ($CertificatePfxUri -eq "")
 {
@@ -133,6 +142,8 @@ if ($NAVAdminUsername -ne "") {
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavDvdUri = "'+$NavDvdUri+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeAppDbPath = "C:\DEMO\AzureSQL\AppDb.bacpac"')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeTenantDbPath = "C:\DEMO\AzureSQL\TenantDb.bacpac"')                                         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -148,6 +159,20 @@ prompt for credentials:i:1'")                                                   
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("ERROR (Initialize): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+}
+
+if ($LicenseFileUri -ne "") {
+    # Initialize Virtual Machine
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeLicenseFile = "'+$LicenseFile+'"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeTranslateApiKey = "default"')                                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Installing Extension Development Shell")')                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Extensions\install.ps1" 4> "C:\DEMO\Extensions\install.log"')                             | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("Done installing Extension Development Shell")')                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Extensions\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log("ERROR (Extensions): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
