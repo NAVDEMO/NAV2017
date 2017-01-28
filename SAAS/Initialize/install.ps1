@@ -87,6 +87,8 @@ if ($LanguageCol.Length -eq 0) {
     $DatabaseFolder = "$NavSetupWorkingDir\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV\$NavVersion\Database"
     $DatabaseName = (Get-ChildItem -Path $DatabaseFolder -Filter "*.bak" -File).BaseName
 
+    import-module (Join-Path $NavSetupWorkingDir "ServiceTier\program files\Microsoft Dynamics NAV\100\Service\Microsoft.dynamics.nav.management.dll")
+
     if ($AppDbPath) {
         Add-Type -path "C:\Program Files (x86)\Microsoft SQL Server\130\DAC\bin\Microsoft.SqlServer.Dac.dll"
         $conn = "Data Source=localhost\NAVDEMO;Initial Catalog=master;Connection Timeout=0;Integrated Security=True;"
@@ -94,12 +96,14 @@ if ($LanguageCol.Length -eq 0) {
         if ($TenantDbPath) {
             $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
             $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
-            $AppimportBac.ImportBacpac($ApploadBac, "App Database")
+            $AppimportBac.ImportBacpac($ApploadBac, "SandBox Database")
+
             $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
             $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
             $TenantimportBac.ImportBacpac($TenantloadBac, $DatabaseName)
+            
             Remove-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName $DatabaseName -Force
-            Export-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName 'App Database' -DestinationDatabaseName $DatabaseName -Force
+            Export-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName 'Sandbox Database' -DestinationDatabaseName $DatabaseName -Force
         } else {
             $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
             $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
