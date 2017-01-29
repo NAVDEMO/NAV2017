@@ -87,30 +87,6 @@ if ($LanguageCol.Length -eq 0) {
     $DatabaseFolder = "$NavSetupWorkingDir\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV\$NavVersion\Database"
     $DatabaseName = (Get-ChildItem -Path $DatabaseFolder -Filter "*.bak" -File).BaseName
 
-    import-module (Join-Path $NavSetupWorkingDir "ServiceTier\program files\Microsoft Dynamics NAV\100\Service\Microsoft.dynamics.nav.management.dll")
-
-    if ($AppDbPath) {
-        Add-Type -path "C:\Program Files (x86)\Microsoft SQL Server\130\DAC\bin\Microsoft.SqlServer.Dac.dll"
-        $conn = "Data Source=localhost\NAVDEMO;Initial Catalog=master;Connection Timeout=0;Integrated Security=True;"
-
-        if ($TenantDbPath) {
-            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
-            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
-            $AppimportBac.ImportBacpac($ApploadBac, "SandBox Database")
-
-            $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
-            $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
-            $TenantimportBac.ImportBacpac($TenantloadBac, $DatabaseName)
-            
-            Remove-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName $DatabaseName -Force
-            Export-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName 'Sandbox Database' -DestinationDatabaseName $DatabaseName -Force
-        } else {
-            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
-            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
-            $AppimportBac.ImportBacpac($ApploadBac, $DatabaseName)
-        }
-    }
-  
     $SetupConfig = [xml](Get-Content $NavSetupConfigFile)
     $SetupConfig.SelectSingleNode("//Configuration/Parameter[@Id='TargetPath']").Value = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion"
     $SetupConfig.SelectSingleNode("//Configuration/Parameter[@Id='TargetPathX64']").Value = "C:\Program Files\Microsoft Dynamics NAV\$NavVersion"
@@ -148,6 +124,52 @@ $config = [xml](Get-Content $CustomSettingsConfigFile)
 $serverInstance = $config.SelectSingleNode("//appSettings/add[@key='ServerInstance']").value
 
 Log "Server Instance: $ServerInstance"
+
+if ($LanguageCol.Length -eq 0) {
+
+    if ($AppDbPath) {
+        Add-Type -path "C:\Program Files (x86)\Microsoft SQL Server\130\DAC\bin\Microsoft.SqlServer.Dac.dll"
+        $conn = "Data Source=localhost\NAVDEMO;Initial Catalog=master;Connection Timeout=0;Integrated Security=True;"
+
+        Log "Stop Service Tier"
+        Set-NAVServerInstance -ServerInstance $serverInstance -Stop
+
+        Log "Remove Demo Database"
+        #Install local DB
+        Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
+        "USE [master]
+        alter database [$DatabaseName] set single_user with rollback immediate"
+        
+        Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
+        "USE [master]
+        drop database [$DatabaseName]"
+
+        if ($TenantDbPath) {
+            Log "Restore App Database from $AppDbPath as SandBox Database"
+            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
+            $AppimportBac.ImportBacpac($ApploadBac, "SandBox Database")
+
+            Log "Restore Tenant Database from $TenantDbPath as new Demo Database"
+            $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+            $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
+            $TenantimportBac.ImportBacpac($TenantloadBac, $DatabaseName)
+            
+            Log "Copy App Objects from Sandbox to Demo Database"
+            Remove-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName $DatabaseName -Force
+            Export-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName 'Sandbox Database' -DestinationDatabaseName $DatabaseName -Force
+        } else {
+
+            Log "Restore Database from $AppDbPath as Demo Database"
+            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
+            $AppimportBac.ImportBacpac($ApploadBac, $DatabaseName)
+        }
+
+        Log "Start Service Tier"
+        Set-NAVServerInstance -ServerInstance $serverInstance -Start
+    }
+}
 
 $regionCodes = @{ 
  "AT" = "de-AT";
@@ -276,7 +298,6 @@ if (!(Test-Path (Join-Path $PSScriptRootV2 '..\Profiles.ps1'))){
     if ($bakFile -ne "None") {
 
         Set-NAVServerInstance -ServerInstance $serverInstance -Stop
-        Push-Location
 
         #Install local DB
         Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
@@ -286,8 +307,6 @@ if (!(Test-Path (Join-Path $PSScriptRootV2 '..\Profiles.ps1'))){
         Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
         "USE [master]
         drop database [$DatabaseName]"
-
-        Pop-Location
 
         New-NAVDatabase -DatabaseServer localhost -DatabaseInstance NAVDEMO -DatabaseName $DatabaseName -FilePath $bakFile -DestinationPath "C:\Program Files\Microsoft SQL Server\MSSQL13.NAVDEMO\MSSQL\DATA" -Timeout 0
         Set-NAVServerInstance -ServerInstance $serverInstance -Start
