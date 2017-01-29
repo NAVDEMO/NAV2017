@@ -11,7 +11,7 @@ param
       ,[string]$NavDvdUri = ""
       ,[string]$AppDbUri = ""
       ,[string]$TenantDbUri = ""
-      ,[string]$Country = "US"
+      ,[string]$Country = "365US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
       ,[string]$LicenseFileUri = ""
@@ -80,6 +80,7 @@ PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integratio
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/Default.aspx"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/SetupConfig.xml"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Profiles/365US.ps1"
 
 # Set $isSaaS to true
 $file = "C:\DEMO\Common\HelperFunctions.ps1"
@@ -141,7 +142,7 @@ if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavDvdUri = "'+$NavDvdUri+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeLanguage = "'+$Country.Split(" ")[0]+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeAppDbPath = "C:\DEMO\AzureSQL\AppDb.bacpac"')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeTenantDbPath = "C:\DEMO\AzureSQL\TenantDb.bacpac"')                                         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"

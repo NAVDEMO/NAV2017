@@ -113,12 +113,7 @@ function New-DevInstance
 		[switch]$Stopped
     )
 
-    if ($Language) {
-        . "C:\DEMO\Profiles\$Language.ps1"
-    } else {
-        . "C:\DEMO\Profiles.ps1"
-        $Language = "XX"
-    }
+    . "C:\DEMO\Profiles\$Language.ps1"
 
     $SourcesFolder = "C:\DEMO\$AppFolder\Sources";
 
@@ -142,7 +137,7 @@ function New-DevInstance
         }
     }
 
-    if ($Language = "XX") {
+    if ($Language.StartsWith("365")) {
 
         Copy-NavDatabase -SourceDatabaseName "DEMO Database NAV (10-0)" -DestinationDatabaseName $DatabaseName
 
@@ -156,11 +151,13 @@ function New-DevInstance
             GO"
        
     } else {
+
         # Restore Database
         Log -OnlyInfo "Restore Database [$DatabaseName] for instance"
         $BakFolder = Join-Path (Get-ChildItem -Path "C:\NAVDVD\$Language\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV" -Directory | Select-Object -Last 1).FullName "Database"
         $BakFile = (Get-ChildItem -Path $BakFolder -Filter "*.bak" -File).FullName
         New-NAVDatabase -DatabaseServer localhost -DatabaseInstance NAVDEMO -DatabaseName $DatabaseName -FilePath $bakFile -DestinationPath $DatabasePath -Timeout 0 | Out-Null
+
     }
     
     Log "Change Default Role Center to 9022"
@@ -222,7 +219,7 @@ function New-DevInstance
     
     if (!(Test-Path $TxtFolder -PathType Container)) 
     {
-        if ($Language -ne "XX") {
+        if (!($Language.StartsWith("365"))) {
             Log -OnlyInfo "Install Local Installers"
             # Install local installers
             if (Test-Path "C:\NAVDVD\$Language\Installers" -PathType Container) {
@@ -338,12 +335,7 @@ function Import-AppFolderDeltas
     $TxtFolder = Join-Path $PSScriptRootV2 "$Language"
     $PrereqFile = "C:\DEMO\$AppFolder\$Language Prereq.fob"
     
-    if ($Language -eq "XX") {
-        . "C:\DEMO\profiles.ps1"
-        $Language = "XX"
-    } else {
-        . "C:\DEMO\profiles\$Language.ps1"
-    }
+    . "C:\DEMO\profiles\$Language.ps1"
 
     if (!(Test-Path $SourcesFolder -PathType Container)) {
         Log "Create $SourcesFolder"
