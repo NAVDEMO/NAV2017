@@ -467,6 +467,8 @@ $regionCodes = @{
  "FRCH" = "fr-CH";
  "ITCH" = "it-CH";
  "NLBE" = "nl-BE";
+ "365US" = "en-US";
+ "365CA" = "en-CA";
 }
 
 $LCID = (New-Object System.Globalization.CultureInfo($regionCodes[$Language])).LCID

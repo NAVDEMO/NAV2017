@@ -149,6 +149,8 @@ $regionCodes = @{
  "FRCH" = "fr-CH";
  "ITCH" = "it-CH";
  "NLBE" = "nl-BE";
+ "365US" = "en-US";
+ "365CA" = "en-CA";
 }
 
 $NAVAdminUser = Get-UserInput -Id NavAdminUser -Text "NAV administrator username" -Default "admin"
