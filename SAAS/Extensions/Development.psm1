@@ -19,77 +19,6 @@ function Remove-AllDevInstances {
     }
 }
 
-function Create-DevInstanceBacpac {
-	Param
-	(
-		[Parameter(Mandatory=$false)]
-		[string]$DevInstance = "DEV",
-		[Parameter(Mandatory=$false)]
-		[string]$Multitenancy = $true
-    )
-
-    Log -OnlyInfo -kind Emphasis "Create .bacpac for NAV Instance $DevInstance"
-    $DatabaseName = (get-DevInstance $DevInstance).DatabaseName
-    $DatabasePath = Join-Path $PSScriptRootV2 "${DevInstance}Db"
-
-    # Install DACFX (Microsoft SQL Server Data-Tier Application Framework)
-    if (!(Test-Path "C:\Program Files\Microsoft SQL Server\120\DAC\bin\sqlpackage.exe")) {
-        Install-DACFx
-    }
-    
-    # App Database / Single Tenant Database
-    $SqlServerInstance = "localhost\NAVDEMO"
-
-    $DatabaseNames = @()
-    if ($Multitenancy) {
-        $DatabaseNames += $DatabaseName.Replace("Database", "Tenant")
-        $DatabaseNames += $DatabaseName.Replace("Database", "App")
-    } else {
-        $DatabaseNames += $DatabaseName.Replace("Database", "Temp")
-    }
-
-    # Remove old bacpac files (if they exist)
-    $DatabaseNames | % {
-        if (Test-NavDatabase($_))
-        {
-            Log -OnlyInfo "Remove Database $_"
-            Remove-NavDatabase $_
-        }
-    }
-
-    # Copy the database and create an App database and a tenant database
-    Log -OnlyInfo "Copying NAV Database $DatabaseName to $DatabaseNames[0]"
-    Copy-NavDatabase -SourceDatabaseName $DatabaseName -DestinationDatabaseName $DatabaseNames[0]
-
-    if ($Multitenancy) {
-        Log -OnlyInfo "Create App Database"
-        Export-NAVApplication -DatabaseServer $SqlServerInstance.Split("\")[0] -DatabaseInstance $SqlServerInstance.Split("\")[1] -DatabaseName $DatabaseNames[0] -DestinationDatabaseName $DatabaseNames[1] -ServiceAccount "NT AUTHORITY\Network Service"
-        Remove-NAVApplication -DatabaseServer $SqlServerInstance.Split("\")[0] -DatabaseInstance $SqlServerInstance.Split("\")[1] -DatabaseName $DatabaseNames[0] -Force
-    }
-
-    $DatabaseNames | % {
-        # Remove unwanted "stuff"
-        Log -OnlyInfo "Removing ""stuff"" which is incompatible with Azure SQL"
-        Remove-NavDatabaseSystemTableData -DatabaseName $_
-        Remove-NavTenantDatabaseUserData -DatabaseName $_ -RemoveUserData $true
-    
-        $bacpacFileName = Join-Path $DatabasePath "$_.bacpac"
-
-        # Create .bacpac
-        Log -OnlyInfo "Create $bacpacFileName"
-        $arguments = @(
-        "/action:Export", 
-        "/tf:""$bacpacFileName""", 
-        "/SourceConnectionString:""Data Source=$SqlServerInstance;Initial Catalog=$_;Integrated Security=SSPI;Persist Security Info=False;"""
-        )
-        Start-Process -FilePath "C:\Program Files\Microsoft SQL Server\120\DAC\bin\sqlpackage.exe" -ArgumentList $arguments -NoNewWindow -Wait
-    
-        # Remove database copy
-        Log -OnlyInfo "Remove Database $_"
-        Remove-NavDatabase -DatabaseName $_ -Force
-    }
-}
-
 function Remove-DevInstance {
 	Param
 	(
@@ -137,6 +66,39 @@ function Remove-DevInstance {
     Log -OnlyInfo -kind Success "Remove-DevInstance Success"
 }
 
+function Copy-NavDatabase([string]$SourceDatabaseName, [string]$DestinationDatabaseName)
+{
+    Log "Copy NAV Database from $SourceDatabaseName to $DestinationDatabaseName"
+
+    try
+    {
+        Log "Using SQL Express"
+        Log "Take database [$SourceDatabaseName] offline"
+        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("ALTER DATABASE [{0}] SET OFFLINE WITH ROLLBACK IMMEDIATE" -f $SourceDatabaseName)
+
+        Log "copy database files"
+        $DatabaseFiles = @()
+        (Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("SELECT Physical_Name as filename FROM sys.master_files WHERE DB_NAME(database_id) = '{0}'" -f $SourceDatabaseName)).filename | ForEach-Object {
+              $FileInfo = Get-Item -Path $_
+              $DestinationFile = "{0}\{1}{2}" -f $FileInfo.DirectoryName, $DestinationDatabaseName, $FileInfo.Extension
+
+              Copy-Item -Path $FileInfo.FullName -Destination $DestinationFile -Force
+
+              $DatabaseFiles = $DatabaseFiles + $DestinationFile
+            }
+
+        $Files = "(FILENAME = N'{0}'), (FILENAME = N'{1}')" -f $DatabaseFiles[0], $DatabaseFiles[1]
+
+        Log "Attach files as new Database [$DestinationDatabaseName]"
+        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("CREATE DATABASE [{0}] ON {1} FOR ATTACH" -f $DestinationDatabaseName, $Files.ToString())
+    }
+    finally
+    {
+        Log "Put database [$SourceDatabaseName] back online"
+        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("ALTER DATABASE [{0}] SET ONLINE" -f $SourceDatabaseName)
+    }
+}
+
 function New-DevInstance
 {
 	Param
@@ -151,17 +113,14 @@ function New-DevInstance
 		[switch]$Stopped
     )
 
-    if (!($Language)) {
-        if (Test-Path -Path "C:\NAVDVD\W1" -PathType Container) {
-            $Language = "W1"
-        } else {
-            $Language = (Get-ChildItem -Path "C:\NAVDVD" -Directory | where-object { Test-Path -Path (Join-Path $_.FullName "WindowsPowerShellScripts") -PathType Container } | Select-Object -First 1).Name
-        }
+    if ($Language) {
+        . "C:\DEMO\Profiles\$Language.ps1"
+    } else {
+        . "C:\DEMO\Profiles.ps1"
+        $Language = "XX"
     }
 
     $SourcesFolder = "C:\DEMO\$AppFolder\Sources";
-
-    . "C:\DEMO\Profiles\$Language.ps1"
 
     Log -OnlyInfo -kind Emphasis "Create NAV Instance $DevInstance"
 
@@ -183,29 +142,38 @@ function New-DevInstance
         }
     }
 
-    if ($AppFolder) {
-        if (!(Test-Path $SourcesFolder -PathType Container)) {
-            New-Item -path $SourcesFolder -ItemType Directory -Force -ErrorAction Ignore | Out-Null
-        }
+    if ($Language = "XX") {
+
+        Copy-NavDatabase -SourceDatabaseName "DEMO Database NAV (10-0)" -DestinationDatabaseName $DatabaseName
+
+        Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
+            "USE [$DatabaseName] `
+            delete from [dbo].[Access Control] `
+            delete from [dbo].[User] `
+            delete from [dbo].[User Property] `
+            GO
+            UPDATE [dbo].[Object] SET [Modified] = 0
+            GO"
+       
+    } else {
+        # Restore Database
+        Log -OnlyInfo "Restore Database [$DatabaseName] for instance"
+        $BakFolder = Join-Path (Get-ChildItem -Path "C:\NAVDVD\$Language\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV" -Directory | Select-Object -Last 1).FullName "Database"
+        $BakFile = (Get-ChildItem -Path $BakFolder -Filter "*.bak" -File).FullName
+        New-NAVDatabase -DatabaseServer localhost -DatabaseInstance NAVDEMO -DatabaseName $DatabaseName -FilePath $bakFile -DestinationPath $DatabasePath -Timeout 0 | Out-Null
     }
-    
-    # Restore Database
-    Log -OnlyInfo "Restore Database [$DatabaseName] for instance"
-    $BakFolder = Join-Path (Get-ChildItem -Path "C:\NAVDVD\$Language\SQLDemoDatabase\CommonAppData\Microsoft\Microsoft Dynamics NAV" -Directory | Select-Object -Last 1).FullName "Database"
-    $BakFile = (Get-ChildItem -Path $BakFolder -Filter "*.bak" -File).FullName
-    New-NAVDatabase -DatabaseServer localhost -DatabaseInstance NAVDEMO -DatabaseName $DatabaseName -FilePath $bakFile -DestinationPath $DatabasePath -Timeout 0 | Out-Null
     
     Log "Change Default Role Center to 9022"
     Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
-"USE [$DatabaseName]
-GO
-UPDATE [dbo].[Profile]
-   SET [Default Role Center] = 0
-GO
-UPDATE [dbo].[Profile]
-   SET [Default Role Center] = 1
- WHERE [Role Center ID] = 9022
-GO"  -WarningAction SilentlyContinue
+        "USE [$DatabaseName]
+        GO
+        UPDATE [dbo].[Profile]
+           SET [Default Role Center] = 0
+        GO
+        UPDATE [dbo].[Profile]
+           SET [Default Role Center] = 1
+         WHERE [Role Center ID] = 9022
+        GO"  -WarningAction SilentlyContinue
 
     # Create NAV Service Tier
     Log -OnlyInfo "Create Service Tier"
@@ -230,6 +198,7 @@ GO"  -WarningAction SilentlyContinue
     Set-NAVServerConfiguration -ServerInstance $DevInstance -KeyName 'PublicSOAPBaseUrl' -KeyValue "http://localhost:7147/$DevInstance/WS/"
     Set-NAVServerConfiguration -ServerInstance $DevInstance -KeyName 'PublicWebBaseUrl' -KeyValue "http://localhost:8080/$DevInstance/WebClient/"
     Set-NAVServerConfiguration -ServerInstance $DevInstance -KeyName 'PublicWinBaseUrl' -KeyValue "dynamicsnav://localhost:7146/$DevInstance/"
+    
     Log -OnlyInfo "Start Service Tier"
     Set-NAVServerInstance -ServerInstance $DevInstance -Start
 
@@ -253,15 +222,17 @@ GO"  -WarningAction SilentlyContinue
     
     if (!(Test-Path $TxtFolder -PathType Container)) 
     {
-        Log -OnlyInfo "Install Local Installers"
-        # Install local installers
-        if (Test-Path "C:\NAVDVD\$Language\Installers" -PathType Container) {
-            Get-ChildItem "C:\NAVDVD\$Language\Installers" | Where-Object { $_.PSIsContainer } | % {
-                Get-ChildItem $_.FullName | Where-Object { $_.PSIsContainer } | % {
-                    $dir = $_.FullName
-                    Get-ChildItem (Join-Path $dir "*.msi") | % { 
-                        Log -OnlyInfo ("Installing "+$_.FullName)
-                        Start-Process -FilePath $_.FullName -WorkingDirectory $dir -ArgumentList "/qn /norestart" -Wait
+        if ($Language -ne "XX") {
+            Log -OnlyInfo "Install Local Installers"
+            # Install local installers
+            if (Test-Path "C:\NAVDVD\$Language\Installers" -PathType Container) {
+                Get-ChildItem "C:\NAVDVD\$Language\Installers" | Where-Object { $_.PSIsContainer } | % {
+                    Get-ChildItem $_.FullName | Where-Object { $_.PSIsContainer } | % {
+                        $dir = $_.FullName
+                        Get-ChildItem (Join-Path $dir "*.msi") | % { 
+                            Log -OnlyInfo ("Installing "+$_.FullName)
+                            Start-Process -FilePath $_.FullName -WorkingDirectory $dir -ArgumentList "/qn /norestart" -Wait
+                        }
                     }
                 }
             }
@@ -300,6 +271,11 @@ GO"  -WarningAction SilentlyContinue
     New-DesktopShortcut -Name "$DevInstance Debugger"                 -TargetPath "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Microsoft.Dynamics.Nav.Client.exe" -Arguments "-Language:1033 -Settings:$DevClientUserSettingsFile ""dynamicsnav:////debug"""
     
     if ($AppFolder) {
+
+        if (!(Test-Path $SourcesFolder -PathType Container)) {
+            New-Item -path $SourcesFolder -ItemType Directory -Force -ErrorAction Ignore | Out-Null
+        }
+
         Log -OnlyInfo "Import Deltas for AppFolder"
         Import-AppFolderDeltas -DevInstance $DevInstance -AppFolder $AppFolder
     }
@@ -360,8 +336,14 @@ function Import-AppFolderDeltas
     $Language = $DevInstanceObj.Language
     $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
     $TxtFolder = Join-Path $PSScriptRootV2 "$Language"
+    $PrereqFile = "C:\DEMO\$AppFolder\$Language Prereq.fob"
     
-    . "C:\DEMO\profiles\$Language.ps1"
+    if ($Language -eq "XX") {
+        . "C:\DEMO\profiles.ps1"
+        $Language = "XX"
+    } else {
+        . "C:\DEMO\profiles\$Language.ps1"
+    }
 
     if (!(Test-Path $SourcesFolder -PathType Container)) {
         Log "Create $SourcesFolder"
@@ -376,7 +358,7 @@ function Import-AppFolderDeltas
 
     # Create folder with Orginal files for "my" delta files
     $OrgFolder   = "C:\DEMO\$AppFolder\Temp\Original-$DevInstance"
-    Log -OnlyInfo "Copy original $Language objects to $OrgFolder for all objects that are modified"
+    Log -OnlyInfo "Copy original objects to $OrgFolder for all objects that are modified"
     Remove-Item -Path $OrgFolder -Recurse -Force -ErrorAction Ignore
     New-Item -Path $OrgFolder -ItemType Directory | Out-Null
     Get-ChildItem $SourcesFolder -Filter "*.DELTA" | % {
@@ -399,7 +381,6 @@ function Import-AppFolderDeltas
     Update-NAVApplicationObject -TargetPath $orgFolder -DeltaPath $deltaFolder -ResultPath $newTxtFile -ModifiedProperty Yes -VersionListProperty FromModified -DateTimeProperty FromModified | Set-Content $MergeResultsFile
     Log -OnlyInfo "MergeResults in $MergeResultsFile"
 
-    $PrereqFile = "C:\DEMO\$AppFolder\$Language Prereq.fob"
     if (Test-Path -Path $PrereqFile) {
         Log -OnlyInfo "Import pre-requisite .fob file"
         Import-NAVApplicationObject  -DatabaseServer 'localhost\NAVDEMO' -DatabaseName $DatabaseName -NavServerName localhost -NavServerInstance $DevInstance -NavServerManagementPort 7145 -SynchronizeSchemaChanges Force -ImportAction Overwrite -Confirm:$false -Path $PrereqFile

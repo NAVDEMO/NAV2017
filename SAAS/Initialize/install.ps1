@@ -34,6 +34,9 @@ $ProfilesCol = @()
 Get-ChildItem -Path "C:\DEMO\Profiles" -File | % { $ProfilesCol += $_.BaseName }
 $Profiles = [string]::Join(', ',$ProfilesCol)
 
+$AppDbPath = "C:\demo\azuresql\AppDb.bacpac"
+$TenantDbPath = "C:\demo\azuresql\TenantDb.bacpac"
+
 if ($LanguageCol.Length -eq 0) {
 
     # No NAVDVDs available - download
@@ -60,11 +63,12 @@ if ($LanguageCol.Length -eq 0) {
         }
     } until (($NavDvdUri) -and (Test-Path -Path $NavDvdUri -PathType Leaf))
 
-            
-    $AppDbPath = Get-UserInput -Id AppDbPath -Text "Specify Path for AppDb bacpac (blank for DVD Demo Database)" 
-    if ($AppDbPath) {
-        $TenantDbPath = $AppDbPath.Replace("App","Tenant")
-        $TenantDbPath = Get-UserInput -Id TenantDbPath -Text "Specify Path for TenantDb bacpac" -Default $TenantDbPath
+    if ($isSaaS) {
+        $AppDbPath = Get-UserInput -Id AppDbPath -Text "Specify Path for AppDb bacpac (blank for DVD Demo Database)" 
+        if ($AppDbPath) {
+            $TenantDbPath = $AppDbPath.Replace("App","Tenant")
+            $TenantDbPath = Get-UserInput -Id TenantDbPath -Text "Specify Path for TenantDb bacpac" -Default $TenantDbPath
+        }
     }
 
     $LanguageCol += $Language
@@ -125,7 +129,7 @@ $serverInstance = $config.SelectSingleNode("//appSettings/add[@key='ServerInstan
 
 Log "Server Instance: $ServerInstance"
 
-if ($LanguageCol.Length -eq 0) {
+if ($isSaaS) {
 
     if ($AppDbPath) {
         Add-Type -path "C:\Program Files (x86)\Microsoft SQL Server\130\DAC\bin\Microsoft.SqlServer.Dac.dll"
@@ -165,6 +169,13 @@ if ($LanguageCol.Length -eq 0) {
             $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
             $AppimportBac.ImportBacpac($ApploadBac, $DatabaseName)
         }
+
+        Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
+            "USE [$DatabaseName] `
+            delete from [dbo].[Access Control] `
+            delete from [dbo].[User] `
+            delete from [dbo].[User Property] `
+            GO"
 
         Log "Start Service Tier"
         Set-NAVServerInstance -ServerInstance $serverInstance -Start
