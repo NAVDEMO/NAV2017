@@ -27,13 +27,18 @@ function timeRefresh(timeoutPeriod)
 </head>
 <body onload="JavaScript:timeRefresh(10000);">
 <%
-   var lines = System.IO.File.ReadAllLines(@"c:\demo\status.txt");
-   Array.Reverse(lines);
-   foreach(var line in lines) {
+  try
+  {
+    var lines = System.IO.File.ReadAllLines(@"c:\demo\status.txt");
+    Array.Reverse(lines);
+    foreach(var line in lines) {
 %>
 <%=line %><br>
 <%
-   }
+    }
+  } catch() 
+  {
+  }
 %>
 </body>
 </html>

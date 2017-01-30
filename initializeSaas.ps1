@@ -30,12 +30,6 @@ param
 	  ,[int]$noOfTestTenants = 1
 )
 
-Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
-Start-Transcript -Path "C:\DEMO\initialize.txt"
-([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " Starting VM Initialization") | Add-Content -Path "c:\demo\status.txt"
-
-. "C:\DEMO\Common\HelperFunctions.ps1"
-
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
     # Do not log Sas Signature
@@ -60,14 +54,26 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-# Other variables
+Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
+Start-Transcript -Path "C:\DEMO\initialize.txt"
+
+. "C:\DEMO\Common\HelperFunctions.ps1"
+
+Log -kind Emphasis "Starting VM Initialization"
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
-new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 Log "Machine Name is $MachineName"
 
-# Update CU2 files
-$date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
+new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
+
+Log "Enable Asp.net (for status.aspx)"
+dism /online /enable-feature /all /featurename:IIS-ASPNET45
+
+# Download status.aspx to main http site
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
+DownloadFile -sourceUrl "${PatchPath}SAAS/Initialize/status.aspx"  -destinationFile "C:\inetpub\wwwroot\status.aspx"
+
+# Update files
+$date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/MTDemoAdminShell.psm1"
@@ -97,7 +103,6 @@ DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"         -destinationF
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml"    -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 DownloadFile -sourceUrl $AppDbUri                                  -destinationFile "C:\DEMO\AzureSQL\AppDb.bacpac"
 DownloadFile -sourceUrl $TenantDbUri                               -destinationFile "C:\DEMO\AzureSQL\TenantDb.bacpac"
-DownloadFile -sourceUrl "${PatchPath}SAAS/Initialize/status.aspx"  -destinationFile "C:\inetpub\wwwroot\status.aspx"
 
 if ($CertificatePfxUri -eq "")
 {
