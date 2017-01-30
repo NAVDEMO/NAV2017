@@ -559,10 +559,12 @@ get-childitem -Path "c:\demo" -filter "*.mht" | % {
 }
 
 if (!(Test-Path -Path "c:\demo\New Developer Experience")) {
-    New-DesktopShortcut -Name "NAV 2017 Windows Client"                          -TargetPath "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Microsoft.Dynamics.Nav.Client.exe" -Arguments "-Language:$languageCode"
-    New-DesktopShortcut -Name "NAV 2017 Web Client"                              -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-    New-DesktopShortcut -Name "NAV 2017 Tablet Client"                           -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/tablet.aspx" IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
-    New-DesktopShortcut -Name "NAV 2017 Phone Client"                            -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/phone.aspx" IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+    if (!$isSaaS) {
+        New-DesktopShortcut -Name "NAV 2017 Web Client"                              -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/?aid=fin" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+    } else {
+        New-DesktopShortcut -Name "NAV 2017 Web Client"                              -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
+        New-DesktopShortcut -Name "NAV 2017 Windows Client"                          -TargetPath "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Microsoft.Dynamics.Nav.Client.exe" -Arguments "-Language:$languageCode"
+    }
     New-DesktopShortcut -Name "NAV 2017 Development Environment"                 -TargetPath "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe" -Arguments "servername=localhost\NAVDEMO, database=$DatabaseName, ntauthentication=1"
     New-DesktopShortcut -Name "NAV 2017 Administration"                          -TargetPath "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Microsoft Dynamics NAV Server.msc" -IconLocation "%SystemRoot%\Installer\{00000000-0000-8000-0000-0CE90DA3512B}\AdminToolsIcon.exe"
     New-DesktopShortcut -Name "NAV 2017 Development Shell"                       -TargetPath "C:\Windows\system32\WindowsPowerShell\v1.0\PowerShell.exe" -Arguments ("-NoExit -ExecutionPolicy RemoteSigned & " + "'C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\NavModelTools.ps1'")

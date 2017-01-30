@@ -101,14 +101,12 @@ function New-DemoTenant
         }
 
         New-Item "C:\MT\$TenantID" -ItemType Directory -Force -ErrorAction Ignore | Out-null
-        $URLsFile = ("C:\MT\$TenantID\URLs.txt")        "Web Client URL         : https://$PublicMachineName/NAV/WebClient?tenant=$TenantID"                 | Set-Content -Path $URLsFile
-        "Tablet Client URL      : https://$PublicMachineName/NAV/WebClient/tablet.aspx?tenant=$TenantID"     | Add-Content -Path $URLsFile
+        $URLsFile = ("C:\MT\$TenantID\URLs.txt")        $aid = ""        if ($isSaaS) { $aid = "&aid=fin" }        "Web Client URL         : https://$PublicMachineName/NAV/WebClient?tenant=$TenantID$aid"             | Set-Content -Path $URLsFile
        ("Device URL             : https://$PublicMachineName/NAV"+"?tenant=$TenantID")                       | Add-Content -Path $URLsFile
        ("Device (configure) URL : ms-dynamicsnav://$PublicMachineName/NAV"+"?tenant=$TenantID")              | Add-Content -Path $URLsFile
     
         if ($SharePointAdminLoginName) {
-            "Web Client URL (AAD)   : https://$PublicMachineName/AAD/WebClient?tenant=$TenantID"             | Add-Content -Path $URLsFile
-            "Tablet Client URL (AAD): https://$PublicMachineName/AAD/WebClient/tablet.aspx?tenant=$TenantID" | Add-Content -Path $URLsFile
+            "Web Client URL (AAD)   : https://$PublicMachineName/AAD/WebClient?tenant=$TenantID$aid"         | Add-Content -Path $URLsFile
            ("Device URL             : https://$PublicMachineName/AAD"+"?tenant=$TenantID")                   | Add-Content -Path $URLsFile
            ("Device (configure) URL : ms-dynamicsnav://$PublicMachineName/AAD"+"?tenant=$TenantID")          | Add-Content -Path $URLsFile
         }

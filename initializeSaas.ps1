@@ -75,6 +75,7 @@ DownloadFile -sourceUrl "${PatchPath}SAAS/Initialize/status.aspx"  -destinationF
 # Update files
 $date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/install.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/MTDemoAdminShell.psm1"
 PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/install.ps1"

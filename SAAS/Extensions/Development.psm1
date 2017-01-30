@@ -58,7 +58,9 @@ function Remove-DevInstance {
 
     # Remove Database folder
     Log -OnlyInfo "Removing Desktop Shortcuts"
-    Remove-DesktopShortcut -Name "$DevInstance Windows Client"
+    if (!$isSaaS) {
+        Remove-DesktopShortcut -Name "$DevInstance Windows Client"
+    }
     Remove-DesktopShortcut -Name "$DevInstance Web Client"
     Remove-DesktopShortcut -Name "$DevInstance Development Environment"
     Remove-DesktopShortcut -Name "$DevInstance Debugger"
@@ -710,7 +712,7 @@ function Publish-Extension {
 		[Parameter(Mandatory=$false)]
 		[string[]]$Addins,
 		[Parameter(Mandatory=$false)]
-        [switch]$installIt
+        [switch]$DontInstall
     )
 
     $ServerInstance = "NAV"
@@ -745,7 +747,7 @@ function Publish-Extension {
         
     Log -OnlyInfo "Publish Extension '$Path'"
     Publish-NAVApp @SandBoxParams -Path $Path -SkipVerification -Force -ServerInstance $ServerInstance -PackageType Extension
-    if ($InstallIt) {
+    if (!$DontInstall) {
         Install-Extension -Name $AppInfo.Name
     }
 }
