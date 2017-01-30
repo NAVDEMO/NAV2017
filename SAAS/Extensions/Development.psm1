@@ -113,7 +113,11 @@ function New-DevInstance
 		[switch]$Stopped
     )
 
-    . "C:\DEMO\Profiles\$Language.ps1"
+    if ($Language) {
+        . "C:\DEMO\Profiles\$Language.ps1"
+    } else {
+        . "C:\DEMO\Profiles.ps1"
+    }
 
     $SourcesFolder = "C:\DEMO\$AppFolder\Sources";
 
@@ -141,15 +145,6 @@ function New-DevInstance
 
         Copy-NavDatabase -SourceDatabaseName "DEMO Database NAV (10-0)" -DestinationDatabaseName $DatabaseName
 
-        Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
-            "USE [$DatabaseName] `
-            delete from [dbo].[Access Control] `
-            delete from [dbo].[User] `
-            delete from [dbo].[User Property] `
-            GO
-            UPDATE [dbo].[Object] SET [Modified] = 0
-            GO"
-       
     } else {
 
         # Restore Database
@@ -160,16 +155,19 @@ function New-DevInstance
 
     }
     
-    Log "Change Default Role Center to 9022"
+    Log "Remove Users, Remove Servers, Clear Modified, Change Default Role Center to 9022"
     Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
         "USE [$DatabaseName]
+        DELETE FROM [dbo].[Access Control]
+        DELETE FROM [dbo].[User]
+        DELETE FROM [dbo].[User Property]
+        DELETE FROM [dbo].[Server Instance]
         GO
-        UPDATE [dbo].[Profile]
-           SET [Default Role Center] = 0
+        UPDATE [dbo].[Object] SET [Modified] = 0
         GO
-        UPDATE [dbo].[Profile]
-           SET [Default Role Center] = 1
-         WHERE [Role Center ID] = 9022
+        UPDATE [dbo].[Profile] SET [Default Role Center] = 0
+        GO
+        UPDATE [dbo].[Profile] SET [Default Role Center] = 1 WHERE [Role Center ID] = 9022
         GO"  -WarningAction SilentlyContinue
 
     # Create NAV Service Tier

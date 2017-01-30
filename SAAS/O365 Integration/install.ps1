@@ -256,55 +256,55 @@ if (!(Test-Path "C:\inetpub\wwwroot\AAD")) {
     Set-NAVServerConfiguration -ServerInstance $serverInstance -KeyName "WSFederationLoginEndpoint" -KeyValue $FederationLoginEndpoint -WarningAction Ignore
     Set-NAVServerUser -ServerInstance $serverInstance -UserName $NAVAdminUser -AuthenticationEmail $SharePointAdminLoginname -WarningAction Ignore
 
-    Log "Uninstall and unpublish NAV App if already installed"
-    UnInstall-NAVApp -ServerInstance $serverInstance -Name $AppName -ErrorAction Ignore
-    UnPublish-NAVApp -ServerInstance $serverInstance -Name $AppName -ErrorAction Ignore
-    
-    # Install pre-requisites if they exist
-    $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
-    $PrereqFile = Join-Path $PSScriptRootV2 "$Language Prereq.fob"
-    if (Test-Path -Path $PrereqFile) {
-        Log "Import pre-requisite .fob file"
-        Import-NAVApplicationObject -DatabaseServer 'localhost\NAVDEMO' -DatabaseName $DatabaseName -Path $PrereqFile -SynchronizeSchemaChanges Force -NavServerName localhost -NavServerInstance $ServerInstance -NavServerManagementPort 7045 -ImportAction Overwrite -Confirm:$false
-    }
-
-    # Publish and Install NAV App
-    $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
-    Log "Publish O365 Integration App"
-    Publish-NAVApp -ServerInstance $serverInstance -Path $AppFilename -SkipVerification
-    Log "Install O365 Integration App"
-    Install-NAVApp -ServerInstance $serverInstance -Name $AppName
-    
-    # Copy misc. files
-    Copy-Item (Join-Path $PSScriptRootV2 "Office.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\Office.png" -Force
-    Copy-Item (Join-Path $PSScriptRootV2 "myapps.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\myapps.png" -Force
-    
-    # Restart NAV Service Tier
-    Log "Restart Service Tier"
-    Set-NAVServerInstance -ServerInstance $serverInstance -Restart
-    
-    Log "Create webserviceuser for O365 setup"
-    $wsusername = 'webserviceuser'
-    $user = get-navserveruser $serverInstance | where-object { $_.UserName -eq $wsusername }
-    if (!($user)){
-        new-navserveruser $serverInstance -UserName $wsusername -CreateWebServicesKey -LicenseType External
-        New-NAVServerUserPermissionSet $serverInstance -UserName $wsusername -PermissionSetId SUPER
-        $user = get-navserveruser $serverInstance | where-object { $_.UserName -eq $wsusername }
-    }
-
-    # Invoke Web Service
-    Log "Create Web Service Proxy"
-    $securePassword = ConvertTo-SecureString -String $user.WebServicesKey -AsPlainText -Force
-    $credential = New-Object System.Management.Automation.PSCredential ($wsUsername, $securePassword)
-    $Uri = ("$publicSoapBaseUrl" + "$Company/Codeunit/AzureAdAppSetup")
-    $proxy = New-WebServiceProxy -Uri $Uri -Credential $credential
-    # Timout 1 hour
-    $proxy.timeout = 60*60*1000
-    Log "Setup Azure Ad App"
-    $proxy.SetAzureAdAppSetup($GLOBAL:PowerBiAdAppId, $GLOBAL:PowerBiAdAppKeyValue)
-    
     if (!$isSaaS) {
 
+        Log "Uninstall and unpublish NAV App if already installed"
+        UnInstall-NAVApp -ServerInstance $serverInstance -Name $AppName -ErrorAction Ignore
+        UnPublish-NAVApp -ServerInstance $serverInstance -Name $AppName -ErrorAction Ignore
+        
+        # Install pre-requisites if they exist
+        $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
+        $PrereqFile = Join-Path $PSScriptRootV2 "$Language Prereq.fob"
+        if (Test-Path -Path $PrereqFile) {
+            Log "Import pre-requisite .fob file"
+            Import-NAVApplicationObject -DatabaseServer 'localhost\NAVDEMO' -DatabaseName $DatabaseName -Path $PrereqFile -SynchronizeSchemaChanges Force -NavServerName localhost -NavServerInstance $ServerInstance -NavServerManagementPort 7045 -ImportAction Overwrite -Confirm:$false
+        }
+    
+        # Publish and Install NAV App
+        $NavIde = "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\finsql.exe"
+        Log "Publish O365 Integration App"
+        Publish-NAVApp -ServerInstance $serverInstance -Path $AppFilename -SkipVerification
+        Log "Install O365 Integration App"
+        Install-NAVApp -ServerInstance $serverInstance -Name $AppName
+        
+        # Copy misc. files
+        Copy-Item (Join-Path $PSScriptRootV2 "Office.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\Office.png" -Force
+        Copy-Item (Join-Path $PSScriptRootV2 "myapps.png") "C:\inetpub\wwwroot\AAD\WebClient\Resources\Images\myapps.png" -Force
+        
+        # Restart NAV Service Tier
+        Log "Restart Service Tier"
+        Set-NAVServerInstance -ServerInstance $serverInstance -Restart
+        
+        Log "Create webserviceuser for O365 setup"
+        $wsusername = 'webserviceuser'
+        $user = get-navserveruser $serverInstance | where-object { $_.UserName -eq $wsusername }
+        if (!($user)){
+            new-navserveruser $serverInstance -UserName $wsusername -CreateWebServicesKey -LicenseType External
+            New-NAVServerUserPermissionSet $serverInstance -UserName $wsusername -PermissionSetId SUPER
+            $user = get-navserveruser $serverInstance | where-object { $_.UserName -eq $wsusername }
+        }
+    
+        # Invoke Web Service
+        Log "Create Web Service Proxy"
+        $securePassword = ConvertTo-SecureString -String $user.WebServicesKey -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($wsUsername, $securePassword)
+        $Uri = ("$publicSoapBaseUrl" + "$Company/Codeunit/AzureAdAppSetup")
+        $proxy = New-WebServiceProxy -Uri $Uri -Credential $credential
+        # Timout 1 hour
+        $proxy.timeout = 60*60*1000
+        Log "Setup Azure Ad App"
+        $proxy.SetAzureAdAppSetup($GLOBAL:PowerBiAdAppId, $GLOBAL:PowerBiAdAppKeyValue)
+    
         # Modify Default.aspx to include a link to SharePoint
         Log "Modify default.aspx"
         
