@@ -239,7 +239,7 @@ if ($noOfTestTenants -gt 0) {
 ('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false -ErrorAction Ignore')             | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log "Installation complete"')                                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log -kind Success "Installation complete"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 Log "Register installation task"
