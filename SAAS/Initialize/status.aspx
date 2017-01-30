@@ -36,8 +36,11 @@ function timeRefresh(timeoutPeriod)
 <%=line %><br>
 <%
     }
-  } catch() 
+  } catch(Exception) 
   {
+%>
+  <p>Error loading status, page should refresh in 10 seconds.</p>
+<%
   }
 %>
 </body>
