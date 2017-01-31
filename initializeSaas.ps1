@@ -65,9 +65,6 @@ Log "Machine Name is $MachineName"
 
 new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 
-Log "Enable Asp.net (for status.aspx)"
-dism /online /enable-feature /all /featurename:IIS-ASPNET45
-
 # Download status.aspx to main http site
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 #DownloadFile -sourceUrl "${PatchPath}SAAS/Initialize/status.aspx"  -destinationFile "C:\inetpub\wwwroot\status.aspx"
