@@ -73,11 +73,11 @@ function Copy-NavDatabase([string]$SourceDatabaseName, [string]$DestinationDatab
     {
         Log "Using SQL Express"
         Log "Take database [$SourceDatabaseName] offline"
-        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("ALTER DATABASE [{0}] SET OFFLINE WITH ROLLBACK IMMEDIATE" -f $SourceDatabaseName)
+        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 -Query ("ALTER DATABASE [{0}] SET OFFLINE WITH ROLLBACK IMMEDIATE" -f $SourceDatabaseName)
 
         Log "copy database files"
         $DatabaseFiles = @()
-        (Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("SELECT Physical_Name as filename FROM sys.master_files WHERE DB_NAME(database_id) = '{0}'" -f $SourceDatabaseName)).filename | ForEach-Object {
+        (Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 -Query ("SELECT Physical_Name as filename FROM sys.master_files WHERE DB_NAME(database_id) = '{0}'" -f $SourceDatabaseName)).filename | ForEach-Object {
               $FileInfo = Get-Item -Path $_
               $DestinationFile = "{0}\{1}{2}" -f $FileInfo.DirectoryName, $DestinationDatabaseName, $FileInfo.Extension
 
@@ -89,12 +89,12 @@ function Copy-NavDatabase([string]$SourceDatabaseName, [string]$DestinationDatab
         $Files = "(FILENAME = N'{0}'), (FILENAME = N'{1}')" -f $DatabaseFiles[0], $DatabaseFiles[1]
 
         Log "Attach files as new Database [$DestinationDatabaseName]"
-        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("CREATE DATABASE [{0}] ON {1} FOR ATTACH" -f $DestinationDatabaseName, $Files.ToString())
+        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 -Query ("CREATE DATABASE [{0}] ON {1} FOR ATTACH" -f $DestinationDatabaseName, $Files.ToString())
     }
     finally
     {
         Log "Put database [$SourceDatabaseName] back online"
-        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -Query ("ALTER DATABASE [{0}] SET ONLINE" -f $SourceDatabaseName)
+        Invoke-SqlCmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 -Query ("ALTER DATABASE [{0}] SET ONLINE" -f $SourceDatabaseName)
     }
 }
 

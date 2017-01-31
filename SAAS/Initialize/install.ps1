@@ -558,7 +558,7 @@ get-childitem -Path "c:\demo" -filter "*.mht" | % {
 }
 
 if (!(Test-Path -Path "c:\demo\New Developer Experience")) {
-    if (!$isSaaS) {
+    if ($isSaaS) {
         New-DesktopShortcut -Name "NAV 2017 Web Client"                              -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/?aid=fin" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"
     } else {
         New-DesktopShortcut -Name "NAV 2017 Web Client"                              -TargetPath "https://$PublicMachineName/$serverInstance/WebClient/" -IconLocation "C:\Program Files\Internet Explorer\iexplore.exe, 3"

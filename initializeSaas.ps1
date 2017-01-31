@@ -233,10 +233,6 @@ if ($noOfTestTenants -gt 0) {
 ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 
-('Log "Installing SQL Server Management Studio 2016"')                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-('. "c:\DEMO\Install SQL Server Management Studio.ps1"')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log "Done installing SQL Server Management Studio 2016"')                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
-
 # Install License
 # Install entitlements
 
