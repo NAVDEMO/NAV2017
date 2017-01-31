@@ -80,7 +80,7 @@ $date = (Get-Date -Date "2017-02-01 00:00:00Z").ToUniversalTime()
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/MTDemoAdminShell.psm1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/install.ps1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/Development.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/Development.psm1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/Development.psm1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Common/HelperFunctions.ps1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/US Prereq.fob"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/install.ps1"

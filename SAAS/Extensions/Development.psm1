@@ -9,7 +9,6 @@ $NavVersion = (Get-ChildItem -Path "c:\program files\Microsoft Dynamics NAV" -Di
 . (Join-Path $PSScriptRootV2 '..\Common\HelperFunctions.ps1')
 . "c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\NavAdminTool.ps1"
 . "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\NavModelTools.ps1"
-Import-Module SQLPS | Out-Null
 
 $TranslateApiKey = Get-Content -Path "c:\DEMO\Extensions\Translate.key" -ErrorAction Ignore
 
@@ -42,14 +41,12 @@ function Remove-DevInstance {
 
     # Remove "old" DEV Database
     Log -OnlyInfo "Removing Database [$DatabaseName]"
-    Push-Location
     Invoke-sqlcmd -ErrorAction Ignore -WarningAction SilentlyContinue -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
     "USE [master]
     alter database [$DatabaseName] set single_user with rollback immediate"
     Invoke-sqlcmd -ErrorAction Ignore -WarningAction SilentlyContinue -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
     "USE [master]
     drop database [$DatabaseName]"
-    Pop-Location
     Remove-Item -Path $DatabasePath -Force -ErrorAction Ignore
         
     # Remove Developer Client User Settings Config
@@ -326,6 +323,10 @@ function Import-AppFolderDeltas
     $ClientAddinsFolder = "C:\DEMO\$AppFolder\Client Add-Ins"
     $MergeResultsFile   = "C:\DEMO\$AppFolder\Temp\$DevInstance-MergeResult.txt"
 
+    if (Test-Path -Path "C:\DEMO\$AppFolder\AppSettings.ps1") {
+        . "C:\DEMO\$AppFolder\AppSettings.ps1"
+    }
+
     Log -OnlyInfo -kind Emphasis "Using NAV instance: $DevInstance"
     
     $DevInstanceObj = get-DevInstance $DevInstance
@@ -346,6 +347,14 @@ function Import-AppFolderDeltas
         Log "Copy Client Add-ins from $ClientAddinsFolder"
         Copy-Item -Path (Join-Path $ClientAddinsFolder "*.dll") -Destination "C:\Program Files (x86)\Microsoft Dynamics NAV\$NavVersion\RoleTailored Client\Add-ins" -Force -ErrorAction Ignore
         Copy-Item -Path (Join-Path $ClientAddinsFolder "*.dll") -Destination "C:\Program Files\Microsoft Dynamics NAV\$NavVersion\Service\Add-ins" -Force -ErrorAction Ignore
+    }
+
+    if (Test-Path variable:global:AppAddIns) {
+        $AppAddIns.Keys | % {
+            $publicKeyToken = $AppAddIns[$_][0]
+            $resource = [System.IO.File]::ReadAllBytes($AppAddIns[$_][1])
+            New-NAVAddIn -ServerInstance $devInstance -AddInName $_ -PublicKeyToken $publicKeyToken -Resource $resource
+        }
     }
 
     # Create folder with Orginal files for "my" delta files
