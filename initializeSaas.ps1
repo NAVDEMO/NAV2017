@@ -73,7 +73,7 @@ $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 #DownloadFile -sourceUrl "${PatchPath}SAAS/Initialize/status.aspx"  -destinationFile "C:\inetpub\wwwroot\status.aspx"
 
 # Update files
-$date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
+$date = (Get-Date -Date "2017-02-01 00:00:00Z").ToUniversalTime()
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/install.ps1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
@@ -85,7 +85,7 @@ $date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/US Prereq.fob"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/install.ps1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/Default.aspx"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/install.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/install.ps1"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/SetupConfig.xml"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/status.aspx"
 #PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Profiles/365US.ps1"

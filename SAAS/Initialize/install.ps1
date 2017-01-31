@@ -117,7 +117,6 @@ Log "NAV Version: $NavVersion"
 Log "Database Name: [$DatabaseName]"
 Log "Import Modules"
 
-Import-module SQLPS -DisableNameChecking
 . (Join-Path $PSScriptRootV2 'HelperFunctions.ps1')
 . ("c:\program files\Microsoft Dynamics NAV\$NavVersion\Service\NavAdminTool.ps1") | Out-Null
 Import-Module (Join-Path $DVDFolder "WindowsPowerShellScripts\Cloud\NAVAdministration\NAVAdministration.psm1") | Out-Null
