@@ -158,12 +158,13 @@ if ($isSaaS) {
                     $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
                     $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
                     $AppimportBac.ImportBacpac($ApploadBac, "SandBox Database")
+                    break
                 } catch {
                     if ($attempt -ge $maxattempts) {
                         Log -Kind Error "Error restoring App database"
                         throw
                     }
-                    Log -kind Warning "Error restoring dApp atabase, retrying"
+                    Log -kind Warning "Error restoring App atabase, retrying"
                     Start-Sleep -Seconds (30*$attempt)
                 }
             }
@@ -176,12 +177,13 @@ if ($isSaaS) {
                     $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
                     $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
                     $TenantimportBac.ImportBacpac($TenantloadBac, $DatabaseName)
+                    break
                 } catch {
                     if ($attempt -ge $maxattempts) {
-                        Log -Kind Error "Error restoring tenant database"
+                        Log -Kind Error "Error restoring Tenant database"
                         throw
                     }
-                    Log -kind Warning "Error restoring tenant database, retrying"
+                    Log -kind Warning "Error restoring Tenant database, retrying"
                     Start-Sleep -Seconds (30*$attempt)
                 }
             }
@@ -199,6 +201,7 @@ if ($isSaaS) {
                     $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
                     $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
                     $AppimportBac.ImportBacpac($ApploadBac, $DatabaseName)
+                    break
                 } catch {
                     if ($attempt -ge $maxattempts) {
                         Log -Kind Error "Error restoring database"
