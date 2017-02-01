@@ -153,6 +153,8 @@ if ($isSaaS) {
             $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
             $AppimportBac.ImportBacpac($ApploadBac, "SandBox Database")
 
+            Start-Sleep -Seconds 10
+
             Log "Restore Tenant Database from $TenantDbPath as new Demo Database"
             $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
             $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
