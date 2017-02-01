@@ -147,28 +147,67 @@ if ($isSaaS) {
         "USE [master]
         drop database [$DatabaseName]"
 
+        $maxattempts = 3
         if ($TenantDbPath) {
-            Log "Restore App Database from $AppDbPath as SandBox Database"
-            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
-            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
-            $AppimportBac.ImportBacpac($ApploadBac, "SandBox Database")
 
-            Start-Sleep -Seconds 10
+            $attempt = 0
+            while ($true) {
+                try {
+                    $attempt++
+                    Log "Restore App Database from $AppDbPath as SandBox Database"
+                    $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+                    $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
+                    $AppimportBac.ImportBacpac($ApploadBac, "SandBox Database")
+                } catch {
+                    if ($attempt -ge $maxattempts) {
+                        Log -Kind Error "Error restoring App database"
+                        throw
+                    }
+                    Log -kind Warning "Error restoring dApp atabase, retrying"
+                    Start-Sleep -Seconds (30*$attempt)
+                }
+            }
 
-            Log "Restore Tenant Database from $TenantDbPath as new Demo Database"
-            $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
-            $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
-            $TenantimportBac.ImportBacpac($TenantloadBac, $DatabaseName)
+            $attempt = 0
+            while ($true) {
+                try {
+                    $attempt++
+                    Log "Restore Tenant Database from $TenantDbPath as new Demo Database"
+                    $TenantimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+                    $TenantloadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($TenantDbPath)
+                    $TenantimportBac.ImportBacpac($TenantloadBac, $DatabaseName)
+                } catch {
+                    if ($attempt -ge $maxattempts) {
+                        Log -Kind Error "Error restoring tenant database"
+                        throw
+                    }
+                    Log -kind Warning "Error restoring tenant database, retrying"
+                    Start-Sleep -Seconds (30*$attempt)
+                }
+            }
             
             Log "Copy App Objects from Sandbox to Demo Database"
             Remove-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName $DatabaseName -Force
             Export-NAVApplication -DatabaseServer 'localhost' -DatabaseInstance 'NAVDEMO' -DatabaseName 'Sandbox Database' -DestinationDatabaseName $DatabaseName -Force
         } else {
 
-            Log "Restore Database from $AppDbPath as Demo Database"
-            $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
-            $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
-            $AppimportBac.ImportBacpac($ApploadBac, $DatabaseName)
+            $attempt = 0
+            while ($true) {
+                try {
+                    $attempt++
+                    Log "Restore Database from $AppDbPath as Demo Database"
+                    $AppimportBac = New-Object Microsoft.SqlServer.Dac.DacServices $conn
+                    $ApploadBac = [Microsoft.SqlServer.Dac.BacPackage]::Load($AppDbPath)
+                    $AppimportBac.ImportBacpac($ApploadBac, $DatabaseName)
+                } catch {
+                    if ($attempt -ge $maxattempts) {
+                        Log -Kind Error "Error restoring database"
+                        throw
+                    }
+                    Log -kind Warning "Error restoring database, retrying"
+                    Start-Sleep -Seconds (30*$attempt)
+                }
+            }
         }
 
         Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
