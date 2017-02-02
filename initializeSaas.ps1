@@ -72,6 +72,9 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
+Remove-item "c:\DEMO" -Recurse -Force -ErrorAction Ignore
+New-item "C:\DEMO" -ItemType Directory -Force -ErrorAction Ignore
+
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Start-Transcript -Path "C:\DEMO\initialize.txt"
 
@@ -84,13 +87,14 @@ Log "Machine Name is $MachineName"
 # Download New DEMO folder
 $DemoZip = Join-Path $PSScriptRoot "demo.zip"
 DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile $DemoZip
-Remove-item "c:\DEMO" -Recurse -Force -ErrorAction Ignore
-New-item "C:\DEMO" -ItemType Directory -Force -ErrorAction Ignore
 Extract-zipfile -file $DemoZip -destination "C:\DEMO"
+Log "Remove ReadOnly flag"
+Get-ChildItem -Recurse -Path "C:\DEMO" | ?{ !$_.PSIsContainer } | Set-ItemProperty -Name IsReadOnly -Value $false
 
 New-Item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 
 # Set $isSaaS to true
+Log "Set isSaaS = true"
 $file = "C:\DEMO\Common\HelperFunctions.ps1"
 [System.IO.File]::WriteAllText($file, [System.IO.File]::ReadAllText($file).Replace('$isSaaS = $false','$isSaaS = $true'))
 
