@@ -72,13 +72,43 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
+function Log {
+    Param (
+        [Parameter(ValueFromPipeline=$true)]
+        [string]$line,
+        [Parameter(Mandatory=$false)]
+        [switch]$OnlyInfo,
+        [Parameter(Mandatory=$false)]
+        [ValidateSet("Info","Emphasis","Success","Warning","Error")]
+        [string]$kind = "Info"
+    )
+    
+    process {
+        $timestamp = [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss"))
+        switch ($kind) {
+            "Success"  { $color = "Green"  }
+            "Warning"  { $color = "Yellow" }
+            "Error"    { $color = "Red"    }
+            "Emphasis" { $color = "White"  }
+            default    { $color = "Gray"   }
+        }
+        if ([Environment]::UserName -ne "SYSTEM") {
+            Microsoft.PowerShell.Utility\Write-Host "$line" -ForegroundColor $color
+        }
+        if (!$OnlyInfo) {
+            "<font color=""$color"">$timestamp $line</font>" | Add-Content -Path "c:\demo\status.txt"
+        }
+        if ($kind -eq "Error") {
+            Start-Sleep -Seconds 30
+        }
+    }
+}
+
 Remove-item "c:\DEMO" -Recurse -Force -ErrorAction Ignore
 New-item "C:\DEMO" -ItemType Directory -Force -ErrorAction Ignore
 
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Start-Transcript -Path "C:\DEMO\initialize.txt"
-
-. "C:\DEMO\Common\HelperFunctions.ps1"
 
 Log -kind Emphasis "Starting VM Initialization"
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
@@ -89,7 +119,7 @@ $DemoZip = Join-Path $PSScriptRoot "demo.zip"
 DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile $DemoZip
 Extract-zipfile -file $DemoZip -destination "C:\DEMO"
 Log "Remove ReadOnly flag"
-Get-ChildItem -Recurse -Path "C:\DEMO" | ?{ !$_.PSIsContainer } | Set-ItemProperty -Name IsReadOnly -Value $false
+Get-ChildItem -Path "C:\DEMO" -Recurse -File | Set-ItemProperty -Name IsReadOnly -Value $false
 
 New-Item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 
