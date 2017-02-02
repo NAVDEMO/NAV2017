@@ -82,10 +82,11 @@ $MachineName = [Environment]::MachineName.ToLowerInvariant()
 Log "Machine Name is $MachineName"
 
 # Download New DEMO folder
-DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile "c:\temp\demo.zip"
+$DemoZip = Join-Path $PSScriptRoot "demo.zip"
+DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile $DemoZip
 Remove-item "c:\DEMO" -Recurse -Force -ErrorAction Ignore
 New-item "C:\DEMO" -ItemType Directory -Force -ErrorAction Ignore
-Extract-zipfile -file "c:\temp\demo.zip" -destination "C:\DEMO"
+Extract-zipfile -file $DemoZip -destination "C:\DEMO"
 
 New-Item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 
