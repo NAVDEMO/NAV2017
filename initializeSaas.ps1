@@ -38,6 +38,24 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
+Function extract-zipfile {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$file,
+        [Parameter(Mandatory=$true)]
+        [string]$destination
+    )
+    Log "Extracting $file"
+    $shell = new-object -com shell.application
+    $zip = $shell.NameSpace($file)
+    foreach($item in $zip.items())
+    {
+        $shell.Namespace($destination).copyhere($item)
+    }
+    Log "Removing $file"
+    Remove-item $file
+}
+
 function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
 {
     $destinationFile = ("C:\"+$path.Replace("SAAS/","DEMO/").Replace("/","\"))
@@ -63,36 +81,20 @@ Log -kind Emphasis "Starting VM Initialization"
 $MachineName = [Environment]::MachineName.ToLowerInvariant()
 Log "Machine Name is $MachineName"
 
-new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
+# Download New DEMO folder
+DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile "c:\temp\demo.zip"
+Remove-item "c:\DEMO" -Recurse -Force -ErrorAction Ignore
+New-item "C:\DEMO" -ItemType Directory -Force -ErrorAction Ignore
+Extract-zipfile -file "c:\temp\demo.zip" -destination "C:\DEMO"
 
-# Download status.aspx to main http site
-$PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-#DownloadFile -sourceUrl "${PatchPath}SAAS/Initialize/status.aspx"  -destinationFile "C:\inetpub\wwwroot\status.aspx"
-
-# Update files
-$date = (Get-Date -Date "2017-02-01 00:00:00Z").ToUniversalTime()
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/install.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/MTDemoAdminShell.psm1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/install.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/Development.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Extensions/Development.psm1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Common/HelperFunctions.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/US Prereq.fob"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/install.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/Default.aspx"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/install.ps1"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/SetupConfig.xml"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Initialize/status.aspx"
-#PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Profiles/365US.ps1"
+New-Item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
 
 # Set $isSaaS to true
 $file = "C:\DEMO\Common\HelperFunctions.ps1"
 [System.IO.File]::WriteAllText($file, [System.IO.File]::ReadAllText($file).Replace('$isSaaS = $false','$isSaaS = $true'))
 
 if ($VMAdminUsername -eq "") {
-    Log "Restart computer and stop installation"
+    Log "No Setup requested, installation Complete. Restart computer."
     Restart-Computer -Force
 }
 
