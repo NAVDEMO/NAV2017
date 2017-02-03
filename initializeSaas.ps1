@@ -134,6 +134,7 @@ if ($VMAdminUsername -eq "") {
 }
 
 # Download files for Task Registration
+$PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"         -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml"    -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
 DownloadFile -sourceUrl $AppDbUri                                  -destinationFile "C:\DEMO\AzureSQL\AppDb.bacpac"
