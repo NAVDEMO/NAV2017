@@ -9,7 +9,9 @@ param
       ,[string]$NAVAdminUsername = ""
       ,[string]$AdminPassword  = ""
       ,[string]$NavDvdUri = ""
-      ,[string]$Country = "US"
+      ,[string]$AppDbUri = ""
+      ,[string]$TenantDbUri = ""
+      ,[string]$Country = "365US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
       ,[string]$LicenseFileUri = ""
@@ -28,17 +30,30 @@ param
 	  ,[int]$noOfTestTenants = 1
 )
 
-Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
-Start-Transcript -Path "C:\DEMO\initialize.txt"
-([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " Starting VM Initialization") | Add-Content -Path "c:\demo\status.txt"
-
-function Log([string]$line) { ('<font color="Gray">' + [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line</font>") | Add-Content -Path "c:\demo\status.txt" }
-
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
-    Log("Downloading '$sourceUrl' to '$destinationFile'")
+    # Do not log Sas Signature
+    Log ("Downloading '"+$sourceUrl.Split('?')[0]+"' to '$destinationFile'")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
+}
+
+Function extract-zipfile {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$file,
+        [Parameter(Mandatory=$true)]
+        [string]$destination
+    )
+    Log "Extracting $file"
+    $shell = new-object -com shell.application
+    $zip = $shell.NameSpace($file)
+    foreach($item in $zip.items())
+    {
+        $shell.Namespace($destination).copyhere($item)
+    }
+    Log "Removing $file"
+    Remove-item $file
 }
 
 function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
@@ -48,36 +63,82 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
     if (Test-Path -path $destinationFile) {
         if ((get-item $destinationFile).LastAccessTimeUtc.Date.CompareTo($date) -ne -1) { 
             # File is newer - don't patch
-            Log("Do not patch '$destinationFile' with '$sourceUrl'")
+            Log "Do not patch '$destinationFile' with '$sourceUrl'"
             return
         } 
         Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     }
-    Log("Patching '$destinationFile' with '$sourceUrl'")
+    Log "Patching '$destinationFile' with '$sourceUrl'"
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
 
-# Other variables
-$MachineName = [Environment]::MachineName.ToLowerInvariant()
-new-item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
-Log("Machine Name is $MachineName")
+function Log {
+    Param (
+        [Parameter(ValueFromPipeline=$true)]
+        [string]$line,
+        [Parameter(Mandatory=$false)]
+        [switch]$OnlyInfo,
+        [Parameter(Mandatory=$false)]
+        [ValidateSet("Info","Emphasis","Success","Warning","Error")]
+        [string]$kind = "Info"
+    )
+    
+    process {
+        $timestamp = [DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss"))
+        switch ($kind) {
+            "Success"  { $color = "Green"  }
+            "Warning"  { $color = "Yellow" }
+            "Error"    { $color = "Red"    }
+            "Emphasis" { $color = "White"  }
+            default    { $color = "Gray"   }
+        }
+        if ([Environment]::UserName -ne "SYSTEM") {
+            Microsoft.PowerShell.Utility\Write-Host "$line" -ForegroundColor $color
+        }
+        if (!$OnlyInfo) {
+            "<font color=""$color"">$timestamp $line</font>" | Add-Content -Path "c:\demo\status.txt"
+        }
+        if ($kind -eq "Error") {
+            Start-Sleep -Seconds 30
+        }
+    }
+}
 
-# Update CU2 files
-$date = (Get-Date -Date "2017-01-11 00:00:00Z").ToUniversalTime()
-$PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/AzureSQL/install.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/Multitenancy/HelperFunctions.ps1"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/US Prereq.fob"
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "SAAS/O365 Integration/install.ps1"
+Remove-item "c:\DEMO" -Recurse -Force -ErrorAction Ignore
+New-item "C:\DEMO" -ItemType Directory -Force -ErrorAction Ignore
+
+Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
+Start-Transcript -Path "C:\DEMO\initialize.txt"
+
+Log -kind Emphasis "Starting VM Initialization"
+$MachineName = [Environment]::MachineName.ToLowerInvariant()
+Log "Machine Name is $MachineName"
+
+# Download New DEMO folder
+$DemoZip = Join-Path $PSScriptRoot "demo.zip"
+DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile $DemoZip
+Extract-zipfile -file $DemoZip -destination "C:\DEMO"
+Log "Remove ReadOnly flag"
+Get-ChildItem -Path "C:\DEMO" -Recurse -File | Set-ItemProperty -Name IsReadOnly -Value $false
+
+New-Item -Path "c:\DEMO\Install" -ItemType Directory -Force -ErrorAction Ignore
+
+# Set $isSaaS to true
+Log "Set isSaaS = true"
+$file = "C:\DEMO\Common\HelperFunctions.ps1"
+[System.IO.File]::WriteAllText($file, [System.IO.File]::ReadAllText($file).Replace('$isSaaS = $false','$isSaaS = $true'))
 
 if ($VMAdminUsername -eq "") {
-    Log("Restart computer and stop installation")
+    Log "No Setup requested, installation Complete. Restart computer."
     Restart-Computer -Force
 }
 
 # Download files for Task Registration
-DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"      -destinationFile "c:\DEMO\Install\InstallationTask.xml"
-DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml" -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
+$PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
+DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"         -destinationFile "c:\DEMO\Install\InstallationTask.xml"
+DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml"    -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
+DownloadFile -sourceUrl $AppDbUri                                  -destinationFile "C:\DEMO\AzureSQL\AppDb.bacpac"
+DownloadFile -sourceUrl $TenantDbUri                               -destinationFile "C:\DEMO\AzureSQL\TenantDb.bacpac"
 
 if ($CertificatePfxUri -eq "")
 {
@@ -89,7 +150,7 @@ if ($CertificatePfxUri -eq "")
         Write-Verbose "Downloading $certificatePfxUri to $CertificatePfxFile"
         DownloadFile -SourceUrl $certificatePfxUri -destinationFile $CertificatePfxFile
     } else {
-        Log("Unpack base64 encoded Certificate Pfx File to $certificatePfxFile")
+        Log "Unpack base64 encoded Certificate Pfx File to $certificatePfxFile"
         # Assume Base64
         [System.IO.File]::WriteAllBytes($CertificatePfxFile, [System.Convert]::FromBase64String($CertificatePfxUri))
     }
@@ -102,13 +163,13 @@ if ($LicenseFileUri -ne "")
         Write-Verbose "Downloading $LicenseFileUri to $LicenseFile"
         DownloadFile -SourceUrl $LicenseFileUri -destinationFile $LicenseFile
     } else {
-        Log("Unpack base64 encoded Certificate Pfx File to $LicenseFile")
+        Log "Unpack base64 encoded Certificate Pfx File to $LicenseFile"
         # Assume Base64
         [System.IO.File]::WriteAllBytes($LicenseFile, [System.Convert]::FromBase64String($LicenseFileUri))
     }
 }
 
-Log("Creating Installation Scripts")
+Log "Creating Installation Scripts"
 
 $step = 1
 $next = $step+1
@@ -118,13 +179,15 @@ $next = $step+1
 ('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
 $step = $next
 $next++
-('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('. "C:\DEMO\Common\HelperFunctions.ps1"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavDvdUri = "'+$NavDvdUri+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeLanguage = "'+$Country.Split(" ")[0]+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeAppDbPath = "C:\DEMO\AzureSQL\AppDb.bacpac"')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeTenantDbPath = "C:\DEMO\AzureSQL\TenantDb.bacpac"')                                         | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -132,14 +195,30 @@ if ($NAVAdminUsername -ne "") {
     ('$HardcodePublicMachineName = "'+$PublicMachineName+'"')                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodecertificatePfxFile = "'+$CertificatePfxFile+'"')                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodecertificatePfxPassword = "'+$CertificatePfxPassword+'"')                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Initializing Virtual Machine")')                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Initialize\install.ps1" 4> "C:\DEMO\Initialize\install.log"')                             | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done initializing Virtual Machine")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Initializing Virtual Machine"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Initialize\install.ps1"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Done initializing Virtual Machine"')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ("Set-Content -Path ""c:\inetpub\wwwroot\http\$MachineName.rdp"" -Value 'full address:s:${PublicMachineName}:3389
 prompt for credentials:i:1'")                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("ERROR (Initialize): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("Initialize: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+}
+
+if ($LicenseFileUri -ne "") {
+    # Initialize Virtual Machine
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeLicenseFile = "'+$LicenseFile+'"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeTranslateApiKey = "default"')                                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Installing Extensions Development Shell"')                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Extensions\install.ps1"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Done installing Extensions Development Shell"')                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Extensions\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("Extensions: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
@@ -155,91 +234,51 @@ if ($Office365UserName -ne "") {
     ('$HardcodeSharePointTimezoneId = "default"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointAppCatalogUrl = "default"')                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeSharePointMultitenant = "No"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Installing O365 integration")')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\O365 Integration\install.ps1" 4> "C:\DEMO\O365 Integration\install.log"')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done installing O365 integration")')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Installing O365 integration"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\O365 Integration\install.ps1"')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Done installing O365 integration"')                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\O365 Integration\error.txt" -Value $_.Exception.Message')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("ERROR (O365): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("O365 Integration: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
-if ($bingMapsKey -ne "") {
-    # Install BingMaps Integration
-    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeBingMapsKey = "'+$bingMapsKey+'"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeRegionFormat = "default"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Installing BingMaps integration")')                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\BingMaps\install.ps1" 4> "C:\DEMO\BingMaps\install.log"')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done installing BingMaps integration")')                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Set-Content -Path "c:\DEMO\BingMaps\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("ERROR (BingMaps): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+# Setup Azure SQL
+('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$HardcodeExistingAzureSqlDatabase = "Yes"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+('$HardcodeDatabaseName = "default"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log "Setting up Azure SQL and Multitenancy"')                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+('. "c:\DEMO\AzureSQL\install.ps1"')                                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log "Done setting up Azure SQL and Multitenancy"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+if ($noOfTestTenants -gt 0) {
+    ('Log ("Adding '+$noOfTestTenants+' test tenants")')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('1..'+$noOfTestTenants+' | % {')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('    Log("Add test tenant Tenant$_")')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('    New-DemoTenant Tenant$_')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log ("Done adding '+$noOfTestTenants+' test tenants")')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
+('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log -kind Error ("AzureSQL: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 
-if ($powerBI -eq "Yes") {
-    # Install PowerBI
-    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Installing PowerBI integration")')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\PowerBI\install.ps1" 4> "C:\DEMO\PowerBI\install.log"')                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done installing PowerBI integration")')                                                         | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Set-Content -Path "c:\DEMO\PowerBI\error.txt" -Value $_.Exception.Message')                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("ERROR (PowerBI): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-}
+# Install License
+# Install entitlements
 
-if ($clickonce -eq "Yes") {
-    # Install ClickOnce
-    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Installing ClickOnce deployment of Windows Client")')                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\Clickonce\install.ps1" 4> "C:\DEMO\Clickonce\install.log"')                               | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done installing ClickOnce deployment of Windows Client")')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Set-Content -Path "c:\DEMO\Clickonce\error.txt" -Value $_.Exception.Message')                        | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("ERROR (ClickOnce): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-}
-
-if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
-    # Setup Azure SQL
-    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Setting up Azure SQL and Multitenancy")')                                                       | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeExistingAzureSqlDatabase = "Yes"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeDatabaseName = "default"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('. "c:\DEMO\AzureSQL\install.ps1" 4> "C:\DEMO\AzureSQL\install.log"')                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("Done setting up Azure SQL and Multitenancy")')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    if ($noOfTestTenants -gt 0) {
-        ('Log("Adding '+$noOfTestTenants+' test tenants")')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-        ('1..'+$noOfTestTenants+' | % {')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-        ('    Log("Add test tenant Tenant$_")')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
-        ('    New-DemoTenant Tenant$_')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
-        ('}')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-        ('Log("Done adding '+$noOfTestTenants+' test tenants")')                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
-    }
-    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('Log("ERROR (AzureSQL): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-}
-
-('Log("Cleaning up")')                                                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log "Cleaning up"')                                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false -ErrorAction Ignore')             | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Log -kind Success "Installation complete"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
 
-Log("Register installation task")
+Log "Register installation task"
 Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\StartInstallationTask.xml" | out-string) -TaskName "Start Installation Task" -User "NT AUTHORITY\SYSTEM" –Force
-Log("Restart computer and start Installation tasks")
+Log "Restart computer and start Installation tasks"
 Restart-Computer -Force
