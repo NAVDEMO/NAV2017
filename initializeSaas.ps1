@@ -104,6 +104,10 @@ function Log {
     }
 }
 
+if (Test-Path -Path "c:\DEMO\Status.txt" -PathType Leaf) {
+    exit
+}
+
 Remove-item "c:\DEMO" -Recurse -Force -ErrorAction Ignore
 New-item "C:\DEMO" -ItemType Directory -Force -ErrorAction Ignore
 

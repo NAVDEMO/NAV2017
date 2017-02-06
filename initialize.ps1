@@ -25,6 +25,10 @@ param
       ,[string]$sqlServerName = ""
 )
 
+if (Test-Path -Path "c:\DEMO\Status.txt" -PathType Leaf) {
+    exit
+}
+
 Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force
 Start-Transcript -Path "C:\DEMO\initialize.txt"
 ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " Starting VM Initialization") | Add-Content -Path "c:\demo\status.txt"
