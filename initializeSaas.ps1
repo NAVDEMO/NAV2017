@@ -105,6 +105,7 @@ function Log {
 }
 
 if (Test-Path -Path "c:\DEMO\Status.txt" -PathType Leaf) {
+    Log "VM already initialized."
     exit
 }
 
