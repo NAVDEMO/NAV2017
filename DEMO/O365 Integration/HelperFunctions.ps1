@@ -51,16 +51,17 @@ function Setup-AadApps
     $adUserObjectId = 0
     Log "Identify AAD Tenant ID"
     $account.Context.Account.Tenants | % {
-    try {
-        Write-Host "Try $_"
-        $GLOBAL:AadTenant = $_
-        Set-AzureRmContext -TenantId $GLOBAL:AadTenant | Out-Null
-        $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
-        $adUserObjectId = $adUser.Id
-        Write-Host "Success"
-        break
-    } catch {
-        Write-Host "Failure"
+        try {
+            Write-Host "Try $_"
+            $GLOBAL:AadTenant = $_
+            Set-AzureRmContext -TenantId $GLOBAL:AadTenant | Out-Null
+            $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
+            $adUserObjectId = $adUser.Id
+            Write-Host "Success"
+            break
+        } catch {
+            Write-Host "Failure"
+        }
     }
 
     if (!$adadUserObjectId) {
