@@ -52,19 +52,19 @@ function Setup-AadApps
     Log "Identify AAD Tenant ID"
     $account.Context.Account.Tenants | % {
         try {
-            Write-Host "Try $_"
+            Log "Try $_"
             $GLOBAL:AadTenant = $_
             Set-AzureRmContext -TenantId $GLOBAL:AadTenant | Out-Null
             $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
             $adUserObjectId = $adUser.Id
-            Write-Host "Success"
+            Log "Success"
             break
         } catch {
-            Write-Host "Failure"
+            Log "Failure"
         }
     }
 
-    if (!$adadUserObjectId) {
+    if (!$adUserObjectId) {
         Log -Kind Error "Could not identify Aad Tenant ID"
         exit
     }
