@@ -50,10 +50,10 @@ function Setup-AadApps
 
     $adUserObjectId = 0
     Log "Identify AAD Tenant ID"
-    $account.Context.Account.Tenants | % {
+    foreach($tenant in $account.Context.Account.Tenants) {
         try {
-            Log "Try $_"
-            $GLOBAL:AadTenant = $_
+            Log "Try $tenant"
+            $GLOBAL:AadTenant = $tenant
             Set-AzureRmContext -TenantId $GLOBAL:AadTenant | Out-Null
             $adUser = Get-AzureRmADUser -UserPrincipalName $account.Context.Account.Id
             $adUserObjectId = $adUser.Id
