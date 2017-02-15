@@ -40,7 +40,7 @@ New-Item $Folder -itemtype directory -ErrorAction ignore | Out-Null
 if (!(Test-Path $Filename)) {
     Log "Downloading Visual Studio Code Setup Program"
     $WebClient = New-Object System.Net.WebClient
-    $WebClient.DownloadFile("https://vscode-update.azurewebsites.net/1.8.1/win32/stable", $Filename)
+    $WebClient.DownloadFile("https://go.microsoft.com/fwlink/?LinkID=623230", $Filename)
 }
 
 Log "Installing Visual Studio Code"
@@ -55,7 +55,7 @@ Log "Setup NetTcpPortSharing"
 Start-Process -FilePath "sc.exe" -ArgumentList @("config", "NetTcpPortSharing", "start=auto") -Wait | Out-Null
 Start-Process -FilePath "sc.exe" -ArgumentList @("start",  "NetTcpPortSharing") –Wait | Out-Null
 
-Log "Create Developer Service Tier"
+Log "Create Navision_main Developer Service Tier"
 $DevInstance = "Navision_main"
 if (!(Get-NAVServerInstance -ServerInstance $DevInstance)) {
     New-NAVServerInstance -ServerInstance $DevInstance `
@@ -102,7 +102,7 @@ if (!(Get-NAVServerInstance -ServerInstance $DevInstance)) {
     
     Log "Create NAV Web Server Instance"
     Write-Host -ForegroundColor Green "Create Web Server Instance"
-    New-NAVWebServerInstance -ServerInstance $DevInstance -WebServerInstance $DevInstance -Server localhost -RegionFormat "en-US" -Language en-US -Company $Company -ClientServicesPort 7146
+    New-NAVWebServerInstance -ServerInstance $DevInstance -WebServerInstance $DevInstance -Server localhost -ClientServicesPort 7146
     
     Log "Change dev instance Web.config"
     $DEVWebConfigFile = "C:\inetpub\wwwroot\$DevInstance\Web.config"
@@ -146,13 +146,29 @@ if (!(Get-NAVServerInstance -ServerInstance $DevInstance)) {
     GO"  -WarningAction SilentlyContinue
 }
 
-Log "Copy Resources"
-$CountryFolder = Join-Path $PSScriptRootV2 $Language
-$ResourcesFolder = Join-Path $PSScriptRootV2 "Resources"
-Remove-Item -Path $ResourcesFolder -Recurse -Force -ErrorAction Ignore
-New-Item -Path $ResourcesFolder -ItemType Directory -Force -ErrorAction Ignore | Out-Null
-Copy-Item -Path (Join-Path $CountryFolder "*.vsix") -Destination $PSScriptRootV2
-Copy-Item -Path (Join-Path $CountryFolder "*.navx") -Destination $ResourcesFolder
+Log "Create Navision_main Developer Service Tier"
+$DevInstance2 = "DynamicsNAV100"
+if (!(Get-NAVServerInstance -ServerInstance $DevInstance2)) {
+    New-NAVServerInstance -ServerInstance $DevInstance2 `
+                          -DatabaseServer localhost `
+                          -DatabaseInstance NAVDEMO `
+                          -DatabaseName $DatabaseName `
+                          -ClientServicesPort 7146 `
+                          -ManagementServicesPort 7145 `
+                          -SOAPServicesPort 7147 `
+                          -ODataServicesPort 7148 `
+                          -DeveloperServicesPort 7049 `
+                          -ClientServicesCredentialType Windows `
+                          -ServiceAccount NetworkService
+    
+    Set-NAVServerConfiguration -ServerInstance $DevInstance2 -KeyName "PublicWebBaseUrl" -KeyValue "http://localhost:8080/$DevInstance2/WebClient/" -WarningAction Ignore
+
+    Log "Set Service tier to depend on NetTcpPort Sharing"
+    Start-Process -FilePath "sc.exe" -ArgumentList @("config", ('MicrosoftDynamicsNavServer$'+$DevInstance2), "depend= NetTcpPortSharing/HTTP") -Wait | Out-Null
+
+    Log "Start Service Tier"
+    Set-NAVServerInstance -ServerInstance $DevInstance2 -Start
+}
 
 Log "Download samples"
 $Folder = "C:\DOWNLOAD"
@@ -169,9 +185,6 @@ if ([Environment]::UserName -ne "SYSTEM") {
     Remove-Item -Path "$alFolder\Samples" -Recurse -Force -ErrorAction Ignore | Out-Null
     New-Item -Path "$alFolder\Samples" -ItemType Directory -Force -ErrorAction Ignore | Out-Null
     Copy-Item -Path (Join-Path $PSScriptRootV2 "Samples\*") -Destination "$alFolder\Samples" -Recurse -ErrorAction Ignore
-
-    New-Item -Path "$alFolder\Resources" -ItemType Directory -Force -ErrorAction Ignore | Out-Null
-    Copy-Item -Path (Join-Path $CountryFolder "*.navx") -Destination "$alFolder\Resources"
 }
 
 Log "install vsix"
