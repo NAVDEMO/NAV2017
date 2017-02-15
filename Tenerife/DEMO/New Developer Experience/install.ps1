@@ -136,14 +136,6 @@ GO"  -WarningAction SilentlyContinue
             $DEVWebConfig.configuration.DynamicsNAVSettings.AppendChild($addelm) | Out-Null
         }
         $DEVWebConfig.Save($DEVWebConfigFile)
-        
-        Log "Create Windows Client config"
-        $TemplateClientUserSettingsFile = "C:\DEMO\Extensions\ClientUserSettings.config"
-        $DevClientUserSettingsFile = "C:\DEMO\Extensions\${DevInstance}ClientUserSettings.config"
-        $config = [xml](Get-Content $TemplateClientUserSettingsFile)
-        $config.SelectSingleNode("//configuration/appSettings/add[@key='ServerInstance']").value = $DevInstance
-        $config.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value = "default"
-        $config.Save($DevClientUserSettingsFile)
     }
 }
 
