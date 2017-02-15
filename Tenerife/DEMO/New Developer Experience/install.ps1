@@ -55,119 +55,96 @@ Log "Setup NetTcpPortSharing"
 Start-Process -FilePath "sc.exe" -ArgumentList @("config", "NetTcpPortSharing", "start=auto") -Wait | Out-Null
 Start-Process -FilePath "sc.exe" -ArgumentList @("start",  "NetTcpPortSharing") –Wait | Out-Null
 
-Log "Create Navision_main Developer Service Tier"
-$DevInstance = "Navision_main"
-if (!(Get-NAVServerInstance -ServerInstance $DevInstance)) {
-    New-NAVServerInstance -ServerInstance $DevInstance `
-                          -DatabaseServer localhost `
-                          -DatabaseInstance NAVDEMO `
-                          -DatabaseName $DatabaseName `
-                          -ClientServicesPort 7146 `
-                          -ManagementServicesPort 7145 `
-                          -SOAPServicesPort 7147 `
-                          -ODataServicesPort 7148 `
-                          -DeveloperServicesPort 7049 `
-                          -ClientServicesCredentialType Windows `
-                          -ServiceAccount NetworkService
+Log "Create Windows User Account in NAV"
+new-navserveruser -ServerInstance $ServerInstance -tenant default -WindowsAccount ([Environment]::UserName)
+New-NAVServerUserPermissionSet -ServerInstance $ServerInstance -tenant default -WindowsAccount ([Environment]::UserName) -PermissionSetId SUPER
+
+Log "Change Default Role Center to 9022"
+Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
+"USE [$DatabaseName]
+GO
+UPDATE [dbo].[Profile]
+   SET [Default Role Center] = 0
+GO
+UPDATE [dbo].[Profile]
+   SET [Default Role Center] = 1
+ WHERE [Role Center ID] = 9022
+GO"  -WarningAction SilentlyContinue
+
+"Navision_main", "DynamicsNAV100" | % {
+    $DevInstance = $_
+    Log "Create $DevInstance Developer Service Tier"
+    if (!(Get-NAVServerInstance -ServerInstance $DevInstance)) {
+        New-NAVServerInstance -ServerInstance $DevInstance `
+                              -DatabaseServer localhost `
+                              -DatabaseInstance NAVDEMO `
+                              -DatabaseName $DatabaseName `
+                              -ClientServicesPort 7146 `
+                              -ManagementServicesPort 7145 `
+                              -SOAPServicesPort 7147 `
+                              -ODataServicesPort 7148 `
+                              -DeveloperServicesPort 7049 `
+                              -ClientServicesCredentialType Windows `
+                              -ServiceAccount NetworkService
+        
+        Set-NAVServerConfiguration -ServerInstance $DevInstance -KeyName "PublicWebBaseUrl" -KeyValue "http://localhost:8080/$DevInstance/WebClient/" -WarningAction Ignore
     
-    Set-NAVServerConfiguration -ServerInstance $DevInstance -KeyName "PublicWebBaseUrl" -KeyValue "http://localhost:8080/$DevInstance/WebClient/" -WarningAction Ignore
-
-    Log "Set Service tier to depend on NetTcpPort Sharing"
-    Start-Process -FilePath "sc.exe" -ArgumentList @("config", ('MicrosoftDynamicsNavServer$'+$DevInstance), "depend= NetTcpPortSharing/HTTP") -Wait | Out-Null
-
-    Log "Start Service Tier"
-    Set-NAVServerInstance -ServerInstance $DevInstance -Start
+        Log "Set Service tier to depend on NetTcpPort Sharing"
+        Start-Process -FilePath "sc.exe" -ArgumentList @("config", ('MicrosoftDynamicsNavServer$'+$DevInstance), "depend= NetTcpPortSharing/HTTP") -Wait | Out-Null
     
-    Log "Create Windows User Account in NAV"
-    new-navserveruser -ServerInstance $DevInstance -tenant default -WindowsAccount ([Environment]::UserName)
-    New-NAVServerUserPermissionSet -ServerInstance $DevInstance -tenant default -WindowsAccount ([Environment]::UserName) -PermissionSetId SUPER
-
-    Log "Read Standard Web.config"
-    $NAVWebConfigFile = "C:\inetpub\wwwroot\$ServerInstance\Web.config"
-    $NAVWebConfig = [xml](Get-Content $NAVWebConfigFile)
-    $designerKey = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='designer']")
-    if ($designerkey) {
-        $designerkey.value = "true"
-    } else {
-        $addelm = $NAVWebConfig.CreateElement("add")
-        $keyatt = $NAVWebConfig.CreateAttribute("key")
-        $keyatt.Value = "designer"
-        $addelm.Attributes.Append($keyatt) | Out-Null
-        $valatt = $NAVWebConfig.CreateAttribute("value")
-        $valatt.Value = "true"
-        $addelm.Attributes.Append($valatt) | Out-Null
-        $NAVWebConfig.configuration.DynamicsNAVSettings.AppendChild($addelm) | Out-Null
+        Log "Start Service Tier"
+        Set-NAVServerInstance -ServerInstance $DevInstance -Start
+        
+        Log "Read Standard Web.config"
+        $NAVWebConfigFile = "C:\inetpub\wwwroot\$ServerInstance\Web.config"
+        $NAVWebConfig = [xml](Get-Content $NAVWebConfigFile)
+        $designerKey = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='designer']")
+        if ($designerkey) {
+            $designerkey.value = "true"
+        } else {
+            $addelm = $NAVWebConfig.CreateElement("add")
+            $keyatt = $NAVWebConfig.CreateAttribute("key")
+            $keyatt.Value = "designer"
+            $addelm.Attributes.Append($keyatt) | Out-Null
+            $valatt = $NAVWebConfig.CreateAttribute("value")
+            $valatt.Value = "true"
+            $addelm.Attributes.Append($valatt) | Out-Null
+            $NAVWebConfig.configuration.DynamicsNAVSettings.AppendChild($addelm) | Out-Null
+        }
+        $NAVWebConfig.Save($NAVWebConfigFile)
+        
+        Log "Create NAV Web Server Instance"
+        New-NAVWebServerInstance -ServerInstance $DevInstance -WebServerInstance $DevInstance -Server localhost -ClientServicesPort 7146
+        
+        Log "Change dev instance Web.config"
+        $DEVWebConfigFile = "C:\inetpub\wwwroot\$DevInstance\Web.config"
+        $DEVWebConfig = [xml](Get-Content $DEVWebConfigFile)
+        $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value
+        $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='FeedbackLink']").value = "https://github.com/Microsoft/AL/issues"
+        $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='CommunityLink']").value = "https://github.com/Microsoft/AL/issues"
+        $designerKey = $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='designer']")
+        if ($designerkey) {
+            $designerkey.value = "true"
+        } else {
+            $addelm = $DEVWebConfig.CreateElement("add")
+            $keyatt = $DEVWebConfig.CreateAttribute("key")
+            $keyatt.Value = "designer"
+            $addelm.Attributes.Append($keyatt) | Out-Null
+            $valatt = $DEVWebConfig.CreateAttribute("value")
+            $valatt.Value = "true"
+            $addelm.Attributes.Append($valatt) | Out-Null
+            $DEVWebConfig.configuration.DynamicsNAVSettings.AppendChild($addelm) | Out-Null
+        }
+        $DEVWebConfig.Save($DEVWebConfigFile)
+        
+        Log "Create Windows Client config"
+        $TemplateClientUserSettingsFile = "C:\DEMO\Extensions\ClientUserSettings.config"
+        $DevClientUserSettingsFile = "C:\DEMO\Extensions\${DevInstance}ClientUserSettings.config"
+        $config = [xml](Get-Content $TemplateClientUserSettingsFile)
+        $config.SelectSingleNode("//configuration/appSettings/add[@key='ServerInstance']").value = $DevInstance
+        $config.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value = "default"
+        $config.Save($DevClientUserSettingsFile)
     }
-    $NAVWebConfig.Save($NAVWebConfigFile)
-    
-    Log "Create NAV Web Server Instance"
-    Write-Host -ForegroundColor Green "Create Web Server Instance"
-    New-NAVWebServerInstance -ServerInstance $DevInstance -WebServerInstance $DevInstance -Server localhost -ClientServicesPort 7146
-    
-    Log "Change dev instance Web.config"
-    $DEVWebConfigFile = "C:\inetpub\wwwroot\$DevInstance\Web.config"
-    $DEVWebConfig = [xml](Get-Content $DEVWebConfigFile)
-    $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value = $NAVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='HelpServer']").value
-    $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='FeedbackLink']").value = "https://github.com/Microsoft/AL/issues"
-    $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='CommunityLink']").value = "https://github.com/Microsoft/AL/issues"
-    $designerKey = $DEVWebConfig.SelectSingleNode("//configuration/DynamicsNAVSettings/add[@key='designer']")
-    if ($designerkey) {
-        $designerkey.value = "true"
-    } else {
-        $addelm = $DEVWebConfig.CreateElement("add")
-        $keyatt = $DEVWebConfig.CreateAttribute("key")
-        $keyatt.Value = "designer"
-        $addelm.Attributes.Append($keyatt) | Out-Null
-        $valatt = $DEVWebConfig.CreateAttribute("value")
-        $valatt.Value = "true"
-        $addelm.Attributes.Append($valatt) | Out-Null
-        $DEVWebConfig.configuration.DynamicsNAVSettings.AppendChild($addelm) | Out-Null
-    }
-    $DEVWebConfig.Save($DEVWebConfigFile)
-    
-    Log "Create Windows Client config"
-    $TemplateClientUserSettingsFile = "C:\DEMO\Extensions\ClientUserSettings.config"
-    $DevClientUserSettingsFile = "C:\DEMO\Extensions\${DevInstance}ClientUserSettings.config"
-    $config = [xml](Get-Content $TemplateClientUserSettingsFile)
-    $config.SelectSingleNode("//configuration/appSettings/add[@key='ServerInstance']").value = $DevInstance
-    $config.SelectSingleNode("//configuration/appSettings/add[@key='TenantId']").value = "default"
-    $config.Save($DevClientUserSettingsFile)
-
-    Log "Change Default Role Center to 9022"
-    Invoke-sqlcmd -ea stop -ServerInstance "localhost\NAVDEMO" -QueryTimeout 0 `
-    "USE [$DatabaseName]
-    GO
-    UPDATE [dbo].[Profile]
-       SET [Default Role Center] = 0
-    GO
-    UPDATE [dbo].[Profile]
-       SET [Default Role Center] = 1
-     WHERE [Role Center ID] = 9022
-    GO"  -WarningAction SilentlyContinue
-}
-
-Log "Create Navision_main Developer Service Tier"
-$DevInstance2 = "DynamicsNAV100"
-if (!(Get-NAVServerInstance -ServerInstance $DevInstance2)) {
-    New-NAVServerInstance -ServerInstance $DevInstance2 `
-                          -DatabaseServer localhost `
-                          -DatabaseInstance NAVDEMO `
-                          -DatabaseName $DatabaseName `
-                          -ClientServicesPort 7146 `
-                          -ManagementServicesPort 7145 `
-                          -SOAPServicesPort 7147 `
-                          -ODataServicesPort 7148 `
-                          -DeveloperServicesPort 7049 `
-                          -ClientServicesCredentialType Windows `
-                          -ServiceAccount NetworkService
-    
-    Set-NAVServerConfiguration -ServerInstance $DevInstance2 -KeyName "PublicWebBaseUrl" -KeyValue "http://localhost:8080/$DevInstance2/WebClient/" -WarningAction Ignore
-
-    Log "Set Service tier to depend on NetTcpPort Sharing"
-    Start-Process -FilePath "sc.exe" -ArgumentList @("config", ('MicrosoftDynamicsNavServer$'+$DevInstance2), "depend= NetTcpPortSharing/HTTP") -Wait | Out-Null
-
-    Log "Start Service Tier"
-    Set-NAVServerInstance -ServerInstance $DevInstance2 -Start
 }
 
 Log "Download samples"
