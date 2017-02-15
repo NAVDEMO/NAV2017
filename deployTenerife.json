@@ -269,7 +269,7 @@
             "publisher": "MicrosoftDynamicsNAV",
             "offer": "DynamicsNAV",
             "sku": "Tenerife",
-            "version": "10.0.14920"
+            "version": "10.0.15428"
           },
           "osDisk": {
             "name": "osdisk",
