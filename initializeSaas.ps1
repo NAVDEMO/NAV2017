@@ -142,6 +142,7 @@ if ($VMAdminUsername -eq "") {
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
 DownloadFile -SourceUrl "${PatchPath}InstallationTask.xml"         -destinationFile "c:\DEMO\Install\InstallationTask.xml"
 DownloadFile -SourceUrl "${PatchPath}StartInstallationTask.xml"    -destinationFile "c:\DEMO\Install\StartInstallationTask.xml"
+DownloadFile -sourceUrl $NavDvdUri                                 -destinationFile "C:\DEMO\NAVDVD.ZIP"
 DownloadFile -sourceUrl $AppDbUri                                  -destinationFile "C:\DEMO\AzureSQL\AppDb.bacpac"
 DownloadFile -sourceUrl $TenantDbUri                               -destinationFile "C:\DEMO\AzureSQL\TenantDb.bacpac"
 
@@ -189,7 +190,7 @@ $next++
 if ($NAVAdminUsername -ne "") {
     # Initialize Virtual Machine
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeNavDvdUri = "'+$NavDvdUri+'"')                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeNavDvdUri = "C:\DEMO\NAVDVD.ZIP"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeLanguage = "'+$Country.Split(" ")[0]+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeAppDbPath = "C:\DEMO\AzureSQL\AppDb.bacpac"')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeTenantDbPath = "C:\DEMO\AzureSQL\TenantDb.bacpac"')                                         | Add-Content "c:\DEMO\Install\step$step.ps1"
