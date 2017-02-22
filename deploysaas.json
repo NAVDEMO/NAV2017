@@ -35,6 +35,14 @@
         "Description": "Specify Administrator Password (for VM and NAV)"
       }
     },
+    "country": {
+      "type": "string",
+      "defaultValue": "365US",
+      "allowedValues": [ "365US","365CA" ],
+      "metadata": {
+        "Description": "Select Country version for Microsoft Dynamics 365 Sandbox environment"
+      }
+    },
     "NavDvdUri": {
       "type": "string",
       "metadata": {
@@ -1121,7 +1129,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initializeSaas.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeSaas.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -NavDvdUri \"',parameters('NavDvdUri'),'\" -AppDbUri \"',parameters('SqlStorageAppDbUri'),'\" -TenantDbUri \"',parameters('SqlStorageTenantDbUri'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -LicenseFileUri \"',parameters('LicenseFileUri'),'\" -CertificatePfxUri \"',parameters('CertificatePfxUri'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -sqlServerName \"',variables('sqlServerName'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -noOfTestTenants \"',parameters('noOfTestTenants'),'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeSaas.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -Country \"',parameters('country'),'\" -NavDvdUri \"',parameters('NavDvdUri'),'\" -AppDbUri \"',parameters('SqlStorageAppDbUri'),'\" -TenantDbUri \"',parameters('SqlStorageTenantDbUri'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\" -LicenseFileUri \"',parameters('LicenseFileUri'),'\" -CertificatePfxUri \"',parameters('CertificatePfxUri'),'\" -CertificatePfxPassword \"',parameters('CertificatePfxPassword'),'\" -PublicMachineName \"',parameters('PublicMachineName'),'\" -Office365UserName \"',parameters('Office365UserName'),'\" -Office365Password \"',parameters('Office365Password'),'\" -sqlServerName \"',variables('sqlServerName'),'\" -sqlAdminUsername \"',parameters('sqlAdminUsername'),'\" -noOfTestTenants \"',parameters('noOfTestTenants'),'\"')]"
         },
         "protectedSettings": {
         }
