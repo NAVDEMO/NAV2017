@@ -33,7 +33,7 @@ param
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
 {
     # Do not log Sas Signature
-    Log ("Downloading '"+$sourceUrl.Split('?')[0]+"' to '$destinationFile'")
+    Log ("Downloading '$destinationFile'")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     Invoke-WebRequest $sourceUrl -OutFile $destinationFile
 }
