@@ -33,7 +33,7 @@
       "defaultValue": "W1 - International",
       "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "GB - Great Britain", "IS - Iceland", "IT - Italy", "NA - North America", "NL - Netherlands", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden", "W1", "AT", "AU", "BE", "CH", "CZ", "DE", "DK", "ES", "FI", "FR", "GB", "IS", "IT", "NA", "NL", "NO", "NZ", "RU", "SE" ],
       "metadata": {
-        "Description": "Select Microsoft Dynamics NAV 2016 Country version to deploy"
+        "Description": "Select Microsoft Dynamics NAV Country version to deploy"
       }
     },
     "CertificatePfxUrl": {
