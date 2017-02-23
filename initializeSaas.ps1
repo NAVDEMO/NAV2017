@@ -252,7 +252,7 @@ if ($Office365UserName -ne "") {
 }
 
 if ($AzureSQL -eq "Yes") {
-    # Setup Azure SQL
+    # Setup Azure SQL and Multitenancy
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeExistingAzureSqlDatabase = "Yes"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
@@ -268,7 +268,16 @@ if ($AzureSQL -eq "Yes") {
     ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 } else {
-
+    # Setup Multitenancy
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Setting up Multitenancy"')                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Multitenancy\install.ps1"')                                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Done setting up Multitenancy"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Multitenancy\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("Multitenancy: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
 if ($noOfTestTenants -gt 0) {
