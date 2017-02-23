@@ -262,23 +262,29 @@ if ($AzureSQL -eq "Yes") {
     ('Log "Setting up Azure SQL and Multitenancy"')                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('. "c:\DEMO\AzureSQL\install.ps1"')                                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log "Done setting up Azure SQL and Multitenancy"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("AzureSQL: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 } else {
 
 }
 
 if ($noOfTestTenants -gt 0) {
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log ("Adding '+$noOfTestTenants+' test tenants")')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('1..'+$noOfTestTenants+' | % {')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('    Log("Add test tenant Tenant$_")')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('    New-DemoTenant Tenant$_')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log ("Done adding '+$noOfTestTenants+' test tenants")')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Multitenancy\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("Adding Tenants: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
-('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log -kind Error ("AzureSQL: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
-('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 # Install License
 # Install entitlements
