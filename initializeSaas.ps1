@@ -28,6 +28,7 @@ param
       ,[string]$sqlAdminUsername = ""
       ,[string]$sqlServerName = ""
 	  ,[int]$noOfTestTenants = 1
+      ,[string]$AzureSQL = "Yes"
 )
 
 function DownloadFile([string]$sourceUrl, [string]$destinationFile)
@@ -121,7 +122,7 @@ Log "Machine Name is $MachineName"
 
 # Download New DEMO folder
 $DemoZip = Join-Path $PSScriptRoot "demo.zip"
-DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile $DemoZip
+DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.dev.zip" -destinationFile $DemoZip
 Extract-zipfile -file $DemoZip -destination "C:\DEMO"
 Log "Remove ReadOnly flag"
 Get-ChildItem -Path "C:\DEMO" -Recurse -File | Set-ItemProperty -Name IsReadOnly -Value $false
@@ -250,29 +251,49 @@ if ($Office365UserName -ne "") {
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
-# Setup Azure SQL
-('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$HardcodeExistingAzureSqlDatabase = "Yes"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
-('$HardcodeDatabaseName = "default"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log "Setting up Azure SQL and Multitenancy"')                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
-('. "c:\DEMO\AzureSQL\install.ps1"')                                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log "Done setting up Azure SQL and Multitenancy"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+if ($AzureSQL -eq "Yes") {
+    # Setup Azure SQL and Multitenancy
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeExistingAzureSqlDatabase = "Yes"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabaseServer = "'+$sqlServerName+'"')                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabaseUserName = "'+$sqlAdminUsername+'"')                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabasePassword = "'+$adminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeDatabaseName = "default"')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Setting up Azure SQL and Multitenancy"')                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\AzureSQL\install.ps1"')                                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Done setting up Azure SQL and Multitenancy"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("AzureSQL: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+} else {
+    # Setup Multitenancy
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Setting up Multitenancy"')                                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Multitenancy\install.ps1"')                                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Done setting up Multitenancy"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Multitenancy\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("Multitenancy: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+}
+
 if ($noOfTestTenants -gt 0) {
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log ("Adding '+$noOfTestTenants+' test tenants")')                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('1..'+$noOfTestTenants+' | % {')                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('    Log("Add test tenant Tenant$_")')                                                            | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('    New-DemoTenant Tenant$_')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log ("Done adding '+$noOfTestTenants+' test tenants")')                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Multitenancy\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("Adding Tenants: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
-('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Set-Content -Path "c:\DEMO\AzureSQL\error.txt" -Value $_.Exception.Message')                         | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log -kind Error ("AzureSQL: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
-('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 # Install License
 # Install entitlements
