@@ -124,6 +124,7 @@ Log "Machine Name is $MachineName"
 $DemoZip = Join-Path $PSScriptRoot "demo.zip"
 DownloadFile -sourceUrl "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip" -destinationFile $DemoZip
 Extract-zipfile -file $DemoZip -destination "C:\DEMO"
+
 Log "Remove ReadOnly flag"
 Get-ChildItem -Path "C:\DEMO" -Recurse -File | Set-ItemProperty -Name IsReadOnly -Value $false
 
