@@ -31,7 +31,7 @@
     "country": {
       "type": "string",
       "defaultValue": "W1 - International",
-      "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "GB - Great Britain", "IS - Iceland", "IT - Italy", "NA - North America", "NL - Netherlands", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden", "W1", "AT", "AU", "BE", "CH", "CZ", "DE", "DK", "ES", "FI", "FR", "GB", "IS", "IT", "NA", "NL", "NO", "NZ", "RU", "SE" ],
+      "allowedValues": [ "W1 - International", "AT - Austria", "AU - Australia", "BE - Belgium", "CA - Canada", "CH - Schwitzerland", "CZ - Czech Republic", "DE - Germany", "DECH - Schwitzerland (German)", "DK - Denmark", "ES - Spain", "FI - Finland", "FR - France", "FRBE - Belgium (French)", "FRCA - Canada (French)", "FRCH - Schwitzerland (French)", "GB - Great Britain", "IS - Iceland", "IT - Italy", "ITCH - Schwitzerland (Italien)", "MX - Mexico", "NA - North America", "NL - Netherlands", "NLBE - Belgium (Dutch)", "NO - Norway", "NZ - New Zealand", "RU - Russia", "SE - Sweden", "US - United States", "W1", "AT", "AU", "BE", "CA", "CH", "CZ", "DE", "DECH", "DK", "ES", "FI", "FR", "FRBE", "FRCA", "FRCH", "GB", "IS", "IT", "ITCH", "MX", "NA", "NL", "NLBE", "NO", "NZ", "RU", "SE", "US" ],
       "metadata": {
         "Description": "Select Microsoft Dynamics NAV Country version to deploy"
       }
