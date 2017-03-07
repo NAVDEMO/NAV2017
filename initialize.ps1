@@ -108,7 +108,7 @@ if ($NAVAdminUsername -ne "") {
     ('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }') | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("NAV Service Tier started")')                                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
-    ('$HardcodeLanguage = "'+$Country.Substring(0,2)+'"')                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeLanguage = "'+$Country.Split(" ")[0]+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminUser = "'+$NAVAdminUsername+'"')                                                    | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeNavAdminPassword = "'+$AdminPassword+'"')                                                   | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('$HardcodeRestoreAndUseBakFile = "'+$RestoreAndUseBakFile+'"')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
