@@ -34,7 +34,7 @@
     "storageAccountType": "Standard_LRS",
     "vmStorageAccountContainerName": "vhds",
     "publicIPAddressName": "[concat(parameters('vmName'), '_pip')]",
-    "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
+    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
     "dnsName": "[tolower(parameters('vmName'))]",
     "vmSize": "Standard_D2_v2",
     "addressPrefix": "10.0.0.0/16",
