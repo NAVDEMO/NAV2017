@@ -117,7 +117,7 @@
     "storageAccountType": "Standard_LRS",
     "vmStorageAccountContainerName": "vhds",
     "publicIPAddressName": "[concat(parameters('vmName'), '_pip')]",
-    "storageAccountName": "[concat('storage', replace(tolower(parameters('vmName')),'-',''))]",
+    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
     "sqlServerName": "[concat('sql', replace(tolower(parameters('vmName')),'-',''))]",
     "dnsName": "[tolower(parameters('vmName'))]",
     "vmSize": "Standard_D2_v2",
