@@ -31,7 +31,7 @@
     "country": {
       "type": "string",
       "defaultValue": "365US",
-      "allowedValues": [ "365US", "365CA", "365W1" ],
+      "allowedValues": [ "365US", "365CA", "365GB", "365W1" ],
       "metadata": {
         "Description": "Select Country version for Microsoft Dynamics 365 Sandbox environment"
       }

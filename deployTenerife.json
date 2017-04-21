@@ -27,6 +27,13 @@
       "metadata": {
         "Description": "Specify Administrator Password (for VM and NAV)"
       }
+    },
+    "LicenseFileUri": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "Description": "Specify the Uri of the License File to use"
+      }
     }
   },
   "variables": {
@@ -934,7 +941,7 @@
           "fileUris": [
             "[uri(deployment().properties.templateLink.uri, 'initializeTenerife.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeTenerife.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\"')]"
+          "commandToExecute": "[concat(variables('ScriptCommandToExecute'),'initializeTenerife.ps1',' -ScriptPath \"',deployment().properties.templateLink.uri,'\" -StorageAccountName \"',variables('storageAccountName'),'\" -StorageAccountKey \"',listKeys(variables('accountid'),'2015-06-15').key1,'\" -VMAdminUsername \"',parameters('vmAdminUsername'),'\" -NAVAdminUsername \"',parameters('navAdminUsername'),'\" -AdminPassword \"',parameters('adminPassword'),'\" -LicenseFileUri \"',parameters('LicenseFileUri'),'\" -CloudServiceName \"',reference(variables('publicIPAddressName')).dnsSettings.fqdn,'\"')]"
         },
         "protectedSettings": {
         }
