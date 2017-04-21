@@ -30,7 +30,7 @@
     },
     "LicenseFileUri": {
       "type": "string",
-      "minLength": 1,
+      "defaultValue": "",
       "metadata": {
         "Description": "Specify the Uri of the License File to use"
       }
