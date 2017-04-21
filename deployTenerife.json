@@ -32,7 +32,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "Description": "Specify the Uri of the License File to use"
+        "Description": "Optional: Specify the Uri of the License File to use"
       }
     }
   },
