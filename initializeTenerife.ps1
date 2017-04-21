@@ -11,6 +11,7 @@ param
       ,[string]$Country = "US"
       ,[string]$RestoreAndUseBakFile = "Default"
       ,[string]$CloudServiceName = ""
+      ,[string]$LicenseFileUri = ""
       ,[string]$CertificatePfxUrl = ""
       ,[string]$CertificatePfxPassword = "" 
       ,[string]$PublicMachineName = ""
@@ -94,6 +95,19 @@ if ($CertificatePfxUrl -eq "")
     }
 }
 
+if ($LicenseFileUri -ne "")
+{
+    $LicenseFile = "C:\DEMO\license.flf"
+    if ($LicenseFileUri.StartsWith("http://") -or $LicenseFileUri.StartsWith("https://")) {
+        Write-Verbose "Downloading $LicenseFileUri to $LicenseFile"
+        DownloadFile -SourceUrl $LicenseFileUri -destinationFile $LicenseFile
+    } else {
+        Log "Unpack base64 encoded Certificate Pfx File to $LicenseFile"
+        # Assume Base64
+        [System.IO.File]::WriteAllBytes($LicenseFile, [System.Convert]::FromBase64String($LicenseFileUri))
+    }
+}
+
 Log("Creating Installation Scripts")
 
 $step = 1
@@ -124,6 +138,21 @@ prompt for credentials:i:1'")                                                   
     ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Set-Content -Path "c:\DEMO\initialize\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('Log("ERROR (Initialize): "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
+}
+
+if ($LicenseFileUri -ne "") {
+    # Initialize Virtual Machine
+    ('try {')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeLicenseFile = "'+$LicenseFile+'"')                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('$HardcodeTranslateApiKey = "default"')                                                               | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Installing Extensions Development Shell"')                                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('. "c:\DEMO\Extensions\install.ps1"')                                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log "Done installing Extensions Development Shell"')                                                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('} catch {')                                                                                          | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Set-Content -Path "c:\DEMO\Extensions\error.txt" -Value $_.Exception.Message')                       | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('Log -kind Error ("Extensions: "+$_.Exception.Message+" ("+($Error[0].ScriptStackTrace -split "\r\n")[0]+")")')  | Add-Content "c:\DEMO\Install\step$step.ps1"
+    ('throw')                                                                                              | Add-Content "c:\DEMO\Install\step$step.ps1"
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
