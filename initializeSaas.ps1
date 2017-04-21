@@ -122,7 +122,7 @@ Log "Machine Name is $MachineName"
 
 # Download New DEMO folder
 $DemoZip = Join-Path $PSScriptRoot "demo.zip"
-$DemoBlobName = "https://nav2016wswe0.blob.core.windows.net/release/Demo.dev.zip"
+$DemoBlobName = "https://nav2016wswe0.blob.core.windows.net/release/Demo.main.zip"
 DownloadFile -sourceUrl $DemoBlobName -destinationFile $DemoZip
 Extract-zipfile -file $DemoZip -destination "C:\DEMO"
 Log "Remove ReadOnly flag"
