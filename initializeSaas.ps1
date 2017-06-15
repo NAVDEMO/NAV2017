@@ -36,7 +36,7 @@ function DownloadFile([string]$sourceUrl, [string]$destinationFile)
     # Do not log Sas Signature
     Log ("Downloading '$destinationFile'")
     Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
-    Invoke-WebRequest $sourceUrl -OutFile $destinationFile
+    (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
 
 Function extract-zipfile {
@@ -70,7 +70,7 @@ function PatchFileIfNecessary([string]$baseUrl, [string]$path, $date)
         Remove-Item -Path $destinationFile -Force -ErrorAction Ignore
     }
     Log "Patching '$destinationFile' with '$sourceUrl'"
-    Invoke-WebRequest $sourceUrl -OutFile $destinationFile
+    (New-Object System.Net.WebClient).DownloadFile($sourceUrl, $destinationFile)
 }
 
 function Log {
