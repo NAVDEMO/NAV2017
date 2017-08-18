@@ -239,6 +239,7 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
 
 ('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
+('Start-Sleep -seconds 10')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
 $step = $next
 $next++
@@ -261,7 +262,7 @@ $next++
 ('Log("Cleaning up")')                                                                                     | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Install" -Force -Recurse -ErrorAction Ignore')                                      | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Remove-Item "c:\DEMO\Initialize.txt" -Force -ErrorAction Ignore')                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false -ErrorAction Ignore')             | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('Unregister-ScheduledTask -TaskName "Installation Task" -Confirm:$false -ErrorAction Ignore')             | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Log("Installation complete")')                                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
 
