@@ -237,16 +237,16 @@ if (($sqlServerName -ne "") -and ($sqlAdminUsername -ne "")) {
     ('}')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 }
 
-('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
-$step = $next
-$next++
-('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log("Waiting for NAV Service Tier to start")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
-('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                             | Add-Content "c:\DEMO\Install\step$step.ps1"
-('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }')     | Add-Content "c:\DEMO\Install\step$step.ps1"
-('Log("NAV Service Tier started")')                                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('(''. "c:\DEMO\Install\Step'+$next+'.ps1"'') | Out-File "C:\DEMO\Install\Next-Step.ps1"')                 | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('Register-ScheduledTask -Xml (get-content "c:\DEMO\Install\InstallationTask.xml" | out-string) -TaskName "Installation Task" -User "'+$VMAdminUserName+'" -Password "'+$AdminPassword+'" –Force') | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('Restart-Computer -Force')                                                                                | Add-Content "c:\DEMO\Install\step$step.ps1"
+#$step = $next
+#$next++
+#('function Log([string]$line) { ([DateTime]::Now.ToString([System.Globalization.DateTimeFormatInfo]::CurrentInfo.ShortTimePattern.replace(":mm",":mm:ss")) + " $line") | Add-Content -Path "c:\demo\status.txt" }') | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('Log("Waiting for NAV Service Tier to start")')                                                           | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('. ("c:\program files\Microsoft Dynamics NAV\100\Service\NavAdminTool.ps1")')                             | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('while ((Get-NAVServerInstance -ServerInstance NAV).State -ne "Running") { Start-Sleep -Seconds 5 }')     | Add-Content "c:\DEMO\Install\step$step.ps1"
+#('Log("NAV Service Tier started")')                                                                        | Add-Content "c:\DEMO\Install\step$step.ps1"
 
 ('try {')                                                                                                  | Add-Content "c:\DEMO\Install\step$step.ps1"
 ('Log("Installing New Developer Experience")')                                                             | Add-Content "c:\DEMO\Install\step$step.ps1"
