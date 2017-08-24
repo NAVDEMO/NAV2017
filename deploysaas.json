@@ -164,7 +164,7 @@
           }
         },
         {
-          "name": "Demo Database NAV (10-0)",
+          "name": "Demo Database NAV (11-0)",
           "type": "databases",
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01-preview",
@@ -172,7 +172,7 @@
             "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
           ],
           "tags": {
-            "displayName": "Demo Database NAV (10-0)"
+            "displayName": "Demo Database NAV (11-0)"
           },
           "properties": {
             "collation": "[variables('SqlCollation')]",
@@ -186,7 +186,7 @@
               "type": "extensions",
               "apiVersion": "2014-04-01-preview",
               "dependsOn": [
-                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)')]"
+                "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (11-0)')]"
               ],
               "tags": {
                 "displayName": "Import"
@@ -1117,7 +1117,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('server1Name'))]",
-        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (10-0)/extensions/Import')]",
+        "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Demo Database NAV (11-0)/extensions/Import')]",
         "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/Tenant Template/extensions/Import')]"
       ],
       "properties": {
