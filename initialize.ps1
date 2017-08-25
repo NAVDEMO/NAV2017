@@ -66,7 +66,7 @@ Log("Machine Name is $MachineName")
 # Update CU2 files
 $date = (Get-Date -Date "2017-08-20 00:00:00Z").ToUniversalTime()
 $PatchPath = $ScriptPath.SubString(0,$ScriptPath.LastIndexOf('/')+1)
-PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctoins.ps1"
+PatchFileIfNecessary -date $date -baseUrl $PatchPath -path "DEMO/O365 Integration/HelperFunctions.ps1"
 
 if ($VMAdminUsername -eq "") {
     Log("Restart computer and stop installation")
