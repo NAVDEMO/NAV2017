@@ -231,7 +231,7 @@
             "publisher": "MicrosoftDynamicsNAV",
             "offer": "DynamicsNAV",
             "sku": "2017",
-            "version": "10.0.17972"
+            "version": "10.0.18609"
           },
           "osDisk": {
             "name": "osdisk",
