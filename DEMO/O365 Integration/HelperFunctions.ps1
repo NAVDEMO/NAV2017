@@ -103,7 +103,8 @@ function Setup-AadApps
     # Add a key to the app
     $startDate = Get-Date
     New-AzureRmADAppCredential -ApplicationId $GLOBAL:SsoAdAppId `
-                               -Password $GLOBAL:SsoAdAppKeyValue `                               -StartDate $startDate `
+                               -Password $GLOBAL:SsoAdAppKeyValue `
+                               -StartDate $startDate `
                                -EndDate $startDate.AddYears(10) | Out-Null
 
     # Get oauth2 permission id for sso app
@@ -203,7 +204,8 @@ function Setup-AadApps
     # Add a key to the app
     $startDate = Get-Date
     New-AzureRmADAppCredential -ApplicationId $GLOBAL:PowerBIAdAppId `
-                               -Password $GLOBAL:PowerBiAdAppKeyValue `                               -StartDate $startDate `
+                               -Password $GLOBAL:PowerBiAdAppKeyValue `
+                               -StartDate $startDate `
                                -EndDate $startDate.AddYears(10) | Out-Null
     
     # Add Required Resource Access
@@ -227,4 +229,3 @@ function Setup-AadApps
     
     (Invoke-WebRequest -UseBasicParsing -Method PATCH -ContentType 'application/json' -Headers $headers -Uri $powerBiUrl -Body $powerBiPostData).Content | Out-Null
 }
-
