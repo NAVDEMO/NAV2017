@@ -103,7 +103,7 @@ function Setup-AadApps
     # Add a key to the app
     $startDate = Get-Date
     New-AzureRmADAppCredential -ApplicationId $GLOBAL:SsoAdAppId `
-                               -Password ConvertTo-SecureString -String $GLOBAL:SsoAdAppKeyValue -AsPlainText -Force `
+                               -Password (ConvertTo-SecureString -String $GLOBAL:SsoAdAppKeyValue -AsPlainText -Force) `
                                -StartDate $startDate `
                                -EndDate $startDate.AddYears(10) | Out-Null
 
