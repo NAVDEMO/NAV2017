@@ -204,7 +204,7 @@ function Setup-AadApps
     # Add a key to the app
     $startDate = Get-Date
     New-AzureRmADAppCredential -ApplicationId $GLOBAL:PowerBIAdAppId `
-                               -Password $GLOBAL:PowerBiAdAppKeyValue `
+                               -Password (ConvertTo-SecureString $GLOBAL:PowerBiAdAppKeyValue -AsPlainText -Force) `
                                -StartDate $startDate `
                                -EndDate $startDate.AddYears(10) | Out-Null
     
